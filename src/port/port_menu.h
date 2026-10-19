@@ -15,4 +15,8 @@ s32 port_act_select_loop(s16 arg, s32 unused);
 /* draws the screen that is on, if one is, in the frame's display list (src/port/scene.c's port_render) */
 extern s32 port_menu_active;
 void port_menu_draw(void);
+/* the keys the screens take before the game sees them (the pause menu's way out) */
+void port_menu_input(void);
+/* the player chose to quit (src/main.c) */
+extern int port_quit;
 #endif

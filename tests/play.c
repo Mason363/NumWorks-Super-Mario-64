@@ -20,6 +20,7 @@ void host_save_dir(const char *d);
 void port_game_init(void);
 void port_game_frame(void);
 extern int port_start_level_num;
+extern int port_quit;
 void port_debug_print(void);
 void port_debug_place(float x, float y, float z, short yaw);
 
@@ -86,6 +87,10 @@ int main(int argc, char **argv) {
     }
     port_game_frame();
     host_time += 33;
+    if (port_quit) {
+      printf("quit at frame %d\n", f);
+      break;
+    }
     bool shot = every ? f % every == 0 : false;
     if (!every) {
       char want[16];

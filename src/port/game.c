@@ -14,6 +14,7 @@
 #include "engine/graph_node.h"
 #include "port.h"
 #include "port_game.h"
+#include "port_menu.h"
 #include "plat.h"
 
 /* the N64 had 4 MB for this; the levels' scripts, cameras, warps and the objects' surfaces fit in less. The
@@ -149,15 +150,22 @@ static void read_controller(void) {
 }
 
 #include "game/object_list_processor.h"
+/* the frame's display list memory: the screens' commands (HUD, menus, text: src/port/gfx.c plays them), from
+ * the start, and their matrices and vertices (alloc_display_list), from the end */
+#define GFX_POOL 512
+Gfx port_gfx_pool[GFX_POOL];
 /* the most the game used of its objects, pool and surfaces (tests read them: tests/play.c --stats, and in the
  * calculator's emulator, by their names) */
-s32 port_stat_objects, port_stat_surfaces, port_stat_nodes;
+s32 port_stat_objects, port_stat_surfaces, port_stat_nodes, port_stat_gfx;
 u32 port_stat_pool = 0xFFFFFFFF;
 static void port_peaks(void) {
   if (gPrevFrameObjectCount > port_stat_objects) port_stat_objects = gPrevFrameObjectCount;
   if (gSurfacesAllocated - gNumStaticSurfaces > port_stat_surfaces) port_stat_surfaces = gSurfacesAllocated - gNumStaticSurfaces;
   if (gSurfaceNodesAllocated - gNumStaticSurfaceNodes > port_stat_nodes) port_stat_nodes = gSurfaceNodesAllocated - gNumStaticSurfaceNodes;
   if (main_pool_available() < port_stat_pool) port_stat_pool = main_pool_available();
+  /* (the frame's display list memory: its commands from the start, its matrices and vertices from the end) */
+  s32 gfx = (s32) (gDisplayListHead - port_gfx_pool) + (s32) ((u8 *) (port_gfx_pool + GFX_POOL) - gGfxPoolEnd) / 8;
+  if (gfx > port_stat_gfx) port_stat_gfx = gfx;
 }
 
 #ifdef HOST
@@ -177,9 +185,9 @@ void port_debug_print(void) {
   if (getenv("PORT_OBJECTS"))
     for (int i = 0; i < OBJECT_POOL_CAPACITY; i++)
       if (gObjectPool[i].activeFlags) printf("  obj %ld\n", (long) ((const char *) gObjectPool[i].behavior - (const char *) bhvMario));
-  printf("  objects %d of %d (most %d), transforms most %d, surfaces most %d, nodes most %d, pool free %u (least %u)\n", gPrevFrameObjectCount,
-         gObjectPoolCapacity, port_stat_objects, port_transforms_most, port_stat_surfaces, port_stat_nodes,
-         (unsigned) main_pool_available(), (unsigned) port_stat_pool);
+  printf("  objects %d of %d (most %d), transforms most %d, surfaces most %d, nodes most %d, pool free %u (least %u), "
+         "display list most %d\n", gPrevFrameObjectCount, gObjectPoolCapacity, port_stat_objects, port_transforms_most,
+         port_stat_surfaces, port_stat_nodes, (unsigned) main_pool_available(), (unsigned) port_stat_pool, port_stat_gfx);
 }
 
 /* puts Mario somewhere (tests/play.c --at), facing yaw */
@@ -199,9 +207,6 @@ s32 port_start_level(void) { return port_start_level_num; }
 
 /* ------------------------------------------------------------------------------------------------ the frame */
 static struct LevelCommand *sScript;
-/* the frame's display list memory: nothing draws with display lists, but the game's code takes matrices and a
- * few commands from it (alloc_display_list), until the frame is drawn */
-static Gfx sGfxPool[512];
 
 void init_rcp(void) {}
 
@@ -211,16 +216,17 @@ void port_game_init(void) {
   port_objects_init();
   gPlayer1Controller->statusData = NULL;
   gPlayer1Controller->controllerData = &sPad;
-  gDisplayListHead = sGfxPool;
-  gGfxPoolEnd = (u8 *) (sGfxPool + 512);
+  gDisplayListHead = port_gfx_pool;
+  gGfxPoolEnd = (u8 *) (port_gfx_pool + GFX_POOL);
   save_file_load_all();
   sScript = (struct LevelCommand *) port_level_script_entry;
 }
 
 void port_game_frame(void) {
   read_controller();
-  gDisplayListHead = sGfxPool;
-  gGfxPoolEnd = (u8 *) (sGfxPool + 512);
+  port_menu_input();
+  gDisplayListHead = port_gfx_pool;
+  gGfxPoolEnd = (u8 *) (port_gfx_pool + GFX_POOL);
   sScript = level_script_execute(sScript);
   gGlobalTimer++;
   port_peaks();

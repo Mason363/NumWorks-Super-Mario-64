@@ -9,6 +9,7 @@
 #include "types.h"
 #include "port.h"
 #include "port_gfx.h"
+#include "game/segment2.h"
 #include "../render.h"
 #include "../data.h"
 
@@ -318,8 +319,17 @@ static void load_vertices(const Vtx *v, int n, int v0) {
 }
 
 /* ------------------------------------------------------------------------------------------------ the list */
+static void model_translate(float x, float y) {
+  M4 t;
+  m4_ident(t);
+  t[3][0] = x, t[3][1] = y;
+  m4_mul(sModel[sModelTop], t, sModel[sModelTop]);
+  sMvpDirty = true;
+}
+
 void port_gfx_run(const Gfx *dl) {
   const Gfx *stack[10];
+  s16 step[10];   /* (the pen's step after a letter: PORT_G_GLYPH) */
   int depth = 0;
   m4_ident(sModel[0]);
   m4_ident(sProj);
@@ -336,11 +346,22 @@ void port_gfx_run(const Gfx *dl) {
     uintptr_t w1 = g->words.w1;
     switch (w0 >> 24) {
       case OP(G_ENDDL):
-        dl = depth > 0 ? stack[--depth] : NULL;
+        dl = NULL;
+        if (depth > 0) {
+          dl = stack[--depth];
+          if (step[depth]) model_translate(step[depth] / 16.0f, 0);
+        }
         break;
       case OP(G_DL):
-        if (((w0 >> 16) & 255) == G_DL_PUSH && depth < 10) stack[depth++] = dl;
+        if (((w0 >> 16) & 255) == G_DL_PUSH && depth < 10) step[depth] = 0, stack[depth++] = dl;
         dl = (const Gfx *) w1;
+        break;
+      case OP(PORT_G_GLYPH):
+        sTex = tex_of(w1);
+        if (depth < 10) {
+          step[depth] = (s16) (w0 & 0xFFFF), stack[depth++] = dl;
+          dl = dl_ia_text_tex_settings;
+        }
         break;
       case OP(G_MTX): {
         u32 p = (w0 >> 16) & 255;
@@ -360,18 +381,13 @@ void port_gfx_run(const Gfx *dl) {
         }
         break;
       }
-      case OP(PORT_G_TRANSLATE): {
-        sMvpDirty = true;
+      case OP(PORT_G_TRANSLATE):
         if ((w0 & 255) && sModelTop < 9) {
           memcpy(sModel[sModelTop + 1], sModel[sModelTop], sizeof(M4));
           sModelTop++;
         }
-        M4 t;
-        m4_ident(t);
-        t[3][0] = (s16) (w1 >> 16) / 16.0f, t[3][1] = (s16) (w1 & 0xFFFF) / 16.0f;
-        m4_mul(sModel[sModelTop], t, sModel[sModelTop]);
+        model_translate((s16) (w1 >> 16) / 16.0f, (s16) (w1 & 0xFFFF) / 16.0f);
         break;
-      }
       case OP(G_POPMTX):
         if (sModelTop > 0) sModelTop--;
         sMvpDirty = true;

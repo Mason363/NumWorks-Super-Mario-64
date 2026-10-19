@@ -22,18 +22,102 @@
 #include "port_menu.h"
 #include "plat.h"
 
-/* a screen of the calculator's draws over the frame (port_menu_draw) */
+/* the screen of the calculator's that is drawn over the frame (port_menu_draw) */
+enum { SCREEN_NONE, SCREEN_ACT, SCREEN_TITLE, SCREEN_KEYS };
 s32 port_menu_active;
+/* (ingame_menu.c's: the pause menu is up; a scale of the menus' matrix) */
+extern s16 gMenuMode;
+void create_dl_scale_matrix(s8 pushOp, f32 x, f32 y, f32 z);
+/* the player chose to quit, from the pause menu (src/main.c stops) */
+int port_quit;
+
+/* ------------------------------------------------------------------------------------------------ text */
+/* the game's characters for plain text (charmap.txt's US values) */
+static void to_game_text(const char *s, u8 *out) {
+  for (; *s; s++) {
+    char c = *s;
+    *out++ = c >= '0' && c <= '9' ? (u8) (c - '0') : c >= 'A' && c <= 'Z' ? (u8) (0x0A + c - 'A')
+           : c >= 'a' && c <= 'z' ? (u8) (0x24 + c - 'a') : c == '\'' ? 0x3E : c == '.' ? 0x3F : c == ',' ? 0x6F
+           : c == '-' ? 0x9F : c == ':' ? 0xE6 : c == '(' ? 0xE1 : c == ')' ? 0xE3 : c == '!' ? 0xF2
+           : c == '?' ? 0xF4 : c == '/' ? 0xD0 : c == '&' ? 0xE5 : 0x9E;
+  }
+  *out = DIALOG_CHAR_TERMINATOR;
+}
+
+/* in the dialogs' font (between dl_ia_text_begin and dl_ia_text_end), y from the bottom; x < 0: centred */
+static void print_text_at(s16 x, s16 y, const char *s) {
+  u8 buf[48];
+  to_game_text(s, buf);
+  print_generic_string(x < 0 ? get_str_x_pos_from_center(160, buf, 10.0f) : x, y, buf);
+}
+
+/* in the HUD's letters, size 16 or 32 pixels, each letter in turn in one of the n colours (from the first), y from
+ * the top */
+static void print_hud_at(s16 x, s16 y, s32 size, const char *s, const u8 (*colours)[3], s32 n, s32 first) {
+  void **lut = segmented_to_virtual(main_hud_lut);
+  gSPDisplayList(gDisplayListHead++, dl_rgba16_text_begin);
+  gDPSetCombineLERP(gDisplayListHead++, TEXEL0, 0, ENVIRONMENT, 0, TEXEL0, 0, ENVIRONMENT, 0, TEXEL0, 0, ENVIRONMENT,
+                    0, TEXEL0, 0, ENVIRONMENT, 0);
+  for (s32 i = 0; s[i]; i++) {
+    char c = s[i];
+    s32 g = c >= '0' && c <= '9' ? c - '0' : c >= 'A' && c <= 'Z' ? 10 + c - 'A' : -1;
+    if (g >= 0 && lut[g] != NULL) {
+      const u8 *k = colours[(i + first) % n];
+      gDPPipeSync(gDisplayListHead++);
+      gDPSetEnvColor(gDisplayListHead++, k[0], k[1], k[2], 255);
+      gDPSetTextureImage(gDisplayListHead++, G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, lut[g]);
+      gSPDisplayList(gDisplayListHead++, dl_rgba16_load_tex_block);
+      gSPTextureRectangle(gDisplayListHead++, x << 2, y << 2, (x + size) << 2, (y + size) << 2, G_TX_RENDERTILE, 0, 0,
+                          (16 << 10) / size, (16 << 10) / size);
+    }
+    x += (s16) (c == ' ' ? size / 2 : size * 3 / 4);
+  }
+  gSPDisplayList(gDisplayListHead++, dl_rgba16_text_end);
+}
+
+static void fill_screen(u8 r, u8 g, u8 b) {
+  gDPSetCycleType(gDisplayListHead++, G_CYC_FILL);
+  gDPSetFillColor(gDisplayListHead++, GPACK_RGBA5551(r, g, b, 1) << 16 | GPACK_RGBA5551(r, g, b, 1));
+  gDPFillRectangle(gDisplayListHead++, 0, 0, SCREEN_WIDTH - 1, SCREEN_HEIGHT - 1);
+  gDPSetCycleType(gDisplayListHead++, G_CYC_1CYCLE);
+}
 
 /* ------------------------------------------------------------------------------------------------ the title */
+/* The game's title and its one save file (the N64 had four: here it is file A), then the keys the first time
+ * (and with Shift). */
 static s32 sTitleTimer;
+static s8 sStartAfterKeys;
 s32 port_title_init(s16 arg, s32 unused) {
   sTitleTimer = 0;
+  port_menu_active = SCREEN_TITLE;
   return 0;
 }
 s32 port_title_loop(s16 arg, s32 unused) {
-  sTitleTimer++;
-  if (sTitleTimer > 10 && (gPlayer1Controller->buttonPressed & (A_BUTTON | START_BUTTON))) return 1;
+  u16 pressed = gPlayer1Controller->buttonPressed;
+  if (++sTitleTimer < 10) return 0;
+  if (port_menu_active == SCREEN_KEYS) {
+    if (pressed & (A_BUTTON | START_BUTTON | B_BUTTON)) {
+      port_menu_active = SCREEN_TITLE;
+      if (sStartAfterKeys) {
+        port_menu_active = SCREEN_NONE;
+        return 1;
+      }
+    }
+    return 0;
+  }
+  if (pressed & Z_TRIG) {
+    port_menu_active = SCREEN_KEYS;
+    sStartAfterKeys = 0;
+  } else if (pressed & (A_BUTTON | START_BUTTON)) {
+    /* (a new game: the keys first) */
+    if (!save_file_exists(0)) {
+      port_menu_active = SCREEN_KEYS;
+      sStartAfterKeys = 1;
+      return 0;
+    }
+    port_menu_active = SCREEN_NONE;
+    return 1;
+  }
   return 0;
 }
 s32 port_title_start_level(s16 arg, s32 unused) {
@@ -75,7 +159,7 @@ s32 port_act_select_init(s16 arg, s32 unused) {
   sDone = 0;
   sActTimer = 0;
   sSpin = 0;
-  port_menu_active = 1;
+  port_menu_active = SCREEN_ACT;
   return 0;
 }
 
@@ -85,7 +169,7 @@ s32 port_act_select_loop(s16 arg, s32 unused) {
   if (sDone) {
     /* (a moment for the chosen star, as the game waited) */
     if (++sDone > 20) {
-      port_menu_active = 0;
+      port_menu_active = SCREEN_NONE;
       gDialogCourseActNum = sSelected + 1;
       return sSelected + 1;
     }
@@ -124,8 +208,104 @@ static void draw_star(s16 x, s16 y, f32 r, s16 yaw, u8 cr, u8 cg, u8 cb, u8 ca) 
   for (s32 i = 1; i <= 10; i++) gSP1Triangle(gDisplayListHead++, 0, i, i % 10 + 1, 0);
 }
 
+static void draw_title(void) {
+  static const u8 logo[][3] = {{230, 30, 30}, {250, 200, 20}, {40, 170, 40}, {40, 90, 230}};
+  static const u8 white[][3] = {{255, 255, 255}};
+  sSpin += 0x300;
+  fill_screen(10, 20, 90);
+  create_dl_ortho_matrix();
+  print_hud_at(95, 30, 32, "SUPER", logo, 4, 0);
+  print_hud_at(61, 68, 32, "MARIO 64", logo, 4, 1);
+  if (save_file_exists(0)) {
+    /* the file's stars */
+    gDPSetCombineMode(gDisplayListHead++, G_CC_SHADE, G_CC_SHADE);
+    gDPSetRenderMode(gDisplayListHead++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
+    draw_star(140, 100, 13, sSpin, 255, 210, 30, 255);
+    char n[8];
+    s32 stars = save_file_get_total_star_count(0, COURSE_MIN - 1, COURSE_MAX - 1), i = 7;
+    n[i] = 0;
+    do n[--i] = (char) ('0' + stars % 10), stars /= 10; while (stars);
+    print_hud_at(158, 132, 16, n + i, white, 1, 0);
+  }
+  gSPDisplayList(gDisplayListHead++, dl_ia_text_begin);
+  gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, 255);
+  if (sTitleTimer / 15 % 2 == 0) print_text_at(-1, 60, "PRESS START");
+  gDPSetEnvColor(gDisplayListHead++, 160, 170, 220, 255);
+  print_text_at(-1, 20, "Shift: the keys");
+  gSPDisplayList(gDisplayListHead++, dl_ia_text_end);
+}
+
+/* the calculator's keys for the N64 controller's buttons (src/plat.h) */
+static void draw_keys(void) {
+  static const char *const keys[][2] = {
+    {"Arrows", "Move (alpha held: walk)"}, {"OK, EXE", "A: jump, swim, read"}, {"Back", "B: punch, kick, pick up"},
+    {"Shift", "Z: crouch, ground pound"}, {"4  6", "Turn the camera"}, {"8  2", "Camera closer, further"},
+    {"0", "R: Mario's or Lakitu's camera"}, {"Backspace", "Start: pause"},
+    {"Home", "Quit (stars are saved)"},
+  };
+  static const u8 gold[][3] = {{255, 210, 40}};
+  fill_screen(10, 20, 90);
+  create_dl_ortho_matrix();
+  print_hud_at(94, 16, 16, "HOW TO PLAY", gold, 1, 0);
+  gSPDisplayList(gDisplayListHead++, dl_ia_text_begin);
+  for (u32 i = 0; i < sizeof keys / sizeof keys[0]; i++) {
+    s16 y = (s16) (186 - 16 * (s32) i);
+    gDPSetEnvColor(gDisplayListHead++, 255, 210, 40, 255);
+    print_text_at(22, y, keys[i][0]);
+    gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, 255);
+    print_text_at(112, y, keys[i][1]);
+  }
+  gDPSetEnvColor(gDisplayListHead++, 160, 170, 220, 255);
+  if (sTitleTimer / 15 % 2 == 0) print_text_at(-1, 22, sStartAfterKeys ? "OK: start" : "OK: back");
+  gSPDisplayList(gDisplayListHead++, dl_ia_text_end);
+}
+
+/* ------------------------------------------------------------------------------------------------ quitting */
+/* The game's pause menu, with the calculator's way out: Shift asks, OK quits (the stars are saved as Mario
+ * gets them, as on the N64), Back stays. */
+static s8 sAskQuit;
+void port_menu_input(void) {
+  if (gMenuMode != MENU_MODE_RENDER_PAUSE_SCREEN) {
+    sAskQuit = 0;
+    return;
+  }
+  u16 pressed = gPlayer1Controller->buttonPressed;
+  if (!sAskQuit) {
+    if (!(pressed & Z_TRIG)) return;
+    sAskQuit = 1;
+  } else if (pressed & A_BUTTON) port_quit = 1;
+  else if (pressed & B_BUTTON) sAskQuit = 0;
+  /* (the game's menu does not see the keys while the question is up) */
+  gPlayer1Controller->buttonPressed = gPlayer3Controller->buttonPressed = 0;
+}
+
+static void draw_quit(void) {
+  gSPDisplayList(gDisplayListHead++, dl_ia_text_begin);
+  if (!sAskQuit) {
+    gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, gMenuTextAlpha);
+    print_text_at(-1, 12, "Shift: quit the game");
+    gSPDisplayList(gDisplayListHead++, dl_ia_text_end);
+    return;
+  }
+  gSPDisplayList(gDisplayListHead++, dl_ia_text_end);
+  create_dl_translation_matrix(MENU_MTX_PUSH, 66, 150, 0);
+  create_dl_scale_matrix(MENU_MTX_NOPUSH, 1.45f, 0.8f, 1.0f);
+  gDPSetEnvColor(gDisplayListHead++, 0, 0, 0, 220);
+  gSPDisplayList(gDisplayListHead++, dl_draw_text_bg_box);
+  gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
+  gSPDisplayList(gDisplayListHead++, dl_ia_text_begin);
+  gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, 255);
+  print_text_at(-1, 126, "Quit the game?");
+  gDPSetEnvColor(gDisplayListHead++, 255, 210, 40, 255);
+  print_text_at(-1, 104, "OK: quit   Back: stay");
+  gSPDisplayList(gDisplayListHead++, dl_ia_text_end);
+}
+
 void port_menu_draw(void) {
-  if (!port_menu_active) return;
+  if (gMenuMode == MENU_MODE_RENDER_PAUSE_SCREEN) draw_quit();
+  if (port_menu_active == SCREEN_TITLE) draw_title();
+  if (port_menu_active == SCREEN_KEYS) draw_keys();
+  if (port_menu_active != SCREEN_ACT) return;
   u8 **courses = segmented_to_virtual(seg2_course_name_table);
   u8 **acts = segmented_to_virtual(seg2_act_name_table);
   s32 course = COURSE_NUM_TO_INDEX(gCurrCourseNum);

@@ -158,6 +158,9 @@ void create_dl_translation_matrix(s8 pushOp, f32 x, f32 y, f32 z) {
     }
 
     if (pushOp == MENU_MTX_NOPUSH) {
+        if (y == 0.0f && port_gfx_join_step(gDisplayListHead - 1, x)) {
+            return;
+        }
         gPortTranslate(gDisplayListHead++, 0, x, y);
     }
 }
@@ -294,9 +297,12 @@ void render_generic_char(u8 c)
 #if defined(VERSION_JP) || defined(VERSION_SH)
     gDPSetTextureImage(gDisplayListHead++, G_IM_FMT_IA, G_IM_SIZ_8b, 1, VIRTUAL_TO_PHYSICAL(unpackedTexture));
 #else
-    gDPSetTextureImage(gDisplayListHead++, G_IM_FMT_IA, G_IM_SIZ_16b, 1, VIRTUAL_TO_PHYSICAL(packedTexture));
+    /* (calculator) the letter in one command */
+    gPortGlyph(gDisplayListHead++, packedTexture);
 #endif
+#if defined(VERSION_JP) || defined(VERSION_SH)
     gSPDisplayList(gDisplayListHead++, dl_ia_text_tex_settings);
+#endif
 #ifdef VERSION_EU
     gSPTextureRectangleFlip(gDisplayListHead++, gDialogX << 2, (gDialogY - 16) << 2,
                             (gDialogX + 8) << 2, gDialogY << 2, G_TX_RENDERTILE, 8 << 6, 4 << 6, 1 << 10, 1 << 10);
