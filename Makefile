@@ -4,8 +4,9 @@
 #   make check      link it like the calculator does (output/sm64.bin)
 #   make host       build/play: the game on a computer, for tests and screenshots
 #   make test       the game played on a computer (tests/check.py, with the sanitizers)
+#   make media      the pictures of README.md and NumPlay's GIFs (tools/media.py)
 #   make data       src/data.bin, src/data_ids.h and src/port/gen/ from the decompilation tools/fetch.py
-#                   gathers (REF=its folder, Python + Pillow + NumPy)
+#                   downloads (REF=build/ref/decomp, Python + Pillow + NumPy)
 Q ?= @
 # the ARM toolchain on the PATH, or in TOOLCHAIN=<its bin folder>
 TOOLCHAIN ?=
@@ -36,7 +37,7 @@ LDFLAGS = -Wl,--relocatable -nostartfiles --specs=nano.specs
 LDFLAGS += -Wl,-e,main -Wl,-u,eadk_app_name -Wl,-u,eadk_app_icon -Wl,-u,eadk_api_level
 LDFLAGS += -Wl,--gc-sections -flinker-output=nolto-rel
 
-.PHONY: build check clean host test data
+.PHONY: build check clean host test media data
 build: $(BUILD_DIR)/sm64.nwa
 
 # apps get 133652 bytes of RAM on custom builds of Epsilon 25.2 (148928 or more on official ones)
@@ -92,6 +93,9 @@ build/play: $(HOST_OBJ) src/data.S src/data.bin
 
 test: build/play
 	python3 tests/check.py build/play
+
+media: build/play
+	python3 tools/media.py build/play
 
 data:
 	@test -n "$(REF)" || { echo "make data REF=<the folder tools/fetch.py filled>"; exit 1; }
