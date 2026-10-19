@@ -140,7 +140,7 @@ class Source:
         self.root = root
         self.vtx, self.lights, self.gfx, self.tex, self.geo = {}, {}, {}, {}, {}
         self.col, self.macro, self.anims, self.values, self.indices = {}, {}, {}, {}, {}
-        self.trajectories = {}
+        self.trajectories, self.paintings, self.texture_lists = {}, {}, {}
         self.read_files = set()
 
     def read(self, rel):
@@ -180,6 +180,18 @@ class Source:
             self.indices[name] = [cval(x) for x in body.split(",") if x.strip()]
         for m in re.finditer(r"struct\s+Animation\s+(\w+)\s*(?:\[\s*\])?\s*=\s*\{(.*?)\};", text, re.S):
             self.anims[m.group(1)] = split_args(m.group(2))
+        # the paintings: where they hang, how big, their images
+        for m in re.finditer(r"struct\s+Painting\s+(\w+)\s*=\s*\{(.*?)\};", text, re.S):
+            f = [x.strip() for x in split_args(m.group(2))]
+            try:
+                self.paintings[m.group(1)] = {"rot": (float(f[7].rstrip("f")), float(f[8].rstrip("f"))),
+                                              "pos": tuple(float(x.rstrip("f")) for x in f[9:12]),
+                                              "textures": f[29], "tw": cval(f[30]), "th": cval(f[31]),
+                                              "size": float(f[-1].rstrip("f"))}
+            except (ValueError, IndexError):
+                pass
+        for m in re.finditer(r"Texture\s*\*const\s+(\w+)\s*\[\]\s*=\s*\{(.*?)\};", text, re.S):
+            self.texture_lists[m.group(1)] = [x.strip() for x in m.group(2).split(",") if x.strip()]
         # texture symbols declared as u8 arrays with an include (some actors)
         for m in re.finditer(r"(?:Texture|u8)\s+(\w+)\s*\[[^\]]*\]\s*=\s*\{\s*#include\s+\"([^\"]+)\"", text):
             self.tex.setdefault(m.group(1), m.group(2).replace(".inc.c", ".png"))

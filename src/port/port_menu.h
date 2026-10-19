@@ -12,4 +12,7 @@ s32 port_start_level(void);
 /* the act select: the loop returns the act chosen (1 to 6), 0 while it goes on */
 s32 port_act_select_init(s16 arg, s32 unused);
 s32 port_act_select_loop(s16 arg, s32 unused);
+/* draws the screen that is on, if one is, in the frame's display list (src/port/scene.c's port_render) */
+extern s32 port_menu_active;
+void port_menu_draw(void);
 #endif

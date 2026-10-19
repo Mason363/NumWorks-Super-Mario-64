@@ -23,6 +23,7 @@
 #include "port.h"
 #include "port_game.h"
 #include "port_gfx.h"
+#include "port_menu.h"
 #include "../render.h"
 
 extern struct LakituState gLakituState;
@@ -476,6 +477,7 @@ void port_render(void) {
   init_rcp();
   Gfx *screens = gDisplayListHead;
   render_game();
+  port_menu_draw();
   gSPEndDisplayList(gDisplayListHead++);
   const Gfx **cmd = r_overlay_alloc(run_screens, sizeof(const Gfx *));
   if (cmd != NULL) *cmd = screens;

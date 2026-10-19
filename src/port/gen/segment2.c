@@ -12,214 +12,214 @@
 // SM64 (US/JP/EU/SH) Segment 02
 
 ALIGNED8 static const Texture texture_hud_char_0[] = {
-PORT_TEX_STUB(508)
-};
-
-ALIGNED8 static const Texture texture_hud_char_1[] = {
-PORT_TEX_STUB(509)
-};
-
-ALIGNED8 static const Texture texture_hud_char_2[] = {
-PORT_TEX_STUB(510)
-};
-
-ALIGNED8 static const Texture texture_hud_char_3[] = {
-PORT_TEX_STUB(511)
-};
-
-ALIGNED8 static const Texture texture_hud_char_4[] = {
-PORT_TEX_STUB(512)
-};
-
-ALIGNED8 static const Texture texture_hud_char_5[] = {
-PORT_TEX_STUB(513)
-};
-
-ALIGNED8 static const Texture texture_hud_char_6[] = {
 PORT_TEX_STUB(514)
 };
 
-ALIGNED8 static const Texture texture_hud_char_7[] = {
+ALIGNED8 static const Texture texture_hud_char_1[] = {
 PORT_TEX_STUB(515)
 };
 
-ALIGNED8 static const Texture texture_hud_char_8[] = {
+ALIGNED8 static const Texture texture_hud_char_2[] = {
 PORT_TEX_STUB(516)
 };
 
-ALIGNED8 static const Texture texture_hud_char_9[] = {
+ALIGNED8 static const Texture texture_hud_char_3[] = {
 PORT_TEX_STUB(517)
 };
 
-ALIGNED8 static const Texture texture_hud_char_A[] = {
+ALIGNED8 static const Texture texture_hud_char_4[] = {
 PORT_TEX_STUB(518)
 };
 
-ALIGNED8 static const Texture texture_hud_char_B[] = {
+ALIGNED8 static const Texture texture_hud_char_5[] = {
 PORT_TEX_STUB(519)
 };
 
-ALIGNED8 static const Texture texture_hud_char_C[] = {
+ALIGNED8 static const Texture texture_hud_char_6[] = {
 PORT_TEX_STUB(520)
 };
 
-ALIGNED8 static const Texture texture_hud_char_D[] = {
+ALIGNED8 static const Texture texture_hud_char_7[] = {
 PORT_TEX_STUB(521)
 };
 
-ALIGNED8 static const Texture texture_hud_char_E[] = {
+ALIGNED8 static const Texture texture_hud_char_8[] = {
 PORT_TEX_STUB(522)
 };
 
-ALIGNED8 static const Texture texture_hud_char_F[] = {
+ALIGNED8 static const Texture texture_hud_char_9[] = {
 PORT_TEX_STUB(523)
 };
 
-ALIGNED8 static const Texture texture_hud_char_G[] = {
+ALIGNED8 static const Texture texture_hud_char_A[] = {
 PORT_TEX_STUB(524)
 };
 
-ALIGNED8 static const Texture texture_hud_char_H[] = {
+ALIGNED8 static const Texture texture_hud_char_B[] = {
 PORT_TEX_STUB(525)
 };
 
-ALIGNED8 static const Texture texture_hud_char_I[] = {
+ALIGNED8 static const Texture texture_hud_char_C[] = {
 PORT_TEX_STUB(526)
+};
+
+ALIGNED8 static const Texture texture_hud_char_D[] = {
+PORT_TEX_STUB(527)
+};
+
+ALIGNED8 static const Texture texture_hud_char_E[] = {
+PORT_TEX_STUB(528)
+};
+
+ALIGNED8 static const Texture texture_hud_char_F[] = {
+PORT_TEX_STUB(529)
+};
+
+ALIGNED8 static const Texture texture_hud_char_G[] = {
+PORT_TEX_STUB(530)
+};
+
+ALIGNED8 static const Texture texture_hud_char_H[] = {
+PORT_TEX_STUB(531)
+};
+
+ALIGNED8 static const Texture texture_hud_char_I[] = {
+PORT_TEX_STUB(532)
 };
 
 #if defined(VERSION_JP) || defined(VERSION_SH)
 ALIGNED8 static const Texture texture_hud_char_J[] = {
-PORT_TEX_STUB(527)
+PORT_TEX_STUB(533)
 };
 #endif
 
 ALIGNED8 static const Texture texture_hud_char_K[] = {
-PORT_TEX_STUB(528)
+PORT_TEX_STUB(534)
 };
 
 ALIGNED8 static const Texture texture_hud_char_L[] = {
-PORT_TEX_STUB(529)
+PORT_TEX_STUB(535)
 };
 
 ALIGNED8 static const Texture texture_hud_char_M[] = {
-PORT_TEX_STUB(530)
+PORT_TEX_STUB(536)
 };
 
 ALIGNED8 static const Texture texture_hud_char_N[] = {
-PORT_TEX_STUB(531)
+PORT_TEX_STUB(537)
 };
 
 ALIGNED8 static const Texture texture_hud_char_O[] = {
-PORT_TEX_STUB(532)
+PORT_TEX_STUB(538)
 };
 
 ALIGNED8 static const Texture texture_hud_char_P[] = {
-PORT_TEX_STUB(533)
+PORT_TEX_STUB(539)
 };
 
 #if defined(VERSION_JP) || defined(VERSION_SH)
 ALIGNED8 static const Texture texture_hud_char_Q[] = {
-PORT_TEX_STUB(534)
+PORT_TEX_STUB(540)
 };
 #endif
 
 ALIGNED8 static const Texture texture_hud_char_R[] = {
-PORT_TEX_STUB(535)
+PORT_TEX_STUB(541)
 };
 
 ALIGNED8 static const Texture texture_hud_char_S[] = {
-PORT_TEX_STUB(536)
+PORT_TEX_STUB(542)
 };
 
 ALIGNED8 static const Texture texture_hud_char_T[] = {
-PORT_TEX_STUB(537)
+PORT_TEX_STUB(543)
 };
 
 ALIGNED8 static const Texture texture_hud_char_U[] = {
-PORT_TEX_STUB(538)
+PORT_TEX_STUB(544)
 };
 
 #if defined(VERSION_EU) || defined(VERSION_JP) || defined(VERSION_SH)
 ALIGNED8 static const Texture texture_hud_char_V[] = {
-PORT_TEX_STUB(539)
+PORT_TEX_STUB(545)
 };
 #endif
 
 ALIGNED8 static const Texture texture_hud_char_W[] = {
-PORT_TEX_STUB(540)
+PORT_TEX_STUB(546)
 };
 
 #if defined(VERSION_JP) || defined(VERSION_SH)
 ALIGNED8 static const Texture texture_hud_char_X[] = {
-PORT_TEX_STUB(541)
+PORT_TEX_STUB(547)
 };
 #endif
 
 ALIGNED8 static const Texture texture_hud_char_Y[] = {
-PORT_TEX_STUB(542)
+PORT_TEX_STUB(548)
 };
 
 #if defined(VERSION_EU) || defined(VERSION_JP) || defined(VERSION_SH)
 ALIGNED8 static const Texture texture_hud_char_Z[] = {
-PORT_TEX_STUB(543)
+PORT_TEX_STUB(549)
 };
 #endif
 
 ALIGNED8 static const Texture texture_hud_char_apostrophe[] = {
-PORT_TEX_STUB(544)
+PORT_TEX_STUB(550)
 };
 
 ALIGNED8 static const Texture texture_hud_char_double_quote[] = {
-PORT_TEX_STUB(545)
+PORT_TEX_STUB(551)
 };
 
 #ifdef VERSION_EU
 ALIGNED8 static const Texture texture_hud_char_umlaut[] = {
-PORT_TEX_STUB(546)// EU ¨
+PORT_TEX_STUB(552)// EU ¨
 };
 #endif
 
 #if defined(VERSION_JP) || defined(VERSION_SH)
 ALIGNED8 static const Texture texture_hud_char_exclamation[] = {
-PORT_TEX_STUB(547)// JP !
+PORT_TEX_STUB(553)// JP !
 };
 
 ALIGNED8 static const Texture texture_hud_char_double_exclamation[] = {
-PORT_TEX_STUB(548)// JP !!
+PORT_TEX_STUB(554)// JP !!
 };
 
 ALIGNED8 static const Texture texture_hud_char_question[] = {
-PORT_TEX_STUB(549)// JP ?
+PORT_TEX_STUB(555)// JP ?
 };
 
 ALIGNED8 static const Texture texture_hud_char_ampersand[] = {
-PORT_TEX_STUB(550)// JP &
+PORT_TEX_STUB(556)// JP &
 };
 
 ALIGNED8 static const Texture texture_hud_char_percent[] = {
-PORT_TEX_STUB(551)// JP %
+PORT_TEX_STUB(557)// JP %
 };
 #endif
 
 ALIGNED8 static const Texture texture_hud_char_multiply[] = {
-PORT_TEX_STUB(552)
+PORT_TEX_STUB(558)
 };
 
 ALIGNED8 static const Texture texture_hud_char_coin[] = {
-PORT_TEX_STUB(553)
+PORT_TEX_STUB(559)
 };
 
 ALIGNED8 static const Texture texture_hud_char_mario_head[] = {
-PORT_TEX_STUB(554)
+PORT_TEX_STUB(560)
 };
 
 ALIGNED8 static const Texture texture_hud_char_star[] = {
-PORT_TEX_STUB(555)
+PORT_TEX_STUB(561)
 };
 
 #if defined(VERSION_JP) || defined(VERSION_SH)
 ALIGNED8 static const Texture texture_hud_char_decimal_point[] = {
-PORT_TEX_STUB(556)
+PORT_TEX_STUB(562)
 };
 #endif
 
@@ -728,123 +728,123 @@ PORT_TEX_STUB(65535)
 #endif // VERSION_CN
 
 ALIGNED8 static const Texture texture_credits_char_3[] = {
-PORT_TEX_STUB(557)
-};
-
-ALIGNED8 static const Texture texture_credits_char_4[] = {
-PORT_TEX_STUB(558)
-};
-
-ALIGNED8 static const Texture texture_credits_char_6[] = {
-PORT_TEX_STUB(559)
-};
-
-ALIGNED8 static const Texture texture_credits_char_A[] = {
-PORT_TEX_STUB(560)
-};
-
-ALIGNED8 static const Texture texture_credits_char_B[] = {
-PORT_TEX_STUB(561)
-};
-
-ALIGNED8 static const Texture texture_credits_char_C[] = {
-PORT_TEX_STUB(562)
-};
-
-ALIGNED8 static const Texture texture_credits_char_D[] = {
 PORT_TEX_STUB(563)
 };
 
-ALIGNED8 static const Texture texture_credits_char_E[] = {
+ALIGNED8 static const Texture texture_credits_char_4[] = {
 PORT_TEX_STUB(564)
 };
 
-ALIGNED8 static const Texture texture_credits_char_F[] = {
+ALIGNED8 static const Texture texture_credits_char_6[] = {
 PORT_TEX_STUB(565)
 };
 
-ALIGNED8 static const Texture texture_credits_char_G[] = {
+ALIGNED8 static const Texture texture_credits_char_A[] = {
 PORT_TEX_STUB(566)
 };
 
-ALIGNED8 static const Texture texture_credits_char_H[] = {
+ALIGNED8 static const Texture texture_credits_char_B[] = {
 PORT_TEX_STUB(567)
 };
 
-ALIGNED8 static const Texture texture_credits_char_I[] = {
+ALIGNED8 static const Texture texture_credits_char_C[] = {
 PORT_TEX_STUB(568)
 };
 
-ALIGNED8 static const Texture texture_credits_char_J[] = {
+ALIGNED8 static const Texture texture_credits_char_D[] = {
 PORT_TEX_STUB(569)
 };
 
-ALIGNED8 static const Texture texture_credits_char_K[] = {
+ALIGNED8 static const Texture texture_credits_char_E[] = {
 PORT_TEX_STUB(570)
 };
 
-ALIGNED8 static const Texture texture_credits_char_L[] = {
+ALIGNED8 static const Texture texture_credits_char_F[] = {
 PORT_TEX_STUB(571)
 };
 
-ALIGNED8 static const Texture texture_credits_char_M[] = {
+ALIGNED8 static const Texture texture_credits_char_G[] = {
 PORT_TEX_STUB(572)
 };
 
-ALIGNED8 static const Texture texture_credits_char_N[] = {
+ALIGNED8 static const Texture texture_credits_char_H[] = {
 PORT_TEX_STUB(573)
 };
 
-ALIGNED8 static const Texture texture_credits_char_O[] = {
+ALIGNED8 static const Texture texture_credits_char_I[] = {
 PORT_TEX_STUB(574)
 };
 
-ALIGNED8 static const Texture texture_credits_char_P[] = {
+ALIGNED8 static const Texture texture_credits_char_J[] = {
 PORT_TEX_STUB(575)
 };
 
-ALIGNED8 static const Texture texture_credits_char_Q[] = {
+ALIGNED8 static const Texture texture_credits_char_K[] = {
 PORT_TEX_STUB(576)
 };
 
-ALIGNED8 static const Texture texture_credits_char_R[] = {
+ALIGNED8 static const Texture texture_credits_char_L[] = {
 PORT_TEX_STUB(577)
 };
 
-ALIGNED8 static const Texture texture_credits_char_S[] = {
+ALIGNED8 static const Texture texture_credits_char_M[] = {
 PORT_TEX_STUB(578)
 };
 
-ALIGNED8 static const Texture texture_credits_char_T[] = {
+ALIGNED8 static const Texture texture_credits_char_N[] = {
 PORT_TEX_STUB(579)
 };
 
-ALIGNED8 static const Texture texture_credits_char_U[] = {
+ALIGNED8 static const Texture texture_credits_char_O[] = {
 PORT_TEX_STUB(580)
 };
 
-ALIGNED8 static const Texture texture_credits_char_V[] = {
+ALIGNED8 static const Texture texture_credits_char_P[] = {
 PORT_TEX_STUB(581)
 };
 
-ALIGNED8 static const Texture texture_credits_char_W[] = {
+ALIGNED8 static const Texture texture_credits_char_Q[] = {
 PORT_TEX_STUB(582)
 };
 
-ALIGNED8 static const Texture texture_credits_char_X[] = {
+ALIGNED8 static const Texture texture_credits_char_R[] = {
 PORT_TEX_STUB(583)
 };
 
-ALIGNED8 static const Texture texture_credits_char_Y[] = {
+ALIGNED8 static const Texture texture_credits_char_S[] = {
 PORT_TEX_STUB(584)
 };
 
-ALIGNED8 static const Texture texture_credits_char_Z[] = {
+ALIGNED8 static const Texture texture_credits_char_T[] = {
 PORT_TEX_STUB(585)
 };
 
-ALIGNED8 static const Texture texture_credits_char_period[] = {
+ALIGNED8 static const Texture texture_credits_char_U[] = {
 PORT_TEX_STUB(586)
+};
+
+ALIGNED8 static const Texture texture_credits_char_V[] = {
+PORT_TEX_STUB(587)
+};
+
+ALIGNED8 static const Texture texture_credits_char_W[] = {
+PORT_TEX_STUB(588)
+};
+
+ALIGNED8 static const Texture texture_credits_char_X[] = {
+PORT_TEX_STUB(589)
+};
+
+ALIGNED8 static const Texture texture_credits_char_Y[] = {
+PORT_TEX_STUB(590)
+};
+
+ALIGNED8 static const Texture texture_credits_char_Z[] = {
+PORT_TEX_STUB(591)
+};
+
+ALIGNED8 static const Texture texture_credits_char_period[] = {
+PORT_TEX_STUB(592)
 };
 
 // JP Small Font
@@ -1915,371 +1915,371 @@ PORT_TEX_STUB(65535)
 // US Small Font
 #else
 ALIGNED8 static const Texture texture_font_char_us_0[] = {
-PORT_TEX_STUB(587)
-};
-
-ALIGNED8 static const Texture texture_font_char_us_1[] = {
-PORT_TEX_STUB(588)
-};
-
-ALIGNED8 static const Texture texture_font_char_us_2[] = {
-PORT_TEX_STUB(589)
-};
-
-ALIGNED8 static const Texture texture_font_char_us_3[] = {
-PORT_TEX_STUB(590)
-};
-
-ALIGNED8 static const Texture texture_font_char_us_4[] = {
-PORT_TEX_STUB(591)
-};
-
-ALIGNED8 static const Texture texture_font_char_us_5[] = {
-PORT_TEX_STUB(592)
-};
-
-ALIGNED8 static const Texture texture_font_char_us_6[] = {
 PORT_TEX_STUB(593)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_7[] = {
+ALIGNED8 static const Texture texture_font_char_us_1[] = {
 PORT_TEX_STUB(594)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_8[] = {
+ALIGNED8 static const Texture texture_font_char_us_2[] = {
 PORT_TEX_STUB(595)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_9[] = {
+ALIGNED8 static const Texture texture_font_char_us_3[] = {
 PORT_TEX_STUB(596)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_A[] = {
+ALIGNED8 static const Texture texture_font_char_us_4[] = {
 PORT_TEX_STUB(597)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_B[] = {
+ALIGNED8 static const Texture texture_font_char_us_5[] = {
 PORT_TEX_STUB(598)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_C[] = {
+ALIGNED8 static const Texture texture_font_char_us_6[] = {
 PORT_TEX_STUB(599)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_D[] = {
+ALIGNED8 static const Texture texture_font_char_us_7[] = {
 PORT_TEX_STUB(600)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_E[] = {
+ALIGNED8 static const Texture texture_font_char_us_8[] = {
 PORT_TEX_STUB(601)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_F[] = {
+ALIGNED8 static const Texture texture_font_char_us_9[] = {
 PORT_TEX_STUB(602)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_G[] = {
+ALIGNED8 static const Texture texture_font_char_us_A[] = {
 PORT_TEX_STUB(603)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_H[] = {
+ALIGNED8 static const Texture texture_font_char_us_B[] = {
 PORT_TEX_STUB(604)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_I[] = {
+ALIGNED8 static const Texture texture_font_char_us_C[] = {
 PORT_TEX_STUB(605)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_J[] = {
+ALIGNED8 static const Texture texture_font_char_us_D[] = {
 PORT_TEX_STUB(606)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_K[] = {
+ALIGNED8 static const Texture texture_font_char_us_E[] = {
 PORT_TEX_STUB(607)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_L[] = {
+ALIGNED8 static const Texture texture_font_char_us_F[] = {
 PORT_TEX_STUB(608)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_M[] = {
+ALIGNED8 static const Texture texture_font_char_us_G[] = {
 PORT_TEX_STUB(609)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_N[] = {
+ALIGNED8 static const Texture texture_font_char_us_H[] = {
 PORT_TEX_STUB(610)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_O[] = {
+ALIGNED8 static const Texture texture_font_char_us_I[] = {
 PORT_TEX_STUB(611)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_P[] = {
+ALIGNED8 static const Texture texture_font_char_us_J[] = {
 PORT_TEX_STUB(612)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_Q[] = {
+ALIGNED8 static const Texture texture_font_char_us_K[] = {
 PORT_TEX_STUB(613)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_R[] = {
+ALIGNED8 static const Texture texture_font_char_us_L[] = {
 PORT_TEX_STUB(614)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_S[] = {
+ALIGNED8 static const Texture texture_font_char_us_M[] = {
 PORT_TEX_STUB(615)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_T[] = {
+ALIGNED8 static const Texture texture_font_char_us_N[] = {
 PORT_TEX_STUB(616)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_U[] = {
+ALIGNED8 static const Texture texture_font_char_us_O[] = {
 PORT_TEX_STUB(617)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_V[] = {
+ALIGNED8 static const Texture texture_font_char_us_P[] = {
 PORT_TEX_STUB(618)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_W[] = {
+ALIGNED8 static const Texture texture_font_char_us_Q[] = {
 PORT_TEX_STUB(619)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_X[] = {
+ALIGNED8 static const Texture texture_font_char_us_R[] = {
 PORT_TEX_STUB(620)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_Y[] = {
+ALIGNED8 static const Texture texture_font_char_us_S[] = {
 PORT_TEX_STUB(621)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_Z[] = {
+ALIGNED8 static const Texture texture_font_char_us_T[] = {
 PORT_TEX_STUB(622)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_a[] = {
+ALIGNED8 static const Texture texture_font_char_us_U[] = {
 PORT_TEX_STUB(623)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_b[] = {
+ALIGNED8 static const Texture texture_font_char_us_V[] = {
 PORT_TEX_STUB(624)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_c[] = {
+ALIGNED8 static const Texture texture_font_char_us_W[] = {
 PORT_TEX_STUB(625)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_d[] = {
+ALIGNED8 static const Texture texture_font_char_us_X[] = {
 PORT_TEX_STUB(626)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_e[] = {
+ALIGNED8 static const Texture texture_font_char_us_Y[] = {
 PORT_TEX_STUB(627)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_f[] = {
+ALIGNED8 static const Texture texture_font_char_us_Z[] = {
 PORT_TEX_STUB(628)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_g[] = {
+ALIGNED8 static const Texture texture_font_char_us_a[] = {
 PORT_TEX_STUB(629)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_h[] = {
+ALIGNED8 static const Texture texture_font_char_us_b[] = {
 PORT_TEX_STUB(630)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_i[] = {
+ALIGNED8 static const Texture texture_font_char_us_c[] = {
 PORT_TEX_STUB(631)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_j[] = {
+ALIGNED8 static const Texture texture_font_char_us_d[] = {
 PORT_TEX_STUB(632)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_k[] = {
+ALIGNED8 static const Texture texture_font_char_us_e[] = {
 PORT_TEX_STUB(633)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_l[] = {
+ALIGNED8 static const Texture texture_font_char_us_f[] = {
 PORT_TEX_STUB(634)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_m[] = {
+ALIGNED8 static const Texture texture_font_char_us_g[] = {
 PORT_TEX_STUB(635)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_n[] = {
+ALIGNED8 static const Texture texture_font_char_us_h[] = {
 PORT_TEX_STUB(636)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_o[] = {
+ALIGNED8 static const Texture texture_font_char_us_i[] = {
 PORT_TEX_STUB(637)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_p[] = {
+ALIGNED8 static const Texture texture_font_char_us_j[] = {
 PORT_TEX_STUB(638)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_q[] = {
+ALIGNED8 static const Texture texture_font_char_us_k[] = {
 PORT_TEX_STUB(639)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_r[] = {
+ALIGNED8 static const Texture texture_font_char_us_l[] = {
 PORT_TEX_STUB(640)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_s[] = {
+ALIGNED8 static const Texture texture_font_char_us_m[] = {
 PORT_TEX_STUB(641)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_t[] = {
+ALIGNED8 static const Texture texture_font_char_us_n[] = {
 PORT_TEX_STUB(642)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_u[] = {
+ALIGNED8 static const Texture texture_font_char_us_o[] = {
 PORT_TEX_STUB(643)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_v[] = {
+ALIGNED8 static const Texture texture_font_char_us_p[] = {
 PORT_TEX_STUB(644)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_w[] = {
+ALIGNED8 static const Texture texture_font_char_us_q[] = {
 PORT_TEX_STUB(645)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_x[] = {
+ALIGNED8 static const Texture texture_font_char_us_r[] = {
 PORT_TEX_STUB(646)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_y[] = {
+ALIGNED8 static const Texture texture_font_char_us_s[] = {
 PORT_TEX_STUB(647)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_z[] = {
+ALIGNED8 static const Texture texture_font_char_us_t[] = {
 PORT_TEX_STUB(648)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_left_right_arrow[] = {
+ALIGNED8 static const Texture texture_font_char_us_u[] = {
 PORT_TEX_STUB(649)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_exclamation[] = {
+ALIGNED8 static const Texture texture_font_char_us_v[] = {
 PORT_TEX_STUB(650)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_coin[] = {
+ALIGNED8 static const Texture texture_font_char_us_w[] = {
 PORT_TEX_STUB(651)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_multiply[] = {
+ALIGNED8 static const Texture texture_font_char_us_x[] = {
 PORT_TEX_STUB(652)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_open_parentheses[] = {
+ALIGNED8 static const Texture texture_font_char_us_y[] = {
 PORT_TEX_STUB(653)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_close_open_parentheses[] = {
+ALIGNED8 static const Texture texture_font_char_us_z[] = {
 PORT_TEX_STUB(654)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_close_parentheses[] = {
+ALIGNED8 static const Texture texture_font_char_us_left_right_arrow[] = {
 PORT_TEX_STUB(655)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_tilde[] = {
+ALIGNED8 static const Texture texture_font_char_us_exclamation[] = {
 PORT_TEX_STUB(656)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_period[] = {
+ALIGNED8 static const Texture texture_font_char_us_coin[] = {
 PORT_TEX_STUB(657)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_percent[] = {
+ALIGNED8 static const Texture texture_font_char_us_multiply[] = {
 PORT_TEX_STUB(658)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_interpunct[] = {
+ALIGNED8 static const Texture texture_font_char_us_open_parentheses[] = {
 PORT_TEX_STUB(659)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_comma[] = {
+ALIGNED8 static const Texture texture_font_char_us_close_open_parentheses[] = {
 PORT_TEX_STUB(660)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_apostrophe[] = {
+ALIGNED8 static const Texture texture_font_char_us_close_parentheses[] = {
 PORT_TEX_STUB(661)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_question[] = {
+ALIGNED8 static const Texture texture_font_char_us_tilde[] = {
 PORT_TEX_STUB(662)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_star_filled[] = {
+ALIGNED8 static const Texture texture_font_char_us_period[] = {
 PORT_TEX_STUB(663)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_star_hollow[] = {
+ALIGNED8 static const Texture texture_font_char_us_percent[] = {
 PORT_TEX_STUB(664)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_double_quote_open[] = {
+ALIGNED8 static const Texture texture_font_char_us_interpunct[] = {
 PORT_TEX_STUB(665)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_double_quote_close[] = {
+ALIGNED8 static const Texture texture_font_char_us_comma[] = {
 PORT_TEX_STUB(666)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_ellipsis[] = {
+ALIGNED8 static const Texture texture_font_char_us_apostrophe[] = {
 PORT_TEX_STUB(667)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_slash[] = {
+ALIGNED8 static const Texture texture_font_char_us_question[] = {
 PORT_TEX_STUB(668)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_ampersand[] = {
+ALIGNED8 static const Texture texture_font_char_us_star_filled[] = {
 PORT_TEX_STUB(669)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_button_A[] = {
+ALIGNED8 static const Texture texture_font_char_us_star_hollow[] = {
 PORT_TEX_STUB(670)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_button_B[] = {
+ALIGNED8 static const Texture texture_font_char_us_double_quote_open[] = {
 PORT_TEX_STUB(671)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_button_C[] = {
+ALIGNED8 static const Texture texture_font_char_us_double_quote_close[] = {
 PORT_TEX_STUB(672)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_button_Z[] = {
+ALIGNED8 static const Texture texture_font_char_us_ellipsis[] = {
 PORT_TEX_STUB(673)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_button_R[] = {
+ALIGNED8 static const Texture texture_font_char_us_slash[] = {
 PORT_TEX_STUB(674)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_button_C_up[] = {
+ALIGNED8 static const Texture texture_font_char_us_ampersand[] = {
 PORT_TEX_STUB(675)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_button_C_down[] = {
+ALIGNED8 static const Texture texture_font_char_us_button_A[] = {
 PORT_TEX_STUB(676)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_button_C_left[] = {
+ALIGNED8 static const Texture texture_font_char_us_button_B[] = {
 PORT_TEX_STUB(677)
 };
 
-ALIGNED8 static const Texture texture_font_char_us_button_C_right[] = {
+ALIGNED8 static const Texture texture_font_char_us_button_C[] = {
 PORT_TEX_STUB(678)
+};
+
+ALIGNED8 static const Texture texture_font_char_us_button_Z[] = {
+PORT_TEX_STUB(679)
+};
+
+ALIGNED8 static const Texture texture_font_char_us_button_R[] = {
+PORT_TEX_STUB(680)
+};
+
+ALIGNED8 static const Texture texture_font_char_us_button_C_up[] = {
+PORT_TEX_STUB(681)
+};
+
+ALIGNED8 static const Texture texture_font_char_us_button_C_down[] = {
+PORT_TEX_STUB(682)
+};
+
+ALIGNED8 static const Texture texture_font_char_us_button_C_left[] = {
+PORT_TEX_STUB(683)
+};
+
+ALIGNED8 static const Texture texture_font_char_us_button_C_right[] = {
+PORT_TEX_STUB(684)
 };
 #endif
 
@@ -10894,23 +10894,23 @@ PORT_TEX_STUB(65535)
 #endif // VERSION_CN
 
 ALIGNED8 static const Texture texture_hud_char_camera[] = {
-PORT_TEX_STUB(679)
+PORT_TEX_STUB(685)
 };
 
 ALIGNED8 static const Texture texture_hud_char_lakitu[] = {
-PORT_TEX_STUB(680)
+PORT_TEX_STUB(686)
 };
 
 ALIGNED8 static const Texture texture_hud_char_no_camera[] = {
-PORT_TEX_STUB(681)
+PORT_TEX_STUB(687)
 };
 
 ALIGNED8 static const Texture texture_hud_char_arrow_up[] = {
-PORT_TEX_STUB(682)
+PORT_TEX_STUB(688)
 };
 
 ALIGNED8 static const Texture texture_hud_char_arrow_down[] = {
-PORT_TEX_STUB(683)
+PORT_TEX_STUB(689)
 };
 
 // Main HUD print table 0x02008250-0x02008337
@@ -12139,47 +12139,47 @@ const Gfx dl_billboard_num_9[] = {
 };
 
 ALIGNED8 static const Texture texture_shadow_quarter_circle[] = {
-PORT_TEX_STUB(684)
-};
-
-ALIGNED8 static const Texture texture_shadow_quarter_square[] = {
-PORT_TEX_STUB(685)
-};
-
-const Texture texture_transition_star_half[] = {
-PORT_TEX_STUB(686)
-};
-
-const Texture texture_transition_circle_half[] = {
-PORT_TEX_STUB(687)
-};
-
-const Texture texture_transition_mario[] = {
-PORT_TEX_STUB(688)
-};
-
-const Texture texture_transition_bowser_half[] = {
-PORT_TEX_STUB(689)
-};
-
-const Texture texture_waterbox_water[] = {
 PORT_TEX_STUB(690)
 };
 
-const Texture texture_waterbox_jrb_water[] = {
+ALIGNED8 static const Texture texture_shadow_quarter_square[] = {
 PORT_TEX_STUB(691)
 };
 
-const Texture texture_waterbox_unknown_water[] = {
+const Texture texture_transition_star_half[] = {
 PORT_TEX_STUB(692)
 };
 
-const Texture texture_waterbox_mist[] = {
+const Texture texture_transition_circle_half[] = {
 PORT_TEX_STUB(693)
 };
 
-const Texture texture_waterbox_lava[] = {
+const Texture texture_transition_mario[] = {
 PORT_TEX_STUB(694)
+};
+
+const Texture texture_transition_bowser_half[] = {
+PORT_TEX_STUB(695)
+};
+
+const Texture texture_waterbox_water[] = {
+PORT_TEX_STUB(696)
+};
+
+const Texture texture_waterbox_jrb_water[] = {
+PORT_TEX_STUB(697)
+};
+
+const Texture texture_waterbox_unknown_water[] = {
+PORT_TEX_STUB(698)
+};
+
+const Texture texture_waterbox_mist[] = {
+PORT_TEX_STUB(699)
+};
+
+const Texture texture_waterbox_lava[] = {
+PORT_TEX_STUB(700)
 };
 
 // Unreferenced light group
@@ -12377,7 +12377,7 @@ const Gfx dl_waterbox_end[] = {
 
 // 0x02014838 - 0x02014878
 ALIGNED8 static const Texture texture_ia8_up_arrow[] = {
-PORT_TEX_STUB(695)
+PORT_TEX_STUB(701)
 };
 
 // 0x02014878 - 0x020148B0

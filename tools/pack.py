@@ -4,7 +4,9 @@
 Levels, models, animations, collision and objects come from the decompilation's sources; the textures are
 painted by tools/textures.py. See src/data.h for the format."""
 import glob
+import math
 import os
+import re
 import struct
 import sys
 
@@ -106,6 +108,31 @@ def texel_error(img, fmt, pal, idx):
     return np.abs(a - img[..., :3])[m].mean() if m.any() else 0.0
 
 
+def usage_of(tris, m):
+    """Where a texture is used, for tools/textures.py's painter of those nobody drew by hand: the share of its
+    triangles that are floors and ceilings (the rest are walls), their mean colour, cut out or not."""
+    n = floors = ceils = 0
+    col = [0, 0, 0]
+    for t in tris:
+        (x1, y1, z1), (x2, y2, z2), (x3, y3, z3) = (v[:3] for v in t.v)
+        ax, ay, az, bx, by, bz = x2 - x1, y2 - y1, z2 - z1, x3 - x1, y3 - y1, z3 - z1
+        nx, ny, nz = ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx
+        ln = math.sqrt(nx * nx + ny * ny + nz * nz) or 1
+        floors += ny / ln > 0.6
+        ceils += ny / ln < -0.6
+        c = t.v[0][5]
+        if c[0] == "c":
+            for k in range(3):
+                col[k] += c[1][k]
+        else:
+            for k in range(3):
+                col[k] += 200
+        n += 1
+    n = n or 1
+    return {"floor": floors / n, "ceil": ceils / n, "colour": tuple(c / n for c in col), "cutout": m.cutout,
+            "xlu": m.xlu}
+
+
 def vertex_colour(v, lit, own_alpha):
     """A vertex's two bytes of colour: RGB 565; RGBA 4444 when the batch's vertices have alphas of their own;
     lit, its normal folded onto an octahedron (8 bits a coordinate)."""
@@ -121,6 +148,21 @@ def vertex_colour(v, lit, own_alpha):
     if own_alpha:
         return (r >> 4) << 12 | (g >> 4) << 8 | (b >> 4) << 4 | a >> 4
     return (r >> 3) << 11 | (g >> 2) << 5 | b >> 3
+
+
+# the castle's paintings, by paintings.c's groups (sPaintingGroups)
+PAINTING_GROUPS = [["cotmc_painting"],
+                   ["bob_painting", "ccm_painting", "wf_painting", "jrb_painting", "lll_painting", "ssl_painting",
+                    "hmc_painting", "ddd_painting", "wdw_painting", "thi_tiny_painting", "ttm_painting",
+                    "ttc_painting", "sl_painting", "thi_huge_painting"],
+                   ["ttm_slide_painting"]]
+
+
+def painting_id(s):
+    """A GEO_ASM's painting: (group, number), from PAINTING_ID(number, group) or the plain number."""
+    m = re.match(r"\s*PAINTING_ID\(\s*(\d+)\s*,\s*(\d+)\s*\)", s)
+    v = int(m.group(2)) << 8 | int(m.group(1)) if m else decomp.cval(s)
+    return (v >> 8, v & 255)
 
 
 class Pack:
@@ -139,13 +181,13 @@ class Pack:
             self.src.read(os.path.relpath(f, self.ref))
 
     # ------------------------------------------------------------------------------------------ textures
-    def texture(self, sym, w, h, cutout, ia):
+    def texture(self, sym, w, h, cutout, ia, usage=None):
         path = self.src.tex.get(sym, sym)
         fmt = 2 if ia or ".ia" in path or ".i4" in path or ".i8" in path else (1 if cutout or "rgba16" in path and cutout else 0)
         key = (path, w, h, fmt)
         if key in self.tex_index:
             return self.tex_index[key]
-        img = textures.paint(path, w, h).copy()
+        img = textures.paint(path, w, h, usage).copy()
         if fmt == 2 and ".ia" not in path:
             img[..., 0] = img[..., :3].max(axis=2)
         # 16 colours a texture (4 bits a texel), 256 when 16 lose too much
@@ -220,7 +262,7 @@ class Pack:
             if m.tex:
                 mode |= 1
                 ia = m.fmt in (3, 4)
-                tex = self.texture(m.tex, m.w, m.h, m.cutout or m.combine == "blend", ia)
+                tex = self.texture(m.tex, m.w, m.h, m.cutout or m.combine == "blend", ia, usage_of(ts, m))
                 if m.combine == "mod":
                     mode |= 2
             if m.cutout:
@@ -333,6 +375,10 @@ class Pack:
         def walk(n):
             for c in n.children:
                 a = c.args
+                if c.kind == "GEO_ASM" and a[1].strip() == "geo_painting_draw" and in_room[0] is not None \
+                        and geo not in port.UNREACHED_AREAS:
+                    in_room[0].append(("painting", painting_id(a[0])))
+                    continue
                 if c.kind == "GEO_SWITCH_CASE" and a[1].strip() == "geo_switch_area":
                     for case in c.children:
                         rooms.append([])
@@ -368,10 +414,52 @@ class Pack:
             for dl, layer in r:
                 if (dl, layer) not in own:
                     t = []
-                    decomp.run_dl(self.src, dl, layer, t)
+                    if dl == "painting":
+                        t = self.painting(*layer)
+                        dl, layer = f"painting_{layer[0]}_{layer[1]}", 1
+                        own[("painting", (int(dl.split("_")[1]), int(dl.split("_")[2])))] = None
+                    else:
+                        decomp.run_dl(self.src, dl, layer, t)
                     own[(dl, layer)] = self.mesh(f"room_{dl}_{layer}", t, bake=True)
+                    if dl.startswith("painting_"):
+                        own[("painting", (int(dl.split("_")[1]), int(dl.split("_")[2])))] = own[(dl, layer)]
         info["rooms"] = [[own[k] for k in r if own[k] is not None] for r in rooms]
         return info
+
+    def painting(self, group, num):
+        """A painting of the castle (paintings.c's group, number): a flat picture where the game puts it (its
+        images, bottom then top, side by side up its height; paintings.c's ripples are not drawn)."""
+        names = PAINTING_GROUPS[group]
+        if num >= len(names) or names[num] not in self.src.paintings:
+            return []
+        p = self.src.paintings[names[num]]
+        texs = self.src.texture_lists.get(p["textures"], [])
+        if not texs:
+            return []
+        size, n = p["size"], len(texs)
+        yaw, pitch = math.radians(p["rot"][1]), math.radians(p["rot"][0])
+        tw, th = p["tw"], p["th"]
+
+        def place(x, y):
+            # (scale, then the yaw about y, the pitch about x, then the position: paintings.c's matrices)
+            x, y = x * size / 614.0, y * size / 614.0
+            z = 0.0
+            x, z = x * math.cos(yaw) + z * math.sin(yaw), -x * math.sin(yaw) + z * math.cos(yaw)
+            y, z = y * math.cos(pitch) - z * math.sin(pitch), y * math.sin(pitch) + z * math.cos(pitch)
+            return x + p["pos"][0], y + p["pos"][1], z + p["pos"][2]
+        out = []
+        col = ("c", (255, 255, 255), 255, None)
+        for i, tex in enumerate(texs):
+            m = decomp.Material()
+            m.tex, m.fmt, m.siz, m.w, m.h, m.cms, m.cmt = tex, 0, 2, tw, th, 2, 2
+            m.combine, m.layer, m.cutout, m.xlu, m.fog, m.env, m.lit = "mod", 1, False, False, False, None, False
+            m.texgen, m.decal, m.scale = False, False, (1.0, 1.0)
+            y0, y1 = 614.0 * i / n, 614.0 * (i + 1) / n
+            corners = [(0, y0, 0, th * 32), (614, y0, tw * 32, th * 32), (614, y1, tw * 32, 0), (0, y1, 0, 0)]
+            v = [place(x, y) + (s, t, col) for x, y, s, t in corners]
+            out.append(decomp.Tri(m, [v[0], v[1], v[2]]))
+            out.append(decomp.Tri(m, [v[0], v[2], v[3]]))
+        return out
 
     def find_fog(self, dl, info):
         for cmd, a in self.src.gfx.get(dl, []):

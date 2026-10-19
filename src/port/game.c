@@ -164,6 +164,7 @@ static void port_peaks(void) {
 #include <stdio.h>
 #include <stdlib.h>
 #include "game/mario.h"
+#include "engine/math_util.h"
 #include "behavior_data.h"
 extern struct LakituState gLakituState;
 /* the state of the game, for tests (tests/play.c --stats) */
@@ -179,6 +180,16 @@ void port_debug_print(void) {
   printf("  objects %d of %d (most %d), transforms most %d, surfaces most %d, nodes most %d, pool free %u (least %u)\n", gPrevFrameObjectCount,
          gObjectPoolCapacity, port_stat_objects, port_transforms_most, port_stat_surfaces, port_stat_nodes,
          (unsigned) main_pool_available(), (unsigned) port_stat_pool);
+}
+
+/* puts Mario somewhere (tests/play.c --at), facing yaw */
+void port_debug_place(f32 x, f32 y, f32 z, s16 yaw) {
+  struct MarioState *m = gMarioState;
+  if (m->marioObj == NULL) return;
+  vec3f_set(m->pos, x, y, z);
+  m->faceAngle[1] = yaw;
+  m->vel[1] = 0;
+  set_mario_action(m, ACT_FREEFALL, 0);
 }
 #endif
 

@@ -168,6 +168,95 @@ def unknown(w, h, name):
     return plain(w, h, 0x909090, seed, 0.2)
 
 
+# ------------------------------------------------------------------------------------------------ by their use
+# a level's look: its ground, its walls, what is over the head (the levels' textures nobody painted by hand are
+# painted from where they are used: tools/pack.py's usage_of)
+THEMES = {
+    "grass": (0x48B030, 0xB8A890, 0x6A5A48),        # Whomp's Fortress: grass, pale stone, dark stone
+    "outside": (0x40A830, 0xC8B898, 0x707070),
+    "snow": (0xF0F4FF, 0x90A8C8, 0x5A6A80),
+    "water": (0xD8C8A0, 0x6888A8, 0x384858),
+    "spooky": (0x6A4A3A, 0x5A5068, 0x2A2030),
+    "inside": (0xD8C8A8, 0xE8D8B0, 0x8A7050),
+    "generic": (0x60B040, 0xB89068, 0x6A5040),
+}
+LEVEL_THEMES = {"wf": "grass", "ccm": "snow", "jrb": "water", "bbh": "spooky", "castle_inside": "inside",
+                "castle_grounds": "outside", "castle_courtyard": "outside", "bob": "generic"}
+
+
+def theme_of(path):
+    parts = path.split("/")
+    if parts[0] == "textures" and parts[1] in THEMES:
+        return parts[1]
+    if parts[0] == "levels" and parts[1] in LEVEL_THEMES:
+        return LEVEL_THEMES[parts[1]]
+    return "generic"
+
+
+def tiles(w, h, seed, base, dark, size=8, diamond=False):
+    ys, xs = np.mgrid[0:h, 0:w]
+    if diamond:
+        u, v = (xs + ys) // size, (xs - ys) // size
+    else:
+        u, v = xs // size, ys // size
+    chk = ((u + v) % 2).astype(bool)
+    n = noise(h, w, 4, seed)
+    img = mix(rgb(base), rgb(dark), np.where(chk, 0.15, 0.55) + n * 0.15)
+    edge = ((xs % size) == 0) | ((ys % size) == 0) if not diamond else np.zeros((h, w), bool)
+    img[edge] = rgb(dark) * 0.8
+    return finish(img)
+
+
+def bars(w, h, seed, base, dark):
+    """A grate or railing: bars, clear between them."""
+    ys, xs = np.mgrid[0:h, 0:w]
+    img = planks(w, h, seed, base, dark, vertical=True)[..., :3].astype(np.float32)
+    alpha = np.zeros((h, w), np.uint8)
+    alpha[((xs % 8) < 3) | ((ys % 16) < 3)] = 255
+    return finish(img, alpha)
+
+
+def auto(path, w, h, u):
+    """A texture painted from where the level uses it: its floors, walls or ceilings, in the level's colours, a
+    pattern picked by its name (so that two textures of a level differ)."""
+    if path.startswith("actors/"):
+        # (an actor nobody drew: its vertex colours show, a little shaded; a round shape where it is cut out)
+        img = plain(w, h, 0xF0F0F0, sum(map(ord, path)), 0.08)
+        if u["cutout"]:
+            ys, xs = np.mgrid[0:h, 0:w]
+            d = np.hypot((xs + 0.5 - w / 2) / (w / 2), (ys + 0.5 - h / 2) / (h / 2))
+            img[..., 3] = np.where(d < 0.95, 255, 0).astype(np.uint8)
+        return img
+    ground, wall, top = THEMES[theme_of(path)]
+    theme = theme_of(path)
+    seed = sum(map(ord, path))
+    pick = seed % 3
+    if u["cutout"]:
+        return bars(w, h, seed, wall, top)
+    if u["floor"] > 0.5:
+        if theme in ("grass", "outside", "generic"):
+            return grass(w, h, seed, ground, 0x2A7A1C, 0x7CD050) if pick else dirt(w, h, seed, 0xB89060, 0x7A5A30, 0xD8B080)
+        if theme == "snow":
+            return plain(w, h, ground, seed, 0.05) if pick else tiles(w, h, seed, 0xE0E8F8, 0xA8B8D0, 8)
+        if theme == "water":
+            return plain(w, h, ground, seed, 0.12) if pick else rock(w, h, seed, 0x8098B0, 0x506070, 0xA8C0D0, False)
+        if theme == "spooky":
+            return planks(w, h, seed, ground, 0x3A2418)
+        if theme == "inside":
+            return tiles(w, h, seed, 0xE8E0D0, 0xA89880, 16, diamond=pick == 0)
+    if u["ceil"] > 0.5:
+        return plain(w, h, top, seed, 0.15)
+    if theme in ("grass", "outside", "generic"):
+        return bricks(w, h, seed, wall, 0x807060) if pick == 0 else rock(w, h, seed, wall, 0x6A5A48, 0xD8C8B0)
+    if theme == "snow":
+        return rock(w, h, seed, wall, 0x506888, 0xC8D8F0, pick == 1)
+    if theme == "water":
+        return rock(w, h, seed, wall, 0x405870, 0x90A8C0, pick == 1)
+    if theme == "spooky":
+        return bricks(w, h, seed, wall, 0x302838) if pick else planks(w, h, seed, 0x5A4030, 0x2A1810, vertical=True)
+    return bricks(w, h, seed, wall, 0xA08868, rows=4 if pick else 2)
+
+
 # ------------------------------------------------------------------------------------------------ the table
 # path (in the decompilation) -> painter
 BOB = "textures/generic/bob_textures."
@@ -193,9 +282,9 @@ TABLE = {
 }
 
 
-def paint(path, w, h):
+def paint(path, w, h, usage=None):
     f = TABLE.get(path) or (art.ACTORS.get(path[len("actors/"):]) if path.startswith("actors/") else None)
-    img = f(w, h) if f else unknown(w, h, path)
+    img = f(w, h) if f else auto(path, w, h, usage) if usage else unknown(w, h, path)
     if img.shape[0] != h or img.shape[1] != w:
         img = np.resize(img, (h, w, 4))
     return img

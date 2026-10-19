@@ -1,12 +1,12 @@
 /* Plays Super Mario 64 on a computer, with scripted keys, and saves frames.
  *
  *   play [--frames N] [--keys "10-40:right,50:a,..."] [--shots 30,60|every:N] [--out DIR] [--saves DIR]
- *        [--level N] [--half] [--stats]
+ *        [--level N] [--half] [--stats] [--at frame:x,y,z,yaw]
  *
  * Keys: left right up down a b z walk cl cr cu cd start r home. "a-b:key" holds the key from frame a to b,
  * "a:key" for one frame (frames are the game's, 30 a second). --level starts the save file in that level
- * (the game's level numbers: 9 is Bob-omb Battlefield) instead of the castle grounds. Screenshots are
- * DIR/shot_<frame>.ppm. */
+ * (the game's level numbers: 9 is Bob-omb Battlefield) instead of the castle grounds; --at puts Mario
+ * somewhere at a frame. Screenshots are DIR/shot_<frame>.ppm. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,6 +21,7 @@ void port_game_init(void);
 void port_game_frame(void);
 extern int port_start_level_num;
 void port_debug_print(void);
+void port_debug_place(float x, float y, float z, short yaw);
 
 typedef struct { int a, b; uint32_t k; } Hold;
 static Hold holds[4096];
@@ -56,6 +57,7 @@ int main(int argc, char **argv) {
   int frames = 300, every = 0;
   const char *out = "build/shots", *shots = "";
   bool stats = false;
+  const char *at = NULL;   /* "frame:x,y,z,yaw": Mario put there at that frame */
   for (int i = 1; i < argc; i++) {
     const char *a = argv[i], *v = i + 1 < argc ? argv[i + 1] : "";
     if (!strcmp(a, "--frames")) frames = atoi(v), i++;
@@ -68,6 +70,7 @@ int main(int argc, char **argv) {
     else if (!strcmp(a, "--level")) port_start_level_num = atoi(v), i++;
     else if (!strcmp(a, "--half")) r_w = 160, r_h = 120, r_scale = 2;
     else if (!strcmp(a, "--stats")) stats = true;
+    else if (!strcmp(a, "--at")) at = v, i++;
   }
   mkdir(out, 0755);
   port_game_init();
@@ -76,6 +79,11 @@ int main(int argc, char **argv) {
     for (int i = 0; i < nholds; i++)
       if (f >= holds[i].a && f < holds[i].b) host_keys |= holds[i].k;
     if (host_keys & K_HOME) break;
+    if (at && f == atoi(at)) {
+      float x, y, z;
+      int yaw;
+      if (sscanf(strchr(at, ':') + 1, "%f,%f,%f,%d", &x, &y, &z, &yaw) == 4) port_debug_place(x, y, z, (short) yaw);
+    }
     port_game_frame();
     host_time += 33;
     bool shot = every ? f % every == 0 : false;
@@ -93,7 +101,7 @@ int main(int argc, char **argv) {
       snprintf(p, sizeof p, "%s/shot_%05d.ppm", out, f);
       host_shot(p);
     }
-    if (stats && f % 30 == 0) {
+    if (stats && (f % 30 == 0 || getenv("PLAY_EVERY"))) {
       printf("frame %d: %d items, %d triangles, %d vertices; ", f, r_stat_items, r_stat_tris, r_stat_verts);
       port_debug_print();
     }
