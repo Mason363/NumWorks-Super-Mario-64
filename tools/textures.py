@@ -9,6 +9,7 @@ import math
 import numpy as np
 
 import art
+import scenery
 
 RNG = np.random.default_rng(64)
 
@@ -280,6 +281,9 @@ TABLE = {
     "levels/bob/3.rgba16.png": lambda w, h: plain(w, h, 0x806040, 45),
     "levels/bob/4.rgba16.png": lambda w, h: rock(w, h, 47),
 }
+
+
+TABLE.update(scenery.TABLE)
 
 
 def paint(path, w, h, usage=None):
