@@ -703,7 +703,7 @@ void transform_object_vertices(TerrainData **data, TerrainData *vertexData) {
     Mat4 *objectTransform;
     Mat4 m;
 
-    objectTransform = &gCurrentObject->transform;
+    objectTransform = (Mat4 *) OBJ_TRANSFORM(gCurrentObject);
 
     numVertices = *(*data);
     (*data)++;

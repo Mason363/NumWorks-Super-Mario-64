@@ -182,7 +182,6 @@ struct Object {
         const void *asConstVoidPtr[0x50];
     } ptrData;
 #endif
-    /*0x1C8*/ u32 unused1;
     /*0x1CC*/ const BehaviorScript *curBhvCommand;
     /*0x1D0*/ u32 bhvStackIndex;
     /*0x1D4*/ uintptr_t bhvStack[8];
@@ -194,12 +193,18 @@ struct Object {
     /*0x204*/ f32 hurtboxHeight;
     /*0x208*/ f32 hitboxDownOffset;
     /*0x20C*/ const BehaviorScript *behavior;
-    /*0x210*/ u32 unused2;
     /*0x214*/ struct Object *platform;
     /*0x218*/ void *collisionData;
-    /*0x21C*/ Mat4 transform;
+    /* (calculator) its matrix, of its own only once it uses one (OBJ_TRANSFORM): most objects never do */
+    f32 (*transform)[4];
     /*0x25C*/ void *respawnInfo;
 };
+
+/* (calculator) an object's transform, made (the identity) the first time it is used (port/objects.c) */
+f32 (*port_obj_transform(struct Object *obj))[4];
+void port_obj_transform_free(struct Object *obj);
+void port_obj_transforms_reset(void);
+#define OBJ_TRANSFORM(obj) ((obj)->transform != NULL ? (obj)->transform : port_obj_transform(obj))
 
 struct ObjectHitbox {
     /*0x00*/ u32 interactType;

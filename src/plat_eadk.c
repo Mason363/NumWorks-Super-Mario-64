@@ -45,3 +45,8 @@ uint32_t plat_random(void) { return eadk_random(); }
 void plat_begin(void) { np_app_begin(); }
 int plat_end(void) { return np_app_end(); }
 bool plat_slow(void) { return epsilon_slow_model(); }
+void *plat_heap(uint32_t *len) {
+  extern char _heap_start[], _heap_end[];
+  *len = (uint32_t)(_heap_end - _heap_start);
+  return _heap_start;
+}

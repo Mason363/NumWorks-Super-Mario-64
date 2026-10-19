@@ -9,6 +9,7 @@
 /* an area as the calculator keeps it: the root the game's code knows, then what drawing it needs */
 struct PortArea {
   struct GraphNodeRoot root;
+  struct GraphNodeCamera *camera;
   u16 mesh;          /* its mesh in src/data.bin (0xFFFF: none) */
   u16 fov, near;
   u32 far;
@@ -17,8 +18,15 @@ struct PortArea {
   u16 fog_near, fog_far;
 };
 
+struct AllocOnlyPool;
+/* (camera.c's, not in its header) */
+void create_camera(struct GraphNodeCamera *gc, struct AllocOnlyPool *pool);
+
 extern const LevelScript port_level_script_entry[];
 void port_game_init(void);
+/* the objects' memory (src/port/objects.c) */
+void port_objects_init(void);
+extern int port_transforms_most;
 void port_game_frame(void);
 
 /* the save chip's 512 bytes (src/port/save.c) */
@@ -27,5 +35,4 @@ void port_eeprom_write(int offset, const u8 *buf, int n);
 
 /* drawing (src/port/scene.c, src/port/menu.c) */
 void port_draw_area(struct GraphNodeRoot *root);
-void port_flush_frame(void);
 #endif

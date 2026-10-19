@@ -66,7 +66,8 @@ u32 gTimeStopState;
 /**
  * The pool that objects are allocated from.
  */
-struct Object gObjectPool[OBJECT_POOL_CAPACITY];
+struct Object *gObjectPool; /* (calculator) in the RAM after the game's own (port/objects.c) */
+s32 gObjectPoolCapacity;
 
 /**
  * A special object whose purpose is to act as a parent for macro objects.
@@ -489,7 +490,6 @@ void spawn_objects_from_info(UNUSED s32 unused, struct SpawnInfo *spawnInfo) {
             object->oBhvParams2ndByte = ((spawnInfo->behaviorArg) >> 16) & 0xFF;
 
             object->behavior = script;
-            object->unused1 = 0;
 
             // Record death/collection in the SpawnInfo
             object->respawnInfoType = RESPAWN_INFO_TYPE_32;
@@ -549,7 +549,9 @@ void clear_objects(void) {
     for (i = 0; i < OBJECT_POOL_CAPACITY; i++) {
         gObjectPool[i].activeFlags = ACTIVE_FLAG_DEACTIVATED;
         geo_reset_object_node(&gObjectPool[i].header.gfx);
+        gObjectPool[i].transform = NULL; /* (calculator) */
     }
+    port_obj_transforms_reset(); /* (calculator) */
 
     gObjectMemoryPool = mem_pool_init(0x800, MEMORY_POOL_LEFT);
     gObjectLists = gObjectListArray;

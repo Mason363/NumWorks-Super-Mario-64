@@ -190,6 +190,7 @@ void unload_object(struct Object *obj) {
     obj->prevObj = NULL;
 
     obj->header.gfx.throwMatrix = NULL;
+    port_obj_transform_free(obj); /* (calculator) */
     stop_sounds_from_source(obj->header.gfx.cameraToObject);
     geo_remove_child(&obj->header.gfx.node);
     geo_add_child(&gObjParentGraphNode, &obj->header.gfx.node);
@@ -218,9 +219,15 @@ struct Object *allocate_object(struct ObjectNode *objList) {
 
         // If no unimportant object exists, then the object pool is exhausted.
         if (unimportantObj == NULL) {
-            // We've met with a terrible fate.
-            while (TRUE) {
+            /* (calculator) the pool is smaller than the N64's: the object is made in a spare that no list holds,
+               so it is never updated nor drawn, instead of the game stopping */
+            static struct Object sSpareObject;
+            if (sSpareObject.header.gfx.node.parent != NULL) {
+                geo_remove_child(&sSpareObject.header.gfx.node);
             }
+            obj = &sSpareObject;
+            obj->transform = NULL;
+            obj->header.next = obj->header.prev = &obj->header;
         } else {
             // If an unimportant object does exist, unload it and take its slot.
             unload_object(unimportantObj);
@@ -252,7 +259,6 @@ struct Object *allocate_object(struct ObjectNode *objList) {
     for (i = 0; i < 0x50; i++) obj->rawData.asS32[i] = 0;
 #endif
 
-    obj->unused1 = 0;
     obj->bhvStackIndex = 0;
     obj->bhvDelayTimer = 0;
 
@@ -261,7 +267,6 @@ struct Object *allocate_object(struct ObjectNode *objList) {
     obj->hurtboxRadius = 0.0f;
     obj->hurtboxHeight = 0.0f;
     obj->hitboxDownOffset = 0.0f;
-    obj->unused2 = 0;
 
     obj->platform = NULL;
     obj->collisionData = NULL;
@@ -276,7 +281,7 @@ struct Object *allocate_object(struct ObjectNode *objList) {
         obj->oDrawingDistance = 4000.0f;
     }
 
-    mtxf_identity(obj->transform);
+    obj->transform = NULL; /* (calculator) made when first used */
 
     obj->respawnInfoType = RESPAWN_INFO_TYPE_NULL;
     obj->respawnInfo = NULL;

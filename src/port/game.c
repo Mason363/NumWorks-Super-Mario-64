@@ -52,6 +52,7 @@ struct GraphNode *process_geo_layout(struct AllocOnlyPool *pool, void *segptr) {
     memset(a, 0, sizeof *a);
     memset(gc, 0, sizeof *gc);
     a->root.node.type = GRAPH_NODE_TYPE_ROOT;
+    a->root.node.flags = GRAPH_RENDER_ACTIVE;
     a->root.numViews = 1;
     a->root.views = views;
     views[0] = &gc->fnNode.node;
@@ -59,6 +60,7 @@ struct GraphNode *process_geo_layout(struct AllocOnlyPool *pool, void *segptr) {
     gc->pos[0] = (s16) g[4], gc->pos[1] = (s16) g[5], gc->pos[2] = (s16) g[6];
     gc->focus[0] = (s16) g[7], gc->focus[1] = (s16) g[8], gc->focus[2] = (s16) g[9];
     create_camera(gc, pool);
+    a->camera = gc;
     a->mesh = (u16) g[1];
     a->fov = (u16) g[10], a->near = (u16) g[11], a->far = (u32) g[12];
     a->background = (u16) g[13];
@@ -69,6 +71,7 @@ struct GraphNode *process_geo_layout(struct AllocOnlyPool *pool, void *segptr) {
   struct PortNode *n = alloc_only_pool_alloc(pool, sizeof(struct PortNode));
   memset(n, 0, sizeof *n);
   n->node.type = PORT_NODE_MODEL;
+  n->node.flags = GRAPH_RENDER_ACTIVE;
   n->model = (u16) g[1];
   return &n->node;
 }
@@ -140,8 +143,20 @@ static void read_controller(void) {
 
 #ifdef HOST
 #include <stdio.h>
+#include <stdlib.h>
 #include "game/mario.h"
+#include "game/object_list_processor.h"
+#include "behavior_data.h"
 extern struct LakituState gLakituState;
+/* the most the game used of its objects, pool and surfaces (tests/play.c --stats) */
+static s32 sPeakObjects, sPeakSurfaces, sPeakNodes;
+static u32 sLeastFree = 0xFFFFFFFF;
+static void port_debug_peaks(void) {
+  if (gPrevFrameObjectCount > sPeakObjects) sPeakObjects = gPrevFrameObjectCount;
+  if (gSurfacesAllocated - gNumStaticSurfaces > sPeakSurfaces) sPeakSurfaces = gSurfacesAllocated - gNumStaticSurfaces;
+  if (gSurfaceNodesAllocated - gNumStaticSurfaceNodes > sPeakNodes) sPeakNodes = gSurfaceNodesAllocated - gNumStaticSurfaceNodes;
+  if (main_pool_available() < sLeastFree) sLeastFree = main_pool_available();
+}
 /* the state of the game, for tests (tests/play.c --stats) */
 void port_debug_print(void) {
   struct MarioState *m = gMarioState;
@@ -149,6 +164,11 @@ void port_debug_print(void) {
          "transition %d pause %d\n", gCurrLevelNum, gCurrAreaIndex, gCurrActNum, m->pos[0], m->pos[1], m->pos[2],
          (unsigned) m->action, gLakituState.pos[0], gLakituState.pos[1], gLakituState.pos[2], gLakituState.focus[0],
          gLakituState.focus[1], gLakituState.focus[2], gWarpTransition.isActive, gWarpTransition.pauseRendering);
+  if (getenv("PORT_OBJECTS"))
+    for (int i = 0; i < OBJECT_POOL_CAPACITY; i++)
+      if (gObjectPool[i].activeFlags) printf("  obj %ld\n", (long) ((const char *) gObjectPool[i].behavior - (const char *) bhvMario));
+  printf("  objects %d of %d (most %d), transforms most %d, surfaces most %d, nodes most %d, pool free %u (least %u)\n", gPrevFrameObjectCount,
+         gObjectPoolCapacity, sPeakObjects, port_transforms_most, sPeakSurfaces, sPeakNodes, (unsigned) main_pool_available(), (unsigned) sLeastFree);
 }
 #endif
 
@@ -158,25 +178,30 @@ s32 port_start_level(void) { return port_start_level_num; }
 
 /* ------------------------------------------------------------------------------------------------ the frame */
 static struct LevelCommand *sScript;
-static Gfx sGfxSink[64];
+/* the frame's display list memory: nothing draws with display lists, but the game's code takes matrices and a
+ * few commands from it (alloc_display_list), until the frame is drawn */
+static Gfx sGfxPool[192];
 
-void init_rcp(void) {
-  gDisplayListHead = sGfxSink;
-  gGfxPoolEnd = (u8 *) sGfxSink;   /* (so alloc_display_list finds no room: nothing draws with it) */
-}
+void init_rcp(void) {}
 
 void port_game_init(void) {
   main_pool_init(sPool, (u8 *) sPool + sizeof sPool);
+  port_objects_init();
   gPlayer1Controller->statusData = NULL;
   gPlayer1Controller->controllerData = &sPad;
-  gDisplayListHead = sGfxSink;
+  gDisplayListHead = sGfxPool;
+  gGfxPoolEnd = (u8 *) (sGfxPool + 192);
   save_file_load_all();
   sScript = (struct LevelCommand *) port_level_script_entry;
 }
 
 void port_game_frame(void) {
   read_controller();
-  gDisplayListHead = sGfxSink;
+  gDisplayListHead = sGfxPool;
+  gGfxPoolEnd = (u8 *) (sGfxPool + 192);
   sScript = level_script_execute(sScript);
   gGlobalTimer++;
+#ifdef HOST
+  port_debug_peaks();
+#endif
 }

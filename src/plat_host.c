@@ -76,3 +76,10 @@ void host_shot(const char *path) {
   }
   fclose(f);
 }
+
+/* the RAM after the game's own (src/port/objects.c gives tests as many objects as the calculator has) */
+void *plat_heap(uint32_t *len) {
+  static uint64_t heap[400000 / 8];
+  *len = sizeof heap;
+  return heap;
+}

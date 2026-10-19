@@ -67,11 +67,34 @@ def level_data_files(ref, level):
     return keep
 
 
+def used_actors(ref):
+    """The actors whose models the game's levels load (src/port/gen/models.txt, from tools/pack.py): only their
+    animations and collision are kept, the others' are empty."""
+    names = set()
+    for line in open(os.path.join(GEN, "models.txt")):
+        p = line.split()
+        if p and p[0] in ("geo", "dl"):
+            names.add(p[1])
+    used = set()
+    for d in sorted(glob.glob(os.path.join(ref, "actors", "*"))):
+        if not os.path.isdir(d):
+            continue
+        for f in glob.glob(os.path.join(d, "*.inc.c")):
+            if set(re.findall(r"(?:GeoLayout|Gfx)\s+(\w+)\s*\[", open(f).read())) & names:
+                used.add(os.path.basename(d))
+                break
+    return used
+
+
 def actor_data_files(ref):
     keep = []
+    used = used_actors(ref)
     for f in sorted(glob.glob(os.path.join(ref, "actors", "*", "collision.inc.c"))):
-        keep.append(os.path.relpath(f, ref))
+        if os.path.basename(os.path.dirname(f)) in used:
+            keep.append(os.path.relpath(f, ref))
     for d in sorted(glob.glob(os.path.join(ref, "actors", "*", "anims"))):
+        if os.path.basename(os.path.dirname(d)) not in used:
+            continue
         # data.inc.c includes the animations, table.inc.c lists them
         for f in ("data.inc.c", "table.inc.c"):
             if os.path.exists(os.path.join(d, f)):

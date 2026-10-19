@@ -27,7 +27,7 @@ void create_transform_from_normals(Mat4 transform, f32 xNorm, f32 yNorm, f32 zNo
  * Initialize the object's transform matrix with Y being up.
  */
 void bhv_platform_normals_init(void) {
-    Mat4 *transform = &o->transform;
+    Mat4 *transform = (Mat4 *) OBJ_TRANSFORM(o);
 
     o->oTiltingPyramidNormalX = 0.0f;
     o->oTiltingPyramidNormalY = 1.0f;
@@ -79,7 +79,7 @@ void bhv_tilting_inverted_pyramid_loop(void) {
 
     s32 marioOnPlatform = FALSE;
     UNUSED u8 filler1[4];
-    Mat4 *transform = &o->transform;
+    Mat4 *transform = (Mat4 *) OBJ_TRANSFORM(o);
     UNUSED u8 filler2[28];
 
     if (gMarioObject->platform == o) {

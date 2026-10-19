@@ -23,7 +23,9 @@
 /**
  * The maximum number of objects that can be loaded at once.
  */
-#define OBJECT_POOL_CAPACITY 240
+/* (calculator) as many as the RAM holds, 240 at most (port/objects.c) */
+extern s32 gObjectPoolCapacity;
+#define OBJECT_POOL_CAPACITY gObjectPoolCapacity
 
 /**
  * Every object is categorized into an object list, which controls the order
@@ -78,7 +80,7 @@ extern s16 gDebugInfo[][8];
 extern s16 gDebugInfoOverwrite[][8];
 
 extern u32 gTimeStopState;
-extern struct Object gObjectPool[];
+extern struct Object *gObjectPool; /* (calculator) */
 extern struct Object gMacroObjectDefaultParent;
 extern struct ObjectNode *gObjectLists;
 extern struct ObjectNode gFreeObjectList;

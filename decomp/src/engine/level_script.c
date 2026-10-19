@@ -816,10 +816,8 @@ struct LevelCommand *level_script_execute(struct LevelCommand *cmd) {
     }
 
     profiler_log_thread5_time(LEVEL_SCRIPT_EXECUTE);
-    init_rcp();
-    render_game();
-    end_master_display_list();
-    alloc_display_list(0);
+    /* (calculator) init_rcp, render_game and the frame to the screen, with the frame's memory on the stack */
+    port_render();
 
     return sCurrentCmd;
 }

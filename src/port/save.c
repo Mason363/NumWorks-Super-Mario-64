@@ -52,7 +52,8 @@ static int b64_value(u8 c) {
 }
 
 static bool copy_read(u8 *out, u32 size) {
-  u32 n, nl = sizeof SAVE_NAME - 1;
+  uint32_t n;
+  u32 nl = sizeof SAVE_NAME - 1;
   const u8 *c = plat_load(COPY_NAME, &n);
   if (!c) return false;
   for (u32 i = 0; i + nl + 3 <= n; i++) {
@@ -80,7 +81,7 @@ static bool copy_read(u8 *out, u32 size) {
 static void load(void) {
   if (sLoaded) return;
   sLoaded = true;
-  u32 len;
+  uint32_t len;
   const u8 *d = plat_load(SAVE_NAME, &len);
   if (d && len == EEPROM_SIZE) memcpy(sEeprom, d, EEPROM_SIZE);
   else if (copy_read(sEeprom, EEPROM_SIZE)) plat_save(SAVE_NAME, sEeprom, EEPROM_SIZE);   /* back where it belongs */

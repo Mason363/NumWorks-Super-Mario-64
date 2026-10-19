@@ -45,18 +45,11 @@
 #include "actors/blue_coin_switch/collision.inc.c"
 #include "actors/breakable_box/collision.inc.c"
 #include "actors/cannon_lid/collision.inc.c"
-#include "actors/capswitch/collision.inc.c"
 #include "actors/checkerboard_platform/collision.inc.c"
-#include "actors/dorrie/collision.inc.c"
 #include "actors/exclamation_box_outline/collision.inc.c"
 #include "actors/metal_box/collision.inc.c"
-#include "actors/penguin/collision.inc.c"
 #include "actors/poundable_pole/collision.inc.c"
 #include "actors/purple_switch/collision.inc.c"
-#include "actors/springboard/collision.inc.c"
-#include "actors/test_platform/collision.inc.c"
-#include "actors/thwomp/collision.inc.c"
-#include "actors/warp_collision/collision.inc.c"
 #include "actors/warp_pipe/collision.inc.c"
 #include "actors/whomp/collision.inc.c"
 #include "actors/wooden_signpost/collision.inc.c"
@@ -64,110 +57,48 @@
 #include "actors/amp/anims/table.inc.c"
 #include "actors/bird/anims/data.inc.c"
 #include "actors/bird/anims/table.inc.c"
-#include "actors/blargg/anims/data.inc.c"
-#include "actors/blargg/anims/table.inc.c"
 #include "actors/blue_fish/anims/data.inc.c"
 #include "actors/blue_fish/anims/table.inc.c"
 #include "actors/bobomb/anims/data.inc.c"
 #include "actors/bobomb/anims/table.inc.c"
 #include "actors/bookend/anims/data.inc.c"
 #include "actors/bookend/anims/table.inc.c"
-#include "actors/bowser/anims/data.inc.c"
-#include "actors/bowser/anims/table.inc.c"
 #include "actors/bowser_key/anims/data.inc.c"
 #include "actors/bowser_key/anims/table.inc.c"
-#include "actors/bub/anims/data.inc.c"
-#include "actors/bub/anims/table.inc.c"
-#include "actors/bully/anims/data.inc.c"
-#include "actors/bully/anims/table.inc.c"
 #include "actors/butterfly/anims/data.inc.c"
 #include "actors/butterfly/anims/table.inc.c"
 #include "actors/chain_chomp/anims/data.inc.c"
 #include "actors/chain_chomp/anims/table.inc.c"
 #include "actors/chair/anims/data.inc.c"
 #include "actors/chair/anims/table.inc.c"
-#include "actors/chillychief/anims/data.inc.c"
-#include "actors/chillychief/anims/table.inc.c"
 #include "actors/chuckya/anims/data.inc.c"
 #include "actors/chuckya/anims/table.inc.c"
-#include "actors/clam_shell/anims/data.inc.c"
-#include "actors/clam_shell/anims/table.inc.c"
-#include "actors/cyan_fish/anims/data.inc.c"
-#include "actors/cyan_fish/anims/table.inc.c"
 #include "actors/door/anims/data.inc.c"
 #include "actors/door/anims/table.inc.c"
-#include "actors/dorrie/anims/data.inc.c"
-#include "actors/dorrie/anims/table.inc.c"
-#include "actors/eyerok/anims/data.inc.c"
-#include "actors/eyerok/anims/table.inc.c"
 #include "actors/flyguy/anims/data.inc.c"
 #include "actors/flyguy/anims/table.inc.c"
 #include "actors/goomba/anims/data.inc.c"
 #include "actors/goomba/anims/table.inc.c"
-#include "actors/heave_ho/anims/data.inc.c"
-#include "actors/heave_ho/anims/table.inc.c"
-#include "actors/hoot/anims/data.inc.c"
-#include "actors/hoot/anims/table.inc.c"
 #include "actors/king_bobomb/anims/data.inc.c"
 #include "actors/king_bobomb/anims/table.inc.c"
-#include "actors/klepto/anims/data.inc.c"
-#include "actors/klepto/anims/table.inc.c"
 #include "actors/koopa/anims/data.inc.c"
 #include "actors/koopa/anims/table.inc.c"
 #include "actors/koopa_flag/anims/data.inc.c"
 #include "actors/koopa_flag/anims/table.inc.c"
 #include "actors/lakitu_cameraman/anims/data.inc.c"
 #include "actors/lakitu_cameraman/anims/table.inc.c"
-#include "actors/lakitu_enemy/anims/data.inc.c"
-#include "actors/lakitu_enemy/anims/table.inc.c"
 #include "actors/mad_piano/anims/data.inc.c"
 #include "actors/mad_piano/anims/table.inc.c"
-#include "actors/manta/anims/data.inc.c"
-#include "actors/manta/anims/table.inc.c"
 #include "actors/mips/anims/data.inc.c"
 #include "actors/mips/anims/table.inc.c"
-#include "actors/moneybag/anims/data.inc.c"
-#include "actors/moneybag/anims/table.inc.c"
-#include "actors/monty_mole/anims/data.inc.c"
-#include "actors/monty_mole/anims/table.inc.c"
 #include "actors/peach/anims/data.inc.c"
 #include "actors/peach/anims/table.inc.c"
-#include "actors/penguin/anims/data.inc.c"
-#include "actors/penguin/anims/table.inc.c"
 #include "actors/piranha_plant/anims/data.inc.c"
 #include "actors/piranha_plant/anims/table.inc.c"
-#include "actors/scuttlebug/anims/data.inc.c"
-#include "actors/scuttlebug/anims/table.inc.c"
-#include "actors/seaweed/anims/data.inc.c"
-#include "actors/seaweed/anims/table.inc.c"
-#include "actors/skeeter/anims/data.inc.c"
-#include "actors/skeeter/anims/table.inc.c"
-#include "actors/snowman/anims/data.inc.c"
-#include "actors/snowman/anims/table.inc.c"
-#include "actors/spindrift/anims/data.inc.c"
-#include "actors/spindrift/anims/table.inc.c"
-#include "actors/spiny/anims/data.inc.c"
-#include "actors/spiny/anims/table.inc.c"
-#include "actors/spiny_egg/anims/data.inc.c"
-#include "actors/spiny_egg/anims/table.inc.c"
-#include "actors/sushi/anims/data.inc.c"
-#include "actors/sushi/anims/table.inc.c"
-#include "actors/swoop/anims/data.inc.c"
-#include "actors/swoop/anims/table.inc.c"
 #include "actors/toad/anims/data.inc.c"
 #include "actors/toad/anims/table.inc.c"
-#include "actors/ukiki/anims/data.inc.c"
-#include "actors/ukiki/anims/table.inc.c"
-#include "actors/unagi/anims/data.inc.c"
-#include "actors/unagi/anims/table.inc.c"
-#include "actors/water_ring/anims/data.inc.c"
-#include "actors/water_ring/anims/table.inc.c"
 #include "actors/whomp/anims/data.inc.c"
 #include "actors/whomp/anims/table.inc.c"
-#include "actors/wiggler_body/anims/data.inc.c"
-#include "actors/wiggler_body/anims/table.inc.c"
-#include "actors/wiggler_head/anims/data.inc.c"
-#include "actors/wiggler_head/anims/table.inc.c"
 #include "actors/yoshi/anims/data.inc.c"
 #include "actors/yoshi/anims/table.inc.c"
 
@@ -310,6 +241,7 @@ extern const Gfx purple_switch_seg8_dl_0800C6E0[] __attribute__((alias("port_dum
 extern const Gfx purple_switch_seg8_dl_0800C718[] __attribute__((alias("port_dummy_dl")));
 const GeoLayout test_platform_geo[] = { PORT_MODEL(65535) };
 extern const Gfx unknown_seg8_dl_08026260[] __attribute__((alias("port_dummy_dl")));
+const Collision unknown_seg8_collision_080262F8[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
 const GeoLayout fish_shadow_geo[] = { PORT_MODEL(43) };
 const GeoLayout fish_geo[] = { PORT_MODEL(42) };
 extern const Gfx blue_fish_seg3_dl_0301BEC0[] __attribute__((alias("port_dummy_dl")));
@@ -489,6 +421,8 @@ extern const Gfx tree_seg3_dl_03030FA0[] __attribute__((alias("port_dummy_dl")))
 extern const Gfx tree_seg3_dl_03032088[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx tree_seg3_dl_03032170[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx tree_seg3_dl_03033258[] __attribute__((alias("port_dummy_dl")));
+const Collision door_seg3_collision_0301CE78[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
+const Collision lll_hexagonal_mesh_seg3_collision_0301CECC[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
 const GeoLayout warp_pipe_geo[] = { PORT_MODEL(2) };
 extern const Gfx warp_pipe_seg3_dl_03008E40[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx warp_pipe_seg3_dl_03008F98[] __attribute__((alias("port_dummy_dl")));
@@ -851,6 +785,7 @@ extern const Gfx heave_ho_seg5_dl_05014560[] __attribute__((alias("port_dummy_dl
 extern const Gfx heave_ho_seg5_dl_050145D0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx heave_ho_seg5_dl_050149A8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx heave_ho_seg5_dl_05014D80[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const heave_ho_seg5_anims_0501534C[] = { NULL };
 const GeoLayout hoot_geo[] = { PORT_MODEL(65535) };
 extern const Gfx hoot_seg5_dl_05001B80[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx hoot_seg5_dl_05001C00[] __attribute__((alias("port_dummy_dl")));
@@ -876,10 +811,13 @@ extern const Gfx hoot_seg5_dl_05004A98[] __attribute__((alias("port_dummy_dl")))
 extern const Gfx hoot_seg5_dl_05004B38[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx hoot_seg5_dl_05004CA8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx hoot_seg5_dl_05004D48[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const hoot_seg5_anims_05005768[] = { NULL };
 const GeoLayout thwomp_geo[] = { PORT_MODEL(65535) };
 extern const Gfx thwomp_seg5_dl_0500B570[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx thwomp_seg5_dl_0500B718[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx thwomp_seg5_dl_0500B750[] __attribute__((alias("port_dummy_dl")));
+const Collision thwomp_seg5_collision_0500B7D0[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
+const Collision thwomp_seg5_collision_0500B92C[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
 const GeoLayout yellow_sphere_geo[] = { PORT_MODEL(65535) };
 extern const Gfx yellow_sphere_seg5_dl_05000840[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx yellow_sphere_seg5_dl_05000888[] __attribute__((alias("port_dummy_dl")));
@@ -1004,6 +942,7 @@ extern const Gfx lakitu_enemy_seg5_dl_050134A8[] __attribute__((alias("port_dumm
 extern const Gfx lakitu_enemy_seg5_dl_050136A0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx lakitu_enemy_seg5_dl_05013860[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx lakitu_enemy_seg5_dl_050138B0[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const lakitu_enemy_seg5_anims_050144D4[] = { NULL };
 const GeoLayout spiny_geo[] = { PORT_MODEL(65535) };
 extern const Gfx spiny_seg5_dl_05016418[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx spiny_seg5_dl_050164E0[] __attribute__((alias("port_dummy_dl")));
@@ -1011,6 +950,7 @@ extern const Gfx spiny_seg5_dl_050165A8[] __attribute__((alias("port_dummy_dl"))
 extern const Gfx spiny_seg5_dl_05016670[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx spiny_seg5_dl_05016738[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx spiny_seg5_dl_05016A48[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const spiny_seg5_anims_05016EAC[] = { NULL };
 const GeoLayout spiny_ball_geo[] = { PORT_MODEL(65535) };
 extern const Gfx spiny_egg_seg5_dl_050151A8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx spiny_egg_seg5_dl_050151E0[] __attribute__((alias("port_dummy_dl")));
@@ -1022,6 +962,7 @@ extern const Gfx spiny_egg_seg5_dl_050152F8[] __attribute__((alias("port_dummy_d
 extern const Gfx spiny_egg_seg5_dl_05015330[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx spiny_egg_seg5_dl_05015368[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx spiny_egg_seg5_dl_05015740[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const spiny_egg_seg5_anims_050157E4[] = { NULL };
 extern const Gfx wiggler_seg5_dl_0500BCB8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx wiggler_seg5_dl_0500BE10[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx wiggler_seg5_dl_0500BE98[] __attribute__((alias("port_dummy_dl")));
@@ -1032,6 +973,7 @@ extern const Gfx wiggler_seg5_dl_0500C208[] __attribute__((alias("port_dummy_dl"
 extern const Gfx wiggler_seg5_dl_0500C240[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx wiggler_seg5_dl_0500C278[] __attribute__((alias("port_dummy_dl")));
 const GeoLayout wiggler_body_geo[] = { PORT_MODEL(65535) };
+const struct Animation *const wiggler_seg5_anims_0500C874[] = { NULL };
 const GeoLayout wiggler_head_geo[] = { PORT_MODEL(65535) };
 extern const Gfx wiggler_seg5_dl_0500DC18[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx wiggler_seg5_dl_0500DD70[] __attribute__((alias("port_dummy_dl")));
@@ -1051,6 +993,7 @@ extern const Gfx wiggler_seg5_dl_0500E518[] __attribute__((alias("port_dummy_dl"
 extern const Gfx wiggler_seg5_dl_0500E608[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx wiggler_seg5_dl_0500E640[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx wiggler_seg5_dl_0500E678[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const wiggler_seg5_anims_0500EC8C[] = { NULL };
 const GeoLayout bowser_bomb_geo[] = { PORT_MODEL(65535) };
 extern const Gfx bomb_seg6_dl_0605A7C0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bomb_seg6_dl_0605A7F8[] __attribute__((alias("port_dummy_dl")));
@@ -1134,6 +1077,7 @@ extern const Gfx bowser_seg6_dl_060431F0[] __attribute__((alias("port_dummy_dl")
 extern const Gfx bowser_seg6_dl_06043548[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bowser_seg6_dl_06043648[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bowser_seg6_dl_06043698[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const bowser_seg6_anims_06057690[] = { NULL };
 s16 dBowserFlamesOrientationValues[1];
 const GeoLayout bowser_flames_geo[] = { PORT_MODEL(65535) };
 extern const Gfx flame_seg6_dl_0601C080[] __attribute__((alias("port_dummy_dl")));
@@ -1183,6 +1127,7 @@ extern const Gfx bub_seg6_dl_06011DC0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bub_seg6_dl_06011E48[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bub_seg6_dl_06011F18[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bub_seg6_dl_06011FA0[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const bub_seg6_anims_06012354[] = { NULL };
 const GeoLayout cyan_fish_geo[] = { PORT_MODEL(65535) };
 extern const Gfx cyan_fish_seg6_dl_0600DD20[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx cyan_fish_seg6_dl_0600DDD8[] __attribute__((alias("port_dummy_dl")));
@@ -1190,6 +1135,7 @@ extern const Gfx cyan_fish_seg6_dl_0600DE90[] __attribute__((alias("port_dummy_d
 extern const Gfx cyan_fish_seg6_dl_0600DED8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx cyan_fish_seg6_dl_0600DFC0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx cyan_fish_seg6_dl_0600E038[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const cyan_fish_seg6_anims_0600E264[] = { NULL };
 const GeoLayout seaweed_geo[] = { PORT_MODEL(65535) };
 extern const Gfx seaweed_seg6_dl_06009E50[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx seaweed_seg6_dl_06009E98[] __attribute__((alias("port_dummy_dl")));
@@ -1199,6 +1145,7 @@ extern const Gfx seaweed_seg6_dl_0600A040[] __attribute__((alias("port_dummy_dl"
 extern const Gfx seaweed_seg6_dl_0600A088[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx seaweed_seg6_dl_0600A138[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx seaweed_seg6_dl_0600A180[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const seaweed_seg6_anims_0600A4D4[] = { NULL };
 const GeoLayout skeeter_geo[] = { PORT_MODEL(65535) };
 extern const Gfx skeeter_seg6_dl_060009D0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx skeeter_seg6_dl_06000A08[] __attribute__((alias("port_dummy_dl")));
@@ -1229,6 +1176,7 @@ extern const Gfx skeeter_seg6_dl_06004678[] __attribute__((alias("port_dummy_dl"
 extern const Gfx skeeter_seg6_dl_06004A40[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx skeeter_seg6_dl_06005328[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx skeeter_seg6_dl_06005358[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const skeeter_seg6_anims_06007DE0[] = { NULL };
 const GeoLayout treasure_chest_base_geo[] = { PORT_MODEL(65535) };
 const GeoLayout treasure_chest_lid_geo[] = { PORT_MODEL(65535) };
 extern const Gfx treasure_chest_seg6_dl_06016D58[] __attribute__((alias("port_dummy_dl")));
@@ -1248,6 +1196,7 @@ extern const Gfx water_mine_seg6_dl_0600D2E0[] __attribute__((alias("port_dummy_
 extern const Gfx water_mine_seg6_dl_0600D3F8[] __attribute__((alias("port_dummy_dl")));
 const GeoLayout water_ring_geo[] = { PORT_MODEL(65535) };
 extern const Gfx water_ring_seg6_dl_06013AC0[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const water_ring_seg6_anims_06013F7C[] = { NULL };
 const GeoLayout metallic_ball_geo[] = { PORT_MODEL(106) };
 extern const Gfx chain_ball_seg6_dl_060212E8[] __attribute__((alias("port_dummy_dl")));
 const GeoLayout chain_chomp_geo[] = { PORT_MODEL(107) };
@@ -1442,6 +1391,7 @@ extern const Gfx chilly_chief_seg6_dl_06002FC8[] __attribute__((alias("port_dumm
 extern const Gfx chilly_chief_seg6_dl_06003010[] __attribute__((alias("port_dummy_dl")));
 const GeoLayout chilly_chief_geo[] = { PORT_MODEL(65535) };
 const GeoLayout chilly_chief_big_geo[] = { PORT_MODEL(65535) };
+const struct Animation *const chilly_chief_seg6_anims_06003994[] = { NULL };
 const GeoLayout moneybag_geo_000000[] = { PORT_MODEL(65535) };
 const GeoLayout moneybag_geo_000078[] = { PORT_MODEL(65535) };
 const GeoLayout moneybag_geo[] = { PORT_MODEL(65535) };
@@ -1455,6 +1405,7 @@ extern const Gfx moneybag_seg6_dl_06005708[] __attribute__((alias("port_dummy_dl
 extern const Gfx moneybag_seg6_dl_06005750[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx moneybag_seg6_dl_06005980[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx moneybag_seg6_dl_060059F0[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const moneybag_seg6_anims_06005E5C[] = { NULL };
 const GeoLayout dorrie_geo[] = { PORT_MODEL(65535) };
 extern const Gfx dorrie_seg6_dl_0600B8E8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx dorrie_seg6_dl_0600B940[] __attribute__((alias("port_dummy_dl")));
@@ -1482,6 +1433,9 @@ extern const Gfx dorrie_seg6_dl_0600DDA0[] __attribute__((alias("port_dummy_dl")
 extern const Gfx dorrie_seg6_dl_0600DE38[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx dorrie_seg6_dl_0600DF60[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx dorrie_seg6_dl_0600DFA8[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const dorrie_seg6_anims_0600F638[] = { NULL };
+const Collision dorrie_seg6_collision_0600F644[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
+const Collision dorrie_seg6_collision_0600FBB8[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
 const GeoLayout mr_i_geo[] = { PORT_MODEL(65535) };
 extern const Gfx mr_i_eyeball_seg6_dl_06002080[] __attribute__((alias("port_dummy_dl")));
 const GeoLayout mr_i_iris_geo[] = { PORT_MODEL(65535) };
@@ -1510,6 +1464,7 @@ extern const Gfx scuttlebug_seg6_dl_06014238[] __attribute__((alias("port_dummy_
 extern const Gfx scuttlebug_seg6_dl_06014270[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx scuttlebug_seg6_dl_06014338[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx scuttlebug_seg6_dl_06014378[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const scuttlebug_seg6_anims_06015064[] = { NULL };
 const GeoLayout snufit_geo[] = { PORT_MODEL(65535) };
 extern const Gfx snufit_seg6_dl_060091E0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx snufit_seg6_dl_06009278[] __attribute__((alias("port_dummy_dl")));
@@ -1537,10 +1492,12 @@ extern const Gfx swoop_seg6_dl_06006B98[] __attribute__((alias("port_dummy_dl"))
 extern const Gfx swoop_seg6_dl_06006BD0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx swoop_seg6_dl_06006CC8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx swoop_seg6_dl_06006D00[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const swoop_seg6_anims_060070D0[] = { NULL };
 const GeoLayout blargg_geo[] = { PORT_MODEL(65535) };
 extern const Gfx blargg_seg5_dl_050058D0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx blargg_seg5_dl_05005A60[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx blargg_seg5_dl_05005D00[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const blargg_seg5_anims_0500616C[] = { NULL };
 const GeoLayout bully_geo[] = { PORT_MODEL(65535) };
 const GeoLayout bully_boss_geo[] = { PORT_MODEL(65535) };
 extern const Gfx bully_seg5_dl_050002E0[] __attribute__((alias("port_dummy_dl")));
@@ -1557,6 +1514,7 @@ extern const Gfx bully_seg5_dl_05003E70[] __attribute__((alias("port_dummy_dl"))
 extern const Gfx bully_seg5_dl_05003EA8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bully_seg5_dl_05003F80[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bully_seg5_dl_05003FC8[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const bully_seg5_anims_0500470C[] = { NULL };
 const GeoLayout king_bobomb_geo[] = { PORT_MODEL(116) };
 extern const Gfx king_bobomb_seg5_dl_0500A4B8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx king_bobomb_seg5_dl_0500A4F0[] __attribute__((alias("port_dummy_dl")));
@@ -1594,6 +1552,7 @@ extern const Gfx clam_shell_seg5_dl_050012B8[] __attribute__((alias("port_dummy_
 extern const Gfx clam_shell_seg5_dl_05001478[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx clam_shell_seg5_dl_050014F8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx clam_shell_seg5_dl_05001568[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const clam_shell_seg5_anims_05001744[] = { NULL };
 extern const Gfx manta_seg5_dl_05004960[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx manta_seg5_dl_050049C8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx manta_seg5_dl_05004A70[] __attribute__((alias("port_dummy_dl")));
@@ -1635,6 +1594,7 @@ extern const Gfx manta_seg5_dl_05006B08[] __attribute__((alias("port_dummy_dl"))
 extern const Gfx manta_seg5_dl_05006B70[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx manta_seg5_dl_05006C08[] __attribute__((alias("port_dummy_dl")));
 const GeoLayout manta_seg5_geo_05008D14[] = { PORT_MODEL(65535) };
+const struct Animation *const manta_seg5_anims_05008EB4[] = { NULL };
 const GeoLayout sushi_geo[] = { PORT_MODEL(65535) };
 extern const Gfx sushi_seg5_dl_05009CC0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx sushi_seg5_dl_05009DD0[] __attribute__((alias("port_dummy_dl")));
@@ -1649,6 +1609,7 @@ extern const Gfx sushi_seg5_dl_0500A860[] __attribute__((alias("port_dummy_dl"))
 extern const Gfx sushi_seg5_dl_0500A8A8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx sushi_seg5_dl_0500A958[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx sushi_seg5_dl_0500A990[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const sushi_seg5_anims_0500AE54[] = { NULL };
 const GeoLayout unagi_geo[] = { PORT_MODEL(65535) };
 extern const Gfx unagi_seg5_dl_0500CCE0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx unagi_seg5_dl_0500CD30[] __attribute__((alias("port_dummy_dl")));
@@ -1673,6 +1634,7 @@ extern const Gfx unagi_seg5_dl_0500E030[] __attribute__((alias("port_dummy_dl"))
 extern const Gfx unagi_seg5_dl_0500E088[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx unagi_seg5_dl_0500E200[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx unagi_seg5_dl_0500E258[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const unagi_seg5_anims_05012824[] = { NULL };
 extern const Gfx whirlpool_seg5_dl_05013B58[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx whirlpool_seg5_dl_05013CB8[] __attribute__((alias("port_dummy_dl")));
 const GeoLayout eyerok_geo_0002AC[] = { PORT_MODEL(65535) };
@@ -1700,6 +1662,7 @@ extern const Gfx eyerok_seg5_dl_0500CAE8[] __attribute__((alias("port_dummy_dl")
 extern const Gfx eyerok_seg5_dl_0500CB80[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx eyerok_seg5_dl_0500CC18[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx eyerok_seg5_dl_0500CC30[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const eyerok_seg5_anims_050116E4[] = { NULL };
 const GeoLayout klepto_geo[] = { PORT_MODEL(65535) };
 extern const Gfx klepto_seg5_dl_05003A68[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx klepto_seg5_dl_05003AC0[] __attribute__((alias("port_dummy_dl")));
@@ -1733,6 +1696,7 @@ extern const Gfx klepto_seg5_dl_05005020[] __attribute__((alias("port_dummy_dl")
 extern const Gfx klepto_seg5_dl_05005068[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx klepto_seg5_dl_05005130[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx klepto_seg5_dl_05005178[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const klepto_seg5_anims_05008CFC[] = { NULL };
 const GeoLayout pokey_head_geo[] = { PORT_MODEL(65535) };
 const GeoLayout pokey_body_part_geo[] = { PORT_MODEL(65535) };
 extern const Gfx pokey_seg5_dl_05012750[] __attribute__((alias("port_dummy_dl")));
@@ -1774,6 +1738,7 @@ extern const Gfx monty_mole_seg5_dl_05004BE0[] __attribute__((alias("port_dummy_
 extern const Gfx monty_mole_seg5_dl_05004C00[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx monty_mole_seg5_dl_05004CE8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx monty_mole_seg5_dl_05004D30[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const monty_mole_seg5_anims_05007248[] = { NULL };
 extern const Gfx monty_mole_hole_seg5_dl_05000840[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx smoke_seg5_dl_05007AC0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx smoke_seg5_dl_05007AF8[] __attribute__((alias("port_dummy_dl")));
@@ -1813,6 +1778,7 @@ extern const Gfx ukiki_seg5_dl_0500CF68[] __attribute__((alias("port_dummy_dl"))
 extern const Gfx ukiki_seg5_dl_0500CFF0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx ukiki_seg5_dl_0500D078[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx ukiki_seg5_dl_0500D108[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const ukiki_seg5_anims_05015784[] = { NULL };
 const GeoLayout penguin_geo[] = { PORT_MODEL(65535) };
 extern const Gfx penguin_seg5_dl_05006188[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx penguin_seg5_dl_050061C8[] __attribute__((alias("port_dummy_dl")));
@@ -1830,6 +1796,8 @@ extern const Gfx penguin_seg5_dl_05007238[] __attribute__((alias("port_dummy_dl"
 extern const Gfx penguin_seg5_dl_050072C8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx penguin_seg5_dl_05007358[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx penguin_seg5_dl_05007540[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const penguin_seg5_anims_05008B74[] = { NULL };
+const Collision penguin_seg5_collision_05008B88[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
 const GeoLayout mr_blizzard_hidden_geo[] = { PORT_MODEL(65535) };
 const GeoLayout mr_blizzard_geo[] = { PORT_MODEL(65535) };
 extern const Gfx snowman_seg5_dl_0500C4C8[] __attribute__((alias("port_dummy_dl")));
@@ -1846,6 +1814,7 @@ extern const Gfx snowman_seg5_dl_0500CBC0[] __attribute__((alias("port_dummy_dl"
 extern const Gfx snowman_seg5_dl_0500CBF8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx snowman_seg5_dl_0500CCB0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx snowman_seg5_dl_0500CCE8[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const snowman_seg5_anims_0500D118[] = { NULL };
 const GeoLayout spindrift_geo[] = { PORT_MODEL(65535) };
 extern const Gfx spindrift_seg5_dl_050002A0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx spindrift_seg5_dl_05000328[] __attribute__((alias("port_dummy_dl")));
@@ -1861,6 +1830,7 @@ extern const Gfx spindrift_seg5_dl_05002AD8[] __attribute__((alias("port_dummy_d
 extern const Gfx spindrift_seg5_dl_05002B30[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx spindrift_seg5_dl_05002C98[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx spindrift_seg5_dl_05002D08[] __attribute__((alias("port_dummy_dl")));
+const struct Animation *const spindrift_seg5_anims_05002D68[] = { NULL };
 const GeoLayout cap_switch_geo[] = { PORT_MODEL(65535) };
 extern const Gfx capswitch_seg5_dl_05002D88[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx cap_switch_exclamation_seg5_dl_05002E00[] __attribute__((alias("port_dummy_dl")));
@@ -1871,12 +1841,15 @@ extern const Gfx capswitch_seg5_dl_05003350[] __attribute__((alias("port_dummy_d
 extern const Gfx capswitch_seg5_dl_05003370[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx capswitch_seg5_dl_05003390[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx capswitch_seg5_dl_050033B0[] __attribute__((alias("port_dummy_dl")));
+const Collision capswitch_collision_050033D0[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
+const Collision capswitch_collision_05003448[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
 const GeoLayout springboard_top_geo[] = { PORT_MODEL(65535) };
 const GeoLayout springboard_spring_geo[] = { PORT_MODEL(65535) };
 const GeoLayout springboard_bottom_geo[] = { PORT_MODEL(65535) };
 extern const Gfx springboard_checkerboard_seg5_dl_050016B8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx springboard_spring_seg5_dl_05001800[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx springboard_checkerboard_seg5_dl_05001900[] __attribute__((alias("port_dummy_dl")));
+const Collision springboard_collision_05001A28[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
 const GeoLayout boo_geo[] = { PORT_MODEL(92) };
 extern const Gfx boo_seg5_dl_0500BEE0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx boo_seg5_dl_0500BF48[] __attribute__((alias("port_dummy_dl")));

@@ -32,19 +32,20 @@ enum { W_WRAP = 0, W_MIRROR = 1, W_CLAMP = 2 };
 typedef struct {
   uint16_t tex;     /* index in the texture table (when M_TEX) */
   uint8_t mode, wrap;
-  uint16_t tri0, ntri;   /* in the mesh's triangles */
-  uint16_t v0, nv;       /* the vertices they use */
+  uint16_t tri0, ntri;   /* in the mesh's triangles (3 bytes each: indices among the batch's vertices) */
+  uint16_t v0, nv;       /* the vertices they use (128 at most) */
   int16_t lo[3], hi[3];  /* their bounds */
   uint8_t light[6];      /* lit: the ambient colour, then the light's */
 } Batch;
 
 typedef struct {
-  uint32_t vtx, tri, batch;   /* offsets: MVert[], uint16_t[3] each, Batch[] */
+  uint32_t vtx, tri, batch;   /* offsets: MVert[], uint8_t[3] each, Batch[] */
   uint16_t nvtx, ntri, nbatch, flags;
   int16_t lo[3], hi[3];
 } Mesh;
 
-/* a texture: texels in flash, w and h powers of two */
+/* a texture: a palette of 16 or 256 texel values, then the texels (4 or 8 bits each), w and h powers of two.
+ * fmt: the values' kind (bits 0-3), and bits 4-5: 1 for 16 colours, 2 for 256 (3: no palette, 16-bit texels) */
 enum { TF_565, TF_565K, TF_IA };   /* opaque; with a transparent colour (TEX_KEY); intensity and alpha */
 #define TEX_KEY 0x0020
 typedef struct {
@@ -52,25 +53,32 @@ typedef struct {
   uint8_t wl, hl, fmt, pad;   /* log2 of the size */
 } Tex;
 
-/* a model: the game's geo layout as a list of nodes, each with its parent: the animated parts (which take an
- * animation's rotations, in order), the switches (which choose one child) and the meshes */
+/* a model: the game's geo layout as a list of nodes, parents first (in the order the game draws them), each
+ * with its parent: the animated parts (which take an animation's values, in order), the switches (which choose
+ * one child), the callbacks, the shadow and the meshes */
 enum { N_PART, N_TRANSLATE, N_ROTATE, N_SCALE, N_SWITCH, N_BILLBOARD, N_SHADOW, N_HELD, N_MESH, N_GROUP, N_RANGE,
-       N_ASM };
+       N_ASM, N_TRANSROT };
 typedef struct {
-  uint8_t kind, parent;       /* parent: 0xFF for the root */
-  uint8_t sw, arg;            /* switches and callbacks: which function (tools/models.py); meshes: their layer */
-  uint8_t cse, pad;           /* the node's place among its parent's children (a switch draws one of them) */
+  uint8_t kind;
+  uint8_t fn;                 /* switches, held objects and callbacks: the game's function (port_geo_funcs) */
+  uint8_t arg;                /* meshes: their layer; switches: how many cases; shadows: the type; held objects:
+                                 the player */
+  uint8_t cse;                /* the node's place among its parent's children (a switch draws one of them) */
+  uint16_t parent;            /* 0xFFFF for the root's children */
+  uint16_t end;               /* where its subtree ends: the next node not below it */
   uint16_t mesh;              /* meshes (and nodes with one): 0xFFFF none */
-  int16_t t[3];               /* translation (render ranges: from, to) */
+  uint16_t pad;
+  int16_t t[3];               /* translation (render ranges: from, to; shadows: solidity, scale) */
   int16_t r[3];               /* rotation */
-  uint32_t scale;             /* x 1/65536 (scale nodes) */
+  uint32_t scale;             /* x 1/65536 (scale nodes); callbacks: their parameter */
 } MNode;
 typedef struct {
   uint32_t nodes;
   uint16_t nnodes;
-  uint8_t shadow_type, pad;
-  int16_t shadow_size, shadow_alpha;
-  int16_t lo[3], hi[3];       /* a box around it, for culling */
+  uint8_t pad0, pad1;
+  int16_t cull;               /* the culling radius */
+  int16_t pad2, pad3, pad4;
+  int16_t lo[3], hi[3];       /* a box around it */
 } MModel;
 
 typedef struct {

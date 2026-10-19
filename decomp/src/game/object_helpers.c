@@ -677,17 +677,17 @@ void obj_apply_scale_to_transform(struct Object *obj) {
     f32 scaleY = obj->header.gfx.scale[1];
     f32 scaleZ = obj->header.gfx.scale[2];
 
-    obj->transform[0][0] *= scaleX;
-    obj->transform[0][1] *= scaleX;
-    obj->transform[0][2] *= scaleX;
+    OBJ_TRANSFORM(obj)[0][0] *= scaleX;
+    OBJ_TRANSFORM(obj)[0][1] *= scaleX;
+    OBJ_TRANSFORM(obj)[0][2] *= scaleX;
 
-    obj->transform[1][0] *= scaleY;
-    obj->transform[1][1] *= scaleY;
-    obj->transform[1][2] *= scaleY;
+    OBJ_TRANSFORM(obj)[1][0] *= scaleY;
+    OBJ_TRANSFORM(obj)[1][1] *= scaleY;
+    OBJ_TRANSFORM(obj)[1][2] *= scaleY;
 
-    obj->transform[2][0] *= scaleZ;
-    obj->transform[2][1] *= scaleZ;
-    obj->transform[2][2] *= scaleZ;
+    OBJ_TRANSFORM(obj)[2][0] *= scaleZ;
+    OBJ_TRANSFORM(obj)[2][1] *= scaleZ;
+    OBJ_TRANSFORM(obj)[2][2] *= scaleZ;
 }
 
 void obj_copy_scale(struct Object *dst, struct Object *src) {
@@ -1898,11 +1898,11 @@ void obj_translate_local(struct Object *obj, s16 posIndex, s16 localTranslateInd
     f32 dz = obj->rawData.asF32[localTranslateIndex + 2];
 
     obj->rawData.asF32[posIndex + 0] +=
-        obj->transform[0][0] * dx + obj->transform[1][0] * dy + obj->transform[2][0] * dz;
+        OBJ_TRANSFORM(obj)[0][0] * dx + OBJ_TRANSFORM(obj)[1][0] * dy + OBJ_TRANSFORM(obj)[2][0] * dz;
     obj->rawData.asF32[posIndex + 1] +=
-        obj->transform[0][1] * dx + obj->transform[1][1] * dy + obj->transform[2][1] * dz;
+        OBJ_TRANSFORM(obj)[0][1] * dx + OBJ_TRANSFORM(obj)[1][1] * dy + OBJ_TRANSFORM(obj)[2][1] * dz;
     obj->rawData.asF32[posIndex + 2] +=
-        obj->transform[0][2] * dx + obj->transform[1][2] * dy + obj->transform[2][2] * dz;
+        OBJ_TRANSFORM(obj)[0][2] * dx + OBJ_TRANSFORM(obj)[1][2] * dy + OBJ_TRANSFORM(obj)[2][2] * dz;
 }
 
 void obj_build_transform_from_pos_and_angle(struct Object *obj, s16 posIndex, s16 angleIndex) {
@@ -1917,7 +1917,7 @@ void obj_build_transform_from_pos_and_angle(struct Object *obj, s16 posIndex, s1
     rotation[1] = obj->rawData.asS32[angleIndex + 1];
     rotation[2] = obj->rawData.asS32[angleIndex + 2];
 
-    mtxf_rotate_zxy_and_translate(obj->transform, translate, rotation);
+    mtxf_rotate_zxy_and_translate(OBJ_TRANSFORM(obj), translate, rotation);
 }
 
 void obj_set_throw_matrix_from_transform(struct Object *obj) {
@@ -1926,7 +1926,7 @@ void obj_set_throw_matrix_from_transform(struct Object *obj) {
         obj_apply_scale_to_transform(obj);
     }
 
-    obj->header.gfx.throwMatrix = &obj->transform;
+    obj->header.gfx.throwMatrix = (Mat4 *) OBJ_TRANSFORM(obj);
 
     //! Sets scale of gCurrentObject instead of obj. Not exploitable since this
     //  function is only called with obj = gCurrentObject
@@ -1938,13 +1938,13 @@ void obj_build_transform_relative_to_parent(struct Object *obj) {
 
     obj_build_transform_from_pos_and_angle(obj, O_PARENT_RELATIVE_POS_INDEX, O_FACE_ANGLE_INDEX);
     obj_apply_scale_to_transform(obj);
-    mtxf_mul(obj->transform, obj->transform, parent->transform);
+    mtxf_mul(OBJ_TRANSFORM(obj), OBJ_TRANSFORM(obj), OBJ_TRANSFORM(parent));
 
-    obj->oPosX = obj->transform[3][0];
-    obj->oPosY = obj->transform[3][1];
-    obj->oPosZ = obj->transform[3][2];
+    obj->oPosX = OBJ_TRANSFORM(obj)[3][0];
+    obj->oPosY = OBJ_TRANSFORM(obj)[3][1];
+    obj->oPosZ = OBJ_TRANSFORM(obj)[3][2];
 
-    obj->header.gfx.throwMatrix = &obj->transform;
+    obj->header.gfx.throwMatrix = (Mat4 *) OBJ_TRANSFORM(obj);
 
     //! Sets scale of gCurrentObject instead of obj. Not exploitable since this
     //  function is only called with obj = gCurrentObject
@@ -1955,9 +1955,9 @@ void obj_create_transform_from_self(struct Object *obj) {
     obj->oFlags &= ~OBJ_FLAG_TRANSFORM_RELATIVE_TO_PARENT;
     obj->oFlags |= OBJ_FLAG_SET_THROW_MATRIX_FROM_TRANSFORM;
 
-    obj->transform[3][0] = obj->oPosX;
-    obj->transform[3][1] = obj->oPosY;
-    obj->transform[3][2] = obj->oPosZ;
+    OBJ_TRANSFORM(obj)[3][0] = obj->oPosX;
+    OBJ_TRANSFORM(obj)[3][1] = obj->oPosY;
+    OBJ_TRANSFORM(obj)[3][2] = obj->oPosZ;
 }
 
 void cur_obj_rotate_move_angle_using_vel(void) {
@@ -2064,9 +2064,9 @@ static void obj_build_vel_from_transform(struct Object *obj) {
     f32 forward = obj->oForwardVel;
 
     //! Typo, up and left should be swapped
-    obj->oVelX = obj->transform[0][0] * up + obj->transform[1][0] * left + obj->transform[2][0] * forward;
-    obj->oVelY = obj->transform[0][1] * up + obj->transform[1][1] * left + obj->transform[2][1] * forward;
-    obj->oVelZ = obj->transform[0][2] * up + obj->transform[1][2] * left + obj->transform[2][2] * forward;
+    obj->oVelX = OBJ_TRANSFORM(obj)[0][0] * up + OBJ_TRANSFORM(obj)[1][0] * left + OBJ_TRANSFORM(obj)[2][0] * forward;
+    obj->oVelY = OBJ_TRANSFORM(obj)[0][1] * up + OBJ_TRANSFORM(obj)[1][1] * left + OBJ_TRANSFORM(obj)[2][1] * forward;
+    obj->oVelZ = OBJ_TRANSFORM(obj)[0][2] * up + OBJ_TRANSFORM(obj)[1][2] * left + OBJ_TRANSFORM(obj)[2][2] * forward;
 }
 
 void cur_obj_set_pos_via_transform(void) {
@@ -2765,8 +2765,8 @@ void cur_obj_align_gfx_with_floor(void) {
         floorNormal[1] = floor->normal.y;
         floorNormal[2] = floor->normal.z;
 
-        mtxf_align_terrain_normal(o->transform, floorNormal, position, o->oFaceAngleYaw);
-        o->header.gfx.throwMatrix = &o->transform;
+        mtxf_align_terrain_normal(OBJ_TRANSFORM(o), floorNormal, position, o->oFaceAngleYaw);
+        o->header.gfx.throwMatrix = (Mat4 *) OBJ_TRANSFORM(o);
     }
 }
 

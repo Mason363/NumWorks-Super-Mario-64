@@ -18,20 +18,91 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_BIN = os.path.join(HERE, "..", "src", "data.bin")
 OUT_IDS = os.path.join(HERE, "..", "src", "data_ids.h")
 
+# the most vertices a batch of triangles has (the renderer transforms them at once: src/render.c)
+BATCH_VERTS = 128
+
 # the world light of the levels (the game's 0x28, 0x28, 0x28): baked into their vertices
 WORLD_LIGHT = (0.57735, 0.57735, 0.57735)
 
 
 class Blob:
+    """The file's bytes; the same data added twice is kept once (Mario's heads differ only by their eyes)."""
     def __init__(self):
         self.b = bytearray(64)   # (the header)
+        self.seen = {}
 
     def add(self, data, align=4):
+        data = bytes(data)
+        if (data, align) in self.seen:
+            return self.seen[(data, align)]
         while len(self.b) % align:
             self.b.append(0)
         off = len(self.b)
         self.b += data
+        self.seen[(data, align)] = off
         return off
+
+
+def quantize(img, fmt, ncol):
+    """A palette of at most ncol texel values (fmt's: RGB565, RGB565 with TEX_KEY first, or intensity << 8 | alpha)
+    and the image's indices into it."""
+    h, w = img.shape[:2]
+    if fmt == 2:
+        inten = img[..., 0].astype(np.int32)
+        vals = (inten << 8) | img[..., 3].astype(np.int32)
+        pts = np.stack([inten, img[..., 3].astype(np.int32)], axis=-1).reshape(-1, 2).astype(np.float64)
+        pal, idx = kmeans_palette(pts, vals.reshape(-1), ncol, lambda c: (int(c[0]) << 8) | int(c[1]), h, w)
+        return pal, idx.reshape(h, w)
+    key = fmt == 1
+    opaque = img[..., 3] >= 128 if key else np.ones((h, w), bool)
+    r, g, b = (img[..., i].astype(np.int32) for i in range(3))
+    vals = ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3)
+    pts = np.stack([r, g, b], axis=-1).reshape(-1, 3).astype(np.float64)
+    flat_opaque = opaque.reshape(-1)
+    pal, idx = kmeans_palette(pts[flat_opaque], vals.reshape(-1)[flat_opaque], ncol - (1 if key else 0),
+                              lambda c: ((int(c[0]) >> 3) << 11) | ((int(c[1]) >> 2) << 5) | (int(c[2]) >> 3), None, None)
+    if key:
+        pal = [0x0020] + [v if v != 0x0020 else 0x0040 for v in pal]
+        full = np.zeros(h * w, np.int32)
+        full[flat_opaque] = idx + 1
+        return pal, full.reshape(h, w)
+    return pal, idx.reshape(h, w)
+
+
+def kmeans_palette(pts, vals, ncol, encode, h, w):
+    """Exact when the image has few enough values, else k-means (k-means++ start, a few rounds)."""
+    if len(vals) == 0:
+        return [0], np.zeros(0, np.int32)
+    uniq, inv = np.unique(vals, return_inverse=True)
+    if len(uniq) <= ncol:
+        return [int(v) for v in uniq], inv.astype(np.int32)
+    rng = np.random.default_rng(7)
+    cent = [pts[rng.integers(len(pts))]]
+    for _ in range(1, ncol):
+        d = np.min([((pts - c) ** 2).sum(1) for c in cent], axis=0)
+        cent.append(pts[rng.choice(len(pts), p=d / d.sum())] if d.sum() > 0 else pts[0])
+    cent = np.array(cent)
+    for _ in range(12):
+        lab = np.argmin(((pts[:, None, :] - cent[None]) ** 2).sum(2), axis=1)
+        for k in range(ncol):
+            m = lab == k
+            if m.any():
+                cent[k] = pts[m].mean(0)
+    lab = np.argmin(((pts[:, None, :] - cent[None]) ** 2).sum(2), axis=1)
+    return [encode(np.clip(np.round(c), 0, 255)) for c in cent], lab.astype(np.int32)
+
+
+def texel_error(img, fmt, pal, idx):
+    """The mean distance (0..255 a channel) of the paletted image from the painted one."""
+    p = np.array(pal)
+    v = p[idx]
+    if fmt == 2:
+        a = np.stack([v >> 8, v & 255], -1).astype(np.float64)
+        b = np.stack([img[..., 0], img[..., 3]], -1).astype(np.float64)
+        return np.abs(a - b).mean()
+    a = np.stack([(v >> 11) * 255 / 31, ((v >> 5) & 63) * 255 / 63, (v & 31) * 255 / 31], -1)
+    m = img[..., 3] >= 128 if fmt == 1 else np.ones(idx.shape, bool)
+    return np.abs(a - img[..., :3])[m].mean() if m.any() else 0.0
 
 
 class Pack:
@@ -56,19 +127,27 @@ class Pack:
         key = (path, w, h, fmt)
         if key in self.tex_index:
             return self.tex_index[key]
-        img = textures.paint(path, w, h)
-        if fmt == 2:
-            inten = img[..., :3].max(axis=2).astype(np.uint16) if ".ia" not in path else img[..., 0].astype(np.uint16)
-            data = ((inten << 8) | img[..., 3].astype(np.uint16)).astype("<u2")
+        img = textures.paint(path, w, h).copy()
+        if fmt == 2 and ".ia" not in path:
+            img[..., 0] = img[..., :3].max(axis=2)
+        # 16 colours a texture (4 bits a texel), 256 when 16 lose too much
+        pal, idx = quantize(img, fmt, 16)
+        depth = 1
+        if texel_error(img, fmt, pal, idx) > 6:
+            pal, idx = quantize(img, fmt, 256)
+            depth = 2
+        pal = pal + [pal[0]] * ((16 if depth == 1 else 256) - len(pal))
+        if depth == 1:
+            flat = idx.reshape(-1).astype(np.uint8)
+            if len(flat) % 2:
+                flat = np.append(flat, 0)
+            texels = (flat[0::2] | (flat[1::2] << 4)).astype(np.uint8)
         else:
-            r, g, b = (img[..., i].astype(np.uint16) for i in range(3))
-            data = (((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3)).astype("<u2")
-            if fmt == 1:
-                data[img[..., 3] < 128] = 0x0020
-                data[(img[..., 3] >= 128) & (data == 0x0020)] = 0x0040
-        off = self.blob.add(data.tobytes())
+            texels = idx.reshape(-1).astype(np.uint8)
+        off = self.blob.add(struct.pack(f"<{len(pal)}H", *pal) + texels.tobytes())
+        self.tex_bytes = getattr(self, "tex_bytes", 0) + len(pal) * 2 + len(texels)
         wl, hl = int(round(np.log2(w))), int(round(np.log2(h)))
-        self.tex_entries.append(struct.pack("<IBBBB", off, wl, hl, fmt, 0))
+        self.tex_entries.append(struct.pack("<IBBBB", off, wl, hl, fmt | (depth << 4), 0))
         self.tex_index[key] = len(self.tex_entries) - 1
         return self.tex_index[key]
 
@@ -117,7 +196,7 @@ class Pack:
             if m.texgen:
                 mode |= 128
             wrap = (m.cms & 3) | ((m.cmt & 3) << 2)
-            # split into runs of at most 255 vertices
+            # split into runs of at most BATCH_VERTS vertices
             pending = list(ts)
             while pending:
                 vmap, bt, bverts = {}, [], []
@@ -128,7 +207,7 @@ class Pack:
                         enc = self.encode_vertex(v, bake, lit, m)
                         keys.append(enc)
                     new = [k for k in keys if k not in vmap]
-                    if len(vmap) + len(set(new)) > 255:
+                    if len(vmap) + len(set(new)) > BATCH_VERTS:
                         rest.append(t)
                         continue
                     idx = []
@@ -142,7 +221,7 @@ class Pack:
                 v0 = len(verts)
                 verts += bverts
                 tri0 = len(tri_idx)
-                tri_idx += [[v0 + i for i in t] for t in bt]
+                tri_idx += bt
                 xs = [v[0] for v in bverts]
                 ys = [v[1] for v in bverts]
                 zs = [v[2] for v in bverts]
@@ -158,7 +237,7 @@ class Pack:
             return None
         vdata = b"".join(struct.pack("<5h4B", *v) for v in verts)
         voff = self.blob.add(vdata)
-        toff = self.blob.add(b"".join(struct.pack("<3H", *t) for t in tri_idx))
+        toff = self.blob.add(bytes(i for t in tri_idx for i in t), 1)
         boff = self.blob.add(b"".join(batches))
         self.meshes.append(struct.pack("<IIIHHHH6h", voff, toff, boff, len(verts), len(tri_idx), len(batches), 0, *lo, *hi))
         idx = len(self.meshes) - 1
@@ -315,7 +394,8 @@ def main():
     os.makedirs(port.GEN, exist_ok=True)
     open(os.path.join(port.GEN, "models.txt"), "w").write("\n".join(sorted(set(lines))) + "\n")
     p.write(mb)
-    print(f"{len(mb.models)} models, {len(mb.dl_mesh)} display lists")
+    M.write_funcs(os.path.join(port.GEN, "geo_funcs.c"))
+    print(f"{len(mb.models)} models, {len(mb.dl_mesh)} display lists, {len(M.FUNCS)} functions")
 
 
 if __name__ == "__main__":

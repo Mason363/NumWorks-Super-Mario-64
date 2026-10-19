@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
       host_shot(p);
     }
     if (stats && f % 30 == 0) {
-      printf("frame %d: %d items, %d triangles; ", f, r_stat_items, r_stat_tris);
+      printf("frame %d: %d items, %d triangles, %d vertices; ", f, r_stat_items, r_stat_tris, r_stat_verts);
       port_debug_print();
     }
   }

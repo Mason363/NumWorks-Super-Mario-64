@@ -81,13 +81,6 @@ void osInvalDCache(void *vaddr, size_t nbytes) {}
 s32 osRecvMesg(OSMesgQueue *mq, OSMesg *msg, s32 flag) { return 0; }
 void osCreateMesgQueue(OSMesgQueue *mq, OSMesg *msg, s32 count) {}
 
-/* the graph nodes of the N64's renderer: the calculator draws on its own (src/scene.c) */
-struct GraphNodeRoot *gCurGraphNodeRoot;
-struct GraphNodeMasterList *gCurGraphNodeMasterList;
-struct GraphNodePerspective *gCurGraphNodeCamFrustum;
-struct GraphNodeCamera *gCurGraphNodeCamera;
-struct GraphNodeObject *gCurGraphNodeObject;
-struct GraphNodeHeldObject *gCurGraphNodeHeldObject;
 
 /* ---------------------------------------------------------------------------------------------- paintings */
 s8 gDDDPaintingStatus;

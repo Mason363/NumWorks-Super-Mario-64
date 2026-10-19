@@ -44,4 +44,6 @@ void plat_begin(void);
 int plat_end(void);
 /* an N0110 or N0115 (216 MHz, the N0120 has 550) */
 bool plat_slow(void);
+/* the RAM after the game's own: what the calculator's software has left for the app */
+void *plat_heap(uint32_t *len);
 #endif
