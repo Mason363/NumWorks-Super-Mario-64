@@ -50,7 +50,10 @@ class ModelBuilder:
             if same:
                 idx = self.dl_mesh[same[0]]
             else:
-                idx = self.pack.mesh(f"dl_{name}_{layer}", tris, bake=False, cell=0) if tris else None
+                # (the same list under other lights: a mesh of its own, its name numbered)
+                n = len({self.dl_mesh[k] for k in self.dl_mesh if k[:2] == key[:2]})
+                idx = self.pack.mesh(f"dl_{name}_{layer}" + (f"_lit{n}" if n else ""), tris, bake=False,
+                                     cell=0) if tris else None
                 idx = 0xFFFF if idx is None else idx
             self.dl_mesh[key], self.dl_sig[key], self.dl_light[key] = idx, sig, end["light"]
         self.light = self.dl_light[key]
