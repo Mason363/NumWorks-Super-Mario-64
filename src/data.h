@@ -56,7 +56,8 @@ enum { TF_565, TF_565K, TF_IA };   /* opaque; with a transparent colour (TEX_KEY
 #define TEX_KEY 0x0020
 typedef struct {
   uint32_t off;
-  uint8_t wl, hl, fmt, pad;   /* log2 of the size */
+  uint8_t wl, hl, fmt, shift;   /* log2 of the size; shift: the texture is that many times halved (the triangles'
+                                   texel coordinates are the full size's) */
 } Tex;
 
 /* a model: the game's geo layout as a list of nodes, parents first (in the order the game draws them), each

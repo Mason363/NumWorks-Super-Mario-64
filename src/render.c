@@ -182,7 +182,7 @@ typedef struct {
 /* the texture and the way the triangle is drawn */
 static const uint8_t *tx_texels;
 static const uint16_t *tx_pal;
-static int tx_wl, tx_wm, tx_hm, tx_fmt, tx_depth;
+static int tx_wl, tx_wm, tx_hm, tx_fmt, tx_depth, tx_shift;
 static uint8_t tx_wrap, d_mode;
 static bool tx_blend;   /* (W_BLEND) */
 static uint32_t d_tint;
@@ -223,7 +223,7 @@ static inline __attribute__((always_inline)) void span_body(int y, int x0, int x
   int32_t r = fix16(p->r), g = fix16(p->g), b = fix16(p->b), dr = fix16(d->r), dg = fix16(d->g), db = fix16(d->b);
   int32_t a = fix16(p->a), da = fix16(d->a), f = fix16(p->fog), df = fix16(d->fog);
   const uint8_t mode = d_mode;
-  const int wm = tx_wm, hm = tx_hm, wl = tx_wl, ws = tx_wrap & 3, wt = tx_wrap >> 2 & 3;
+  const int wm = tx_wm, hm = tx_hm, wl = tx_wl, ws = tx_wrap & 3, wt = tx_wrap >> 2 & 3, shift = tx_shift;
   const int tr = d_tint >> 16 & 255, tg = d_tint >> 8 & 255, tb = d_tint & 255;
   const bool tinted = d_tint != 0xFFFFFF, fog = fog_on && (mode & M_FOG), ia = tx_fmt == TF_IA;
   const bool key = tx_fmt == TF_565K, blend = tx_blend;
@@ -249,7 +249,7 @@ static inline __attribute__((always_inline)) void span_body(int y, int x0, int x
       int cr = r >> 16, cg = g >> 16, cbl = b >> 16, ca = d_alpha;
       uint16_t out;
       if (depth) {
-        int i = wrap_coord(v >> 16, hm, wt) << wl | wrap_coord(u >> 16, wm, ws);
+        int i = wrap_coord(v >> 16 >> shift, hm, wt) << wl | wrap_coord(u >> 16 >> shift, wm, ws);
         uint16_t t = depth == 1 ? pal[texels[i >> 1] >> ((i & 1) << 2) & 15]
                    : depth == 2 ? pal[texels[i]] : ((const uint16_t *)(const void *)texels)[i];
         if (ia) {
@@ -305,7 +305,8 @@ static inline __attribute__((always_inline)) void span_fast_body(int y, int x0, 
   if (ze > 30000.0f) ze = 30000.0f;
   if (ze < 0) ze = 0;
   int32_t z = (int32_t)(zs * 65536.0f), dz = (int32_t)((ze - zs) * 65536.0f / (float)(x1 - x0));
-  const uint32_t wm = (uint32_t)tx_wm, vsh = 8 - (uint32_t)tx_wl, vmask = (uint32_t)(tx_hm << tx_wl);
+  const uint32_t ush = 24 + (uint32_t)tx_shift, wm = (uint32_t)tx_wm;
+  const uint32_t vsh = 8 + (uint32_t)tx_shift - (uint32_t)tx_wl, vmask = (uint32_t)(tx_hm << tx_wl);
   const uint8_t *texels = tx_texels;
   const uint16_t *pal = tx_pal;
   const int fr = fog_col >> 11, fg = (fog_col >> 5) & 63, fb = fog_col & 31;
@@ -327,7 +328,7 @@ static inline __attribute__((always_inline)) void span_fast_body(int y, int x0, 
   for (const uint16_t *end = cb + n; cb < end; cb++, zb++, z += dz, uv += duv) {                              \
     int zz = z >> 16;                                                                                         \
     if (zz < *zb) continue;                                                                                   \
-    uint32_t i = ((uv >> 24) & wm) | ((uv >> vsh) & vmask);                                                   \
+    uint32_t i = ((uv >> ush) & wm) | ((uv >> vsh) & vmask);                                                  \
     uint32_t t = TEXEL();                                                                                     \
     *zb = (uint16_t)zz;                                                                                       \
     *cb = (uint16_t)(OUT);                                                                                    \
@@ -543,7 +544,7 @@ static void use_texture(const Batch *b) {
     const Tex *t = TEX(b->tex);
     const uint8_t *base = DAT(uint8_t, t->off);
     int depth = t->fmt >> 4;
-    tx_depth = depth;
+    tx_depth = depth, tx_shift = t->shift;
     tx_wl = t->wl, tx_wm = (1 << t->wl) - 1, tx_hm = (1 << t->hl) - 1;
     tx_fmt = t->fmt & 15;
     tx_pal = (const uint16_t *)(const void *)base;
@@ -576,7 +577,7 @@ static void draw_batch(const RItem *it, const Batch *b) {
   Vec3f L = {0, 0, 0};
   if (lit) model_light(M, L);
   use_texture(b);
-  float tw = (float)(tx_wm + 1), th = (float)(tx_hm + 1);
+  float tw = (float)((tx_wm + 1) << tx_shift), th = (float)((tx_hm + 1) << tx_shift);
   r_stat_verts += nv;
   RVert *vb = F->verts;
   for (int i = 0; i < nv; i++) {

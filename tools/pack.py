@@ -108,6 +108,29 @@ def texel_error(img, fmt, pal, idx):
     return np.abs(a - img[..., :3])[m].mean() if m.any() else 0.0
 
 
+def halve(img):
+    """Half the size: each 2 x 2 texels' mean (and the most opaque's alpha)."""
+    f = img.astype(np.float32)
+    h, w = img.shape[:2]
+    q = f.reshape(h // 2, 2, w // 2, 2, 4)
+    out = q.mean(axis=(1, 3))
+    out[..., 3] = q[..., 3].max(axis=(1, 3))
+    return np.clip(out + 0.5, 0, 255).astype(np.uint8)
+
+
+def smooth(img, fmt):
+    """Whether the texture looks the same at half its size: its texels' differences from their 2 x 2 blocks'
+    means are small (and, cut out, its clear texels stay clear)."""
+    if fmt != 0:
+        return False
+    half = halve(img).astype(np.float32)
+    back = np.repeat(np.repeat(half, 2, axis=0), 2, axis=1)
+    return float(np.abs(back[..., :3] - img[..., :3].astype(np.float32)).mean()) < SMOOTH
+
+
+SMOOTH = 7.0   # (the mean difference, of 255, a texture may lose)
+
+
 def usage_of(tris, m):
     """Where a texture is used, for tools/textures.py's painter of those nobody drew by hand: the share of its
     triangles that are floors and ceilings (the rest are walls), their mean colour, cut out or not."""
@@ -190,6 +213,11 @@ class Pack:
         img = textures.paint(path, w, h, usage).copy()
         if fmt == 2 and ".ia" not in path:
             img[..., 0] = img[..., :3].max(axis=2)
+        # a texture that loses little at half its size (or a quarter) is kept so (data.h's Tex.shift)
+        shift = 0
+        while shift < 2 and min(img.shape[:2]) >= 16 and smooth(img, fmt):
+            img = halve(img)
+            shift += 1
         # 16 colours a texture (4 bits a texel), 256 when 16 lose too much
         pal, idx = quantize(img, fmt, 16)
         depth = 1
@@ -206,8 +234,8 @@ class Pack:
             texels = idx.reshape(-1).astype(np.uint8)
         off = self.blob.add(struct.pack(f"<{len(pal)}H", *pal) + texels.tobytes())
         self.tex_bytes = getattr(self, "tex_bytes", 0) + len(pal) * 2 + len(texels)
-        wl, hl = int(round(np.log2(w))), int(round(np.log2(h)))
-        self.tex_entries.append(struct.pack("<IBBBB", off, wl, hl, fmt | (depth << 4), 0))
+        wl, hl = int(round(np.log2(img.shape[1]))), int(round(np.log2(img.shape[0])))
+        self.tex_entries.append(struct.pack("<IBBBB", off, wl, hl, fmt | (depth << 4), shift))
         self.tex_index[key] = len(self.tex_entries) - 1
         return self.tex_index[key]
 
