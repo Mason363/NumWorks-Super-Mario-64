@@ -90,7 +90,7 @@ static void draw_shadow(f32 x, f32 y, f32 z, s16 scale, u8 solidity, s8 type) {
   f32 dist = y - h, radius;
   bool square = false;
   if (type == SHADOW_SQUARE_PERMANENT || type == SHADOW_SQUARE_SCALABLE || type == SHADOW_SQUARE_TOGGLABLE ||
-      type >= SHADOW_RECTANGLE_HARDCODED_OFFSET) {
+      (type >= SHADOW_RECTANGLE_HARDCODED_OFFSET && type != SHADOW_CIRCLE_PLAYER)) {
     square = true;
     nx = 0, ny = 1, nz = 0;
     if (type == SHADOW_SQUARE_PERMANENT) radius = scale / 2;

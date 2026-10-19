@@ -30,19 +30,30 @@ class ModelBuilder:
     def __init__(self, pack):
         self.pack = pack
         self.src = pack.src
-        self.dl_mesh = {}      # (display list, layer) -> mesh index
+        self.dl_mesh = {}      # (display list, layer, the lights before it) -> mesh index
+        self.dl_sig, self.dl_light = {}, {}   # (the same) -> its triangles (to share them), the lights after it
+        self.light = None
         self.models = []       # packed MModel
         self.index = {}        # geo symbol, or ("dl", symbol, layer) -> model index
 
     def dl(self, name, layer):
         if name in ("NULL", "0", ""):
             return 0xFFFF
-        key = (name, layer)
+        # (with the lights the model's lists drawn before left set, as on the N64: Mario's buttons take the blue of
+        # his overalls from them)
+        key = (name, layer, repr(self.light))
         if key not in self.dl_mesh:
             tris = []
-            decomp.run_dl(self.src, name, layer, tris)
-            idx = self.pack.mesh(f"dl_{name}_{layer}", tris, bake=False, cell=0) if tris else None
-            self.dl_mesh[key] = 0xFFFF if idx is None else idx
+            end = decomp.run_dl(self.src, name, layer, tris, light=self.light)
+            sig = repr([([getattr(t.mat, f, None) for f in decomp.Material.__slots__], t.v) for t in tris])
+            same = [k for k in self.dl_mesh if k[:2] == key[:2] and self.dl_sig[k] == sig]
+            if same:
+                idx = self.dl_mesh[same[0]]
+            else:
+                idx = self.pack.mesh(f"dl_{name}_{layer}", tris, bake=False, cell=0) if tris else None
+                idx = 0xFFFF if idx is None else idx
+            self.dl_mesh[key], self.dl_sig[key], self.dl_light[key] = idx, sig, end["light"]
+        self.light = self.dl_light[key]
         return self.dl_mesh[key]
 
     def finish(self, nodes, cull):
@@ -69,6 +80,7 @@ class ModelBuilder:
     def from_geo(self, geo):
         if geo in self.index:
             return self.index[geo]
+        self.light = None
         tree = decomp.geo_tree(self.src, geo)
         nodes = []
         # (a culling radius first: the object is culled with it, else with 300)

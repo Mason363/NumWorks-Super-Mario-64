@@ -232,12 +232,12 @@ def tex_combine(cc):
     return "mod"
 
 
-def run_dl(src, name, layer, out, light_dir=None, state=None):
-    """Appends the triangles of display list `name` to out (a list of Tri). The state carries on into nested lists,
-    as on the N64."""
+def run_dl(src, name, layer, out, light_dir=None, state=None, light=None):
+    """Appends the triangles of display list `name` to out (a list of Tri) and returns the state it ends in. The
+    state carries on into nested lists, as on the N64; light: the lights a list drawn before it left set."""
     if state is None:
         state = {"vbuf": [None] * 32, "tex": None, "fmt": 0, "siz": 2, "w": 32, "h": 32, "cms": 0, "cmt": 0,
-                 "combine": "mod", "lit": True, "light": None, "scale": (1.0, 1.0), "on": False, "cutout": False,
+                 "combine": "mod", "lit": True, "light": light, "scale": (1.0, 1.0), "on": False, "cutout": False,
                  "xlu": False, "fog": False, "env": None, "texgen": False, "render_tex": False}
     for cmd, a in src.gfx[name]:
         if cmd == "gsSPDisplayList":

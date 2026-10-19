@@ -58,18 +58,20 @@ void bhv_bubble_maybe_loop(void) {
     o->oPosZ += random_float() * 10.0f - 5.0f;
 
     o->header.gfx.scale[0] = sins(o->oWaterObjUnkF4) * 0.2 + 1.0;
-    o->oWaterObjUnkF4 += o->oWaterObjUnkFC;
+    /* (calculator) the angles wrap around, as on the N64 (their steps may be anything) */
+    o->oWaterObjUnkF4 = (s32) ((u32) o->oWaterObjUnkF4 + (u32) o->oWaterObjUnkFC);
     o->header.gfx.scale[1] = sins(o->oWaterObjUnkF8) * 0.2 + 1.0;
-    o->oWaterObjUnkF8 += o->oWaterObjUnk100;
+    o->oWaterObjUnkF8 = (s32) ((u32) o->oWaterObjUnkF8 + (u32) o->oWaterObjUnk100);
 }
 
 void bhv_small_water_wave_loop(void) {
     f32 sp1C = find_water_level(o->oPosX, o->oPosZ);
 
     o->header.gfx.scale[0] = sins(o->oWaterObjUnkF4) * 0.2 + 1.0;
-    o->oWaterObjUnkF4 += o->oWaterObjUnkFC;
+    /* (calculator) the angles wrap around, as on the N64 (their steps may be anything) */
+    o->oWaterObjUnkF4 = (s32) ((u32) o->oWaterObjUnkF4 + (u32) o->oWaterObjUnkFC);
     o->header.gfx.scale[1] = sins(o->oWaterObjUnkF8) * 0.2 + 1.0;
-    o->oWaterObjUnkF8 += o->oWaterObjUnk100;
+    o->oWaterObjUnkF8 = (s32) ((u32) o->oWaterObjUnkF8 + (u32) o->oWaterObjUnk100);
 
     if (o->oPosY > sp1C) {
         o->activeFlags = ACTIVE_FLAG_DEACTIVATED;

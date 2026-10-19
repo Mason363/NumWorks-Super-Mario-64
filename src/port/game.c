@@ -152,7 +152,7 @@ static void read_controller(void) {
 #include "game/object_list_processor.h"
 /* the frame's display list memory: the screens' commands (HUD, menus, text: src/port/gfx.c plays them), from
  * the start, and their matrices and vertices (alloc_display_list), from the end */
-#define GFX_POOL 512
+#define GFX_POOL 640
 Gfx port_gfx_pool[GFX_POOL];
 /* the most the game used of its objects, pool and surfaces (tests read them: tests/play.c --stats, and in the
  * calculator's emulator, by their names) */
