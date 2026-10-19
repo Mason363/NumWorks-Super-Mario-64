@@ -1605,8 +1605,8 @@ void bowser_free_update(void) {
     }
     // Check floor height and platform
     floorHeight = find_floor(o->oPosX, o->oPosY, o->oPosZ, &floor);
-    if ((floor != NULL) && (floor->object != NULL)) {
-        o->platform = floor->object;
+    if ((floor != NULL) && (SURF_OBJECT(floor) != NULL)) {
+        o->platform = SURF_OBJECT(floor);
     } else {
         o->platform = NULL;
     }

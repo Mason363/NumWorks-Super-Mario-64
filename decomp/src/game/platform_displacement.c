@@ -55,9 +55,9 @@ void update_mario_platform(void) {
             break;
 
         case 0:
-            if (floor != NULL && floor->object != NULL) {
-                gMarioPlatform = floor->object;
-                gMarioObject->platform = floor->object;
+            if (floor != NULL && SURF_OBJECT(floor) != NULL) {
+                gMarioPlatform = SURF_OBJECT(floor);
+                gMarioObject->platform = SURF_OBJECT(floor);
             } else {
                 gMarioPlatform = NULL;
                 gMarioObject->platform = NULL;

@@ -42,31 +42,79 @@
 #include "levels/bob/chain_chomp_gate/collision.inc.c"
 #include "levels/bob/grate_door/collision.inc.c"
 #include "levels/bob/seesaw_platform/collision.inc.c"
+#include "levels/wf/areas/1/10/collision_left.inc.c"
+#include "levels/wf/areas/1/11/collision_left.inc.c"
+#include "levels/wf/areas/1/collision_left.inc.c"
+#include "levels/wf/areas/1/macro.inc.c"
+#include "levels/wf/beta_extending_platform/collision.inc.c"
+#include "levels/wf/breakable_wall_left/collision.inc.c"
+#include "levels/wf/breakable_wall_right/collision.inc.c"
+#include "levels/wf/extending_platform/collision.inc.c"
+#include "levels/wf/kickable_board/collision.inc.c"
+#include "levels/wf/large_bomp/collision.inc.c"
+#include "levels/wf/rotating_platform/collision.inc.c"
+#include "levels/wf/rotating_wooden_platform/collision.inc.c"
+#include "levels/wf/sliding_platform/collision.inc.c"
+#include "levels/wf/small_bomp/collision.inc.c"
+#include "levels/wf/tower_door/collision.inc.c"
+#include "levels/wf/tumbling_bridge_near/collision.inc.c"
+#include "levels/jrb/areas/1/collision_left.inc.c"
+#include "levels/jrb/areas/1/macro.inc.c"
+#include "levels/jrb/areas/1/trajectory.inc.c"
+#include "levels/jrb/areas/2/collision_left.inc.c"
+#include "levels/jrb/areas/2/macro.inc.c"
+#include "levels/jrb/falling_pillar_base/collision.inc.c"
+#include "levels/jrb/floating_platform/collision.inc.c"
+#include "levels/jrb/rock/collision.inc.c"
+#include "levels/jrb/sliding_box/collision.inc.c"
+#include "levels/jrb/unused_lid/collision.inc.c"
+#include "levels/jrb/wooden_ship/collision.inc.c"
+#include "levels/ccm/areas/1/collision_left.inc.c"
+#include "levels/ccm/areas/1/macro.inc.c"
+#include "levels/ccm/areas/1/trajectory.inc.c"
+#include "levels/ccm/areas/2/collision_left.inc.c"
+#include "levels/ccm/areas/2/macro.inc.c"
+#include "levels/ccm/areas/2/trajectory.inc.c"
+#include "levels/ccm/ropeway_lift/collision.inc.c"
+#include "levels/bbh/areas/1/collision_left.inc.c"
+#include "levels/bbh/areas/1/macro.inc.c"
+#include "levels/bbh/areas/1/room.inc.c"
+#include "levels/bbh/coffin/collision.inc.c"
+#include "levels/bbh/merry_go_round/collision.inc.c"
+#include "levels/bbh/mesh_elevator/collision.inc.c"
+#include "levels/bbh/moving_bookshelf/collision.inc.c"
+#include "levels/bbh/staircase_step/collision.inc.c"
+#include "levels/bbh/tilting_trap_platform/collision.inc.c"
+#include "levels/bbh/tumbling_platform_far/collision.inc.c"
+#include "levels/bbh/tumbling_platform_near/collision.inc.c"
 #include "actors/blue_coin_switch/collision.inc.c"
 #include "actors/breakable_box/collision.inc.c"
 #include "actors/cannon_lid/collision.inc.c"
 #include "actors/checkerboard_platform/collision.inc.c"
+#include "actors/dorrie/collision.inc.c"
 #include "actors/exclamation_box_outline/collision.inc.c"
 #include "actors/metal_box/collision.inc.c"
+#include "actors/penguin/collision.inc.c"
 #include "actors/poundable_pole/collision.inc.c"
 #include "actors/purple_switch/collision.inc.c"
+#include "actors/thwomp/collision.inc.c"
 #include "actors/warp_pipe/collision.inc.c"
 #include "actors/whomp/collision.inc.c"
 #include "actors/wooden_signpost/collision.inc.c"
 
 /* a display list nobody draws: the calculator draws its own models */
 const Gfx port_dummy_dl[] = { gsSPEndDisplayList() };
-const GeoLayout dAmpGeo[] = { PORT_MODEL(70) };
+const GeoLayout dAmpGeo[] = { PORT_MODEL(130) };
 extern const Gfx dAmpElectricityDl[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx dAmpEyeDl[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx dAmpMouthDl[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx dAmpBodyDl[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout blue_coin_switch_geo[] = { PORT_MODEL(69) };
+const GeoLayout blue_coin_switch_geo[] = { PORT_MODEL(129) };
 extern const Gfx blue_coin_switch_seg8_dl_08000D58[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx blue_coin_switch_seg8_dl_08000DD0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx blue_coin_switch_seg8_dl_08000E08[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout black_bobomb_geo[] = { PORT_MODEL(82) };
-const GeoLayout bobomb_buddy_geo[] = { PORT_MODEL(83) };
+const GeoLayout black_bobomb_geo[] = { PORT_MODEL(142) };
+const GeoLayout bobomb_buddy_geo[] = { PORT_MODEL(143) };
 extern const Gfx bobomb_seg8_dl_08022AC0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bobomb_seg8_dl_08022B08[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bobomb_seg8_dl_08022B58[] __attribute__((alias("port_dummy_dl")));
@@ -78,29 +126,29 @@ extern const Gfx bobomb_seg8_dl_08022D78[] __attribute__((alias("port_dummy_dl")
 extern const Gfx bobomb_seg8_dl_08023270[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bobomb_seg8_dl_08023378[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bobomb_seg8_dl_08023480[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout bowling_ball_geo[] = { PORT_MODEL(85) };
-const GeoLayout bowling_ball_track_geo[] = { PORT_MODEL(91) };
-const GeoLayout breakable_box_geo[] = { PORT_MODEL(73) };
-const GeoLayout breakable_box_small_geo[] = { PORT_MODEL(74) };
+const GeoLayout bowling_ball_geo[] = { PORT_MODEL(145) };
+const GeoLayout bowling_ball_track_geo[] = { PORT_MODEL(151) };
+const GeoLayout breakable_box_geo[] = { PORT_MODEL(133) };
+const GeoLayout breakable_box_small_geo[] = { PORT_MODEL(134) };
 extern const Gfx breakable_box_seg8_dl_08012C30[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx breakable_box_seg8_dl_08012CD8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx breakable_box_seg8_dl_08012D20[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx breakable_box_seg8_dl_08012D48[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout cannon_barrel_geo[] = { PORT_MODEL(86) };
+const GeoLayout cannon_barrel_geo[] = { PORT_MODEL(146) };
 extern const Gfx cannon_barrel_seg8_dl_08006408[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx cannon_barrel_seg8_dl_080064C0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx cannon_barrel_seg8_dl_08006660[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout cannon_base_geo[] = { PORT_MODEL(87) };
+const GeoLayout cannon_base_geo[] = { PORT_MODEL(147) };
 extern const Gfx cannon_base_seg8_dl_08005658[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx cannon_base_seg8_dl_080056D0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx cannon_base_seg8_dl_080057F8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx cannon_lid_seg8_dl_08004898[] __attribute__((alias("port_dummy_dl")));
-const Gfx cannon_lid_seg8_dl_080048E0[1] = {{{PORT_MODEL_TAG, 84}}};
-const GeoLayout checkerboard_platform_geo[] = { PORT_MODEL(72) };
+const Gfx cannon_lid_seg8_dl_080048E0[1] = {{{PORT_MODEL_TAG, 144}}};
+const GeoLayout checkerboard_platform_geo[] = { PORT_MODEL(132) };
 extern const Gfx checkerboard_platform_seg8_dl_0800D5C0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx checkerboard_platform_seg8_dl_0800D618[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx checkerboard_platform_seg8_dl_0800D680[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout chuckya_geo[] = { PORT_MODEL(90) };
+const GeoLayout chuckya_geo[] = { PORT_MODEL(150) };
 extern const Gfx chuckya_seg8_dl_08009FF8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx chuckya_seg8_dl_0800A030[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx chuckya_seg8_dl_0800A068[] __attribute__((alias("port_dummy_dl")));
@@ -124,7 +172,7 @@ extern const Gfx chuckya_seg8_dl_0800A958[] __attribute__((alias("port_dummy_dl"
 extern const Gfx chuckya_seg8_dl_0800A998[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx chuckya_seg8_dl_0800AB70[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx chuckya_seg8_dl_0800ABE8[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout exclamation_box_geo[] = { PORT_MODEL(76) };
+const GeoLayout exclamation_box_geo[] = { PORT_MODEL(136) };
 extern const Gfx exclamation_box_seg8_dl_08018FA8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx exclamation_box_seg8_dl_08019008[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx exclamation_box_seg8_dl_08019058[] __attribute__((alias("port_dummy_dl")));
@@ -135,7 +183,7 @@ extern const Gfx exclamation_box_seg8_dl_08019318[] __attribute__((alias("port_d
 extern const Gfx exclamation_box_seg8_dl_08019378[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx exclamation_box_seg8_dl_080193D8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx exclamation_box_seg8_dl_08019438[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout exclamation_box_outline_geo[] = { PORT_MODEL(75) };
+const GeoLayout exclamation_box_outline_geo[] = { PORT_MODEL(135) };
 extern const Gfx exclamation_box_outline_seg8_dl_08024EB8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx exclamation_box_outline_seg8_dl_08024F30[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx exclamation_box_outline_seg8_dl_08024F58[] __attribute__((alias("port_dummy_dl")));
@@ -146,8 +194,8 @@ extern const Gfx exclamation_box_outline_seg8_dl_08024FE8[] __attribute__((alias
 extern const Gfx exclamation_box_outline_seg8_dl_08025968[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx exclamation_box_outline_seg8_dl_080259F8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx exclamation_box_outline_seg8_dl_08025EC0[] __attribute__((alias("port_dummy_dl")));
-const Gfx exclamation_box_outline_seg8_dl_08025F08[1] = {{{PORT_MODEL_TAG, 78}}};
-const GeoLayout flyguy_geo[] = { PORT_MODEL(89) };
+const Gfx exclamation_box_outline_seg8_dl_08025F08[1] = {{{PORT_MODEL_TAG, 138}}};
+const GeoLayout flyguy_geo[] = { PORT_MODEL(149) };
 extern const Gfx flyguy_seg8_dl_08010840[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx flyguy_seg8_dl_08010968[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx flyguy_seg8_dl_08010A90[] __attribute__((alias("port_dummy_dl")));
@@ -157,7 +205,7 @@ extern const Gfx flyguy_seg8_dl_080113A8[] __attribute__((alias("port_dummy_dl")
 extern const Gfx flyguy_seg8_dl_08011420[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx flyguy_seg8_dl_080116D0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx flyguy_seg8_dl_08011710[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout goomba_geo[] = { PORT_MODEL(77) };
+const GeoLayout goomba_geo[] = { PORT_MODEL(137) };
 extern const Gfx goomba_seg8_dl_0801B2E8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx goomba_seg8_dl_0801B560[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx goomba_seg8_dl_0801B5A0[] __attribute__((alias("port_dummy_dl")));
@@ -170,9 +218,9 @@ extern const Gfx goomba_seg8_dl_0801CF78[] __attribute__((alias("port_dummy_dl")
 extern const Gfx goomba_seg8_dl_0801D0D0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx goomba_seg8_dl_0801D360[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx goomba_seg8_dl_0801D760[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout heart_geo[] = { PORT_MODEL(88) };
+const GeoLayout heart_geo[] = { PORT_MODEL(148) };
 extern const Gfx heart_seg8_dl_0800DFE0[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout koopa_shell_geo[] = { PORT_MODEL(79) };
+const GeoLayout koopa_shell_geo[] = { PORT_MODEL(139) };
 const GeoLayout koopa_shell2_geo[] = { PORT_MODEL(65535) };
 const GeoLayout koopa_shell3_geo[] = { PORT_MODEL(65535) };
 extern const Gfx koopa_shell_seg8_dl_08027108[] __attribute__((alias("port_dummy_dl")));
@@ -184,34 +232,34 @@ extern const Gfx koopa_shell_seg8_dl_080288E0[] __attribute__((alias("port_dummy
 extern const Gfx koopa_shell_seg8_dl_08028978[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx koopa_shell_seg8_dl_08028A20[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx koopa_shell_seg8_dl_08028B78[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout metal_box_geo[] = { PORT_MODEL(80) };
+const GeoLayout metal_box_geo[] = { PORT_MODEL(140) };
 extern const Gfx metal_box_seg8_dl_08024B18[] __attribute__((alias("port_dummy_dl")));
-const Gfx metal_box_dl[1] = {{{PORT_MODEL_TAG, 81}}};
-const GeoLayout purple_switch_geo[] = { PORT_MODEL(71) };
+const Gfx metal_box_dl[1] = {{{PORT_MODEL_TAG, 141}}};
+const GeoLayout purple_switch_geo[] = { PORT_MODEL(131) };
 extern const Gfx purple_switch_seg8_dl_0800C668[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx purple_switch_seg8_dl_0800C6E0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx purple_switch_seg8_dl_0800C718[] __attribute__((alias("port_dummy_dl")));
 const GeoLayout test_platform_geo[] = { PORT_MODEL(65535) };
 extern const Gfx unknown_seg8_dl_08026260[] __attribute__((alias("port_dummy_dl")));
 const Collision unknown_seg8_collision_080262F8[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const GeoLayout fish_shadow_geo[] = { PORT_MODEL(43) };
-const GeoLayout fish_geo[] = { PORT_MODEL(42) };
+const GeoLayout fish_shadow_geo[] = { PORT_MODEL(103) };
+const GeoLayout fish_geo[] = { PORT_MODEL(102) };
 extern const Gfx blue_fish_seg3_dl_0301BEC0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx blue_fish_seg3_dl_0301BFB8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx blue_fish_seg3_dl_0301C0A8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx blue_fish_seg3_dl_0301C150[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout bowser_key_geo[] = { PORT_MODEL(60) };
-const GeoLayout bowser_key_cutscene_geo[] = { PORT_MODEL(59) };
+const GeoLayout bowser_key_geo[] = { PORT_MODEL(120) };
+const GeoLayout bowser_key_cutscene_geo[] = { PORT_MODEL(119) };
 extern const Gfx bowser_key_dl[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout butterfly_geo[] = { PORT_MODEL(46) };
+const GeoLayout butterfly_geo[] = { PORT_MODEL(106) };
 extern const Gfx butterfly_seg3_dl_03005408[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx butterfly_seg3_dl_030054A0[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout yellow_coin_geo[] = { PORT_MODEL(32) };
-const GeoLayout yellow_coin_no_shadow_geo[] = { PORT_MODEL(52) };
-const GeoLayout blue_coin_geo[] = { PORT_MODEL(53) };
-const GeoLayout blue_coin_no_shadow_geo[] = { PORT_MODEL(54) };
-const GeoLayout red_coin_geo[] = { PORT_MODEL(63) };
-const GeoLayout red_coin_no_shadow_geo[] = { PORT_MODEL(64) };
+const GeoLayout yellow_coin_geo[] = { PORT_MODEL(92) };
+const GeoLayout yellow_coin_no_shadow_geo[] = { PORT_MODEL(112) };
+const GeoLayout blue_coin_geo[] = { PORT_MODEL(113) };
+const GeoLayout blue_coin_no_shadow_geo[] = { PORT_MODEL(114) };
+const GeoLayout red_coin_geo[] = { PORT_MODEL(123) };
+const GeoLayout red_coin_no_shadow_geo[] = { PORT_MODEL(124) };
 extern const Gfx coin_seg3_dl_03007780[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx coin_seg3_dl_030077D0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx coin_seg3_dl_03007800[] __attribute__((alias("port_dummy_dl")));
@@ -226,8 +274,8 @@ extern const Gfx coin_seg3_dl_03007940[] __attribute__((alias("port_dummy_dl")))
 extern const Gfx coin_seg3_dl_03007968[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx coin_seg3_dl_03007990[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx coin_seg3_dl_030079B8[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout dirt_animation_geo[] = { PORT_MODEL(67) };
-const GeoLayout cartoon_star_geo[] = { PORT_MODEL(68) };
+const GeoLayout dirt_animation_geo[] = { PORT_MODEL(127) };
+const GeoLayout cartoon_star_geo[] = { PORT_MODEL(128) };
 extern const Gfx dirt_seg3_dl_0302BFF8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx dirt_seg3_dl_0302C028[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx dirt_seg3_dl_0302C238[] __attribute__((alias("port_dummy_dl")));
@@ -242,12 +290,12 @@ extern const Gfx dirt_seg3_dl_0302C3E8[] __attribute__((alias("port_dummy_dl")))
 extern const Gfx dirt_seg3_dl_0302C420[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx dirt_seg3_dl_0302C458[] __attribute__((alias("port_dummy_dl")));
 const GeoLayout castle_door_geo[] = { PORT_MODEL(3) };
-const GeoLayout cabin_door_geo[] = { PORT_MODEL(65535) };
+const GeoLayout cabin_door_geo[] = { PORT_MODEL(70) };
 const GeoLayout wooden_door_geo[] = { PORT_MODEL(13) };
 const GeoLayout wooden_door2_geo[] = { PORT_MODEL(65535) };
 const GeoLayout metal_door_geo[] = { PORT_MODEL(4) };
 const GeoLayout hazy_maze_door_geo[] = { PORT_MODEL(65535) };
-const GeoLayout haunted_door_geo[] = { PORT_MODEL(65535) };
+const GeoLayout haunted_door_geo[] = { PORT_MODEL(75) };
 const GeoLayout castle_door_0_star_geo[] = { PORT_MODEL(14) };
 const GeoLayout castle_door_1_star_geo[] = { PORT_MODEL(15) };
 const GeoLayout castle_door_3_stars_geo[] = { PORT_MODEL(16) };
@@ -289,7 +337,7 @@ extern const Gfx door_seg3_dl_03015008[] __attribute__((alias("port_dummy_dl")))
 extern const Gfx door_seg3_dl_03015078[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx door_seg3_dl_030150E8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx door_seg3_dl_03015158[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout explosion_geo[] = { PORT_MODEL(66) };
+const GeoLayout explosion_geo[] = { PORT_MODEL(126) };
 extern const Gfx explosion_seg3_dl_03004208[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx explosion_seg3_dl_03004298[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx explosion_seg3_dl_030042B0[] __attribute__((alias("port_dummy_dl")));
@@ -298,9 +346,9 @@ extern const Gfx explosion_seg3_dl_030042E0[] __attribute__((alias("port_dummy_d
 extern const Gfx explosion_seg3_dl_030042F8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx explosion_seg3_dl_03004310[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx explosion_seg3_dl_03004328[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout red_flame_shadow_geo[] = { PORT_MODEL(61) };
-const GeoLayout red_flame_geo[] = { PORT_MODEL(37) };
-const GeoLayout blue_flame_geo[] = { PORT_MODEL(38) };
+const GeoLayout red_flame_shadow_geo[] = { PORT_MODEL(121) };
+const GeoLayout red_flame_geo[] = { PORT_MODEL(97) };
+const GeoLayout blue_flame_geo[] = { PORT_MODEL(98) };
 extern const Gfx flame_seg3_dl_0301B320[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx flame_seg3_dl_0301B3B0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx flame_seg3_dl_0301B3C8[] __attribute__((alias("port_dummy_dl")));
@@ -319,12 +367,12 @@ extern const Gfx flame_seg3_dl_0301B560[] __attribute__((alias("port_dummy_dl"))
 extern const Gfx flame_seg3_dl_0301B578[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx flame_seg3_dl_0301B590[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx flame_seg3_dl_0301B5A8[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout leaves_geo[] = { PORT_MODEL(40) };
+const GeoLayout leaves_geo[] = { PORT_MODEL(100) };
 extern const Gfx leaves_seg3_dl_0301CDE0[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout marios_cap_geo[] = { PORT_MODEL(58) };
-const GeoLayout marios_metal_cap_geo[] = { PORT_MODEL(56) };
-const GeoLayout marios_wing_cap_geo[] = { PORT_MODEL(57) };
-const GeoLayout marios_winged_metal_cap_geo[] = { PORT_MODEL(55) };
+const GeoLayout marios_cap_geo[] = { PORT_MODEL(118) };
+const GeoLayout marios_metal_cap_geo[] = { PORT_MODEL(116) };
+const GeoLayout marios_wing_cap_geo[] = { PORT_MODEL(117) };
+const GeoLayout marios_winged_metal_cap_geo[] = { PORT_MODEL(115) };
 extern const Gfx mario_cap_seg3_dl_03022B30[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx mario_cap_seg3_dl_03022B68[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx mario_cap_seg3_dl_03022CC8[] __attribute__((alias("port_dummy_dl")));
@@ -339,27 +387,27 @@ extern const Gfx mario_cap_seg3_dl_030230B0[] __attribute__((alias("port_dummy_d
 extern const Gfx mario_cap_seg3_dl_03023108[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx mario_cap_seg3_dl_03023160[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx mario_cap_seg3_dl_03023298[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout mist_geo[] = { PORT_MODEL(48) };
-const GeoLayout white_puff_geo[] = { PORT_MODEL(49) };
+const GeoLayout mist_geo[] = { PORT_MODEL(108) };
+const GeoLayout white_puff_geo[] = { PORT_MODEL(109) };
 extern const Gfx mist_seg3_dl_03000880[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx mist_seg3_dl_03000920[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout mushroom_1up_geo[] = { PORT_MODEL(62) };
+const GeoLayout mushroom_1up_geo[] = { PORT_MODEL(122) };
 extern const Gfx mushroom_1up_seg3_dl_0302A628[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx mushroom_1up_seg3_dl_0302A660[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout number_geo[] = { PORT_MODEL(65) };
-const Gfx pebble_seg3_dl_0301CB00[1] = {{{PORT_MODEL_TAG, 47}}};
-const Gfx sand_seg3_dl_0302BCD0[1] = {{{PORT_MODEL_TAG, 45}}};
-const GeoLayout star_geo[] = { PORT_MODEL(33) };
+const GeoLayout number_geo[] = { PORT_MODEL(125) };
+const Gfx pebble_seg3_dl_0301CB00[1] = {{{PORT_MODEL_TAG, 107}}};
+const Gfx sand_seg3_dl_0302BCD0[1] = {{{PORT_MODEL_TAG, 105}}};
+const GeoLayout star_geo[] = { PORT_MODEL(93) };
 extern const Gfx star_seg3_dl_0302B7B0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx star_seg3_dl_0302B870[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx star_seg3_dl_0302B9C0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx star_seg3_dl_0302BA18[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout transparent_star_geo[] = { PORT_MODEL(34) };
+const GeoLayout transparent_star_geo[] = { PORT_MODEL(94) };
 extern const Gfx transparent_star_seg3_dl_0302C560[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx transparent_star_seg3_dl_0302C620[] __attribute__((alias("port_dummy_dl")));
 const GeoLayout bubbly_tree_geo[] = { PORT_MODEL(1) };
 const GeoLayout spiky_tree_geo[] = { PORT_MODEL(19) };
-const GeoLayout snow_tree_geo[] = { PORT_MODEL(65535) };
+const GeoLayout snow_tree_geo[] = { PORT_MODEL(71) };
 const GeoLayout spiky_tree1_geo[] = { PORT_MODEL(65535) };
 const GeoLayout palm_tree_geo[] = { PORT_MODEL(65535) };
 extern const Gfx tree_seg3_dl_0302FE88[] __attribute__((alias("port_dummy_dl")));
@@ -377,19 +425,19 @@ extern const Gfx warp_pipe_seg3_dl_03008F98[] __attribute__((alias("port_dummy_d
 extern const Gfx warp_pipe_seg3_dl_03009968[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx warp_pipe_seg3_dl_03009A20[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx warp_pipe_seg3_dl_03009A50[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout white_particle_geo[] = { PORT_MODEL(51) };
-const Gfx white_particle_dl[1] = {{{PORT_MODEL_TAG, 50}}};
-const GeoLayout wooden_signpost_geo[] = { PORT_MODEL(35) };
+const GeoLayout white_particle_geo[] = { PORT_MODEL(111) };
+const Gfx white_particle_dl[1] = {{{PORT_MODEL_TAG, 110}}};
+const GeoLayout wooden_signpost_geo[] = { PORT_MODEL(95) };
 extern const Gfx wooden_signpost_seg3_dl_0302D9C8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx wooden_signpost_seg3_dl_0302DA48[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx wooden_signpost_seg3_dl_0302DC40[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx wooden_signpost_seg3_dl_0302DCD0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx wooden_signpost_seg3_dl_0302DD08[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout bubble_geo[] = { PORT_MODEL(27) };
-const GeoLayout purple_marble_geo[] = { PORT_MODEL(41) };
+const GeoLayout bubble_geo[] = { PORT_MODEL(87) };
+const GeoLayout purple_marble_geo[] = { PORT_MODEL(101) };
 extern const Gfx bubble_seg4_dl_0401DD60[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bubble_seg4_dl_0401DDE0[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout burn_smoke_geo[] = { PORT_MODEL(39) };
+const GeoLayout burn_smoke_geo[] = { PORT_MODEL(99) };
 extern const Gfx burn_smoke_seg4_dl_04022000[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx burn_smoke_seg4_dl_04022028[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx burn_smoke_seg4_dl_04022048[] __attribute__((alias("port_dummy_dl")));
@@ -442,7 +490,7 @@ const GeoLayout mario_geo_load_body[] = { PORT_MODEL(65535) };
 const GeoLayout mario_geo_load_medium_poly_body[] = { PORT_MODEL(65535) };
 const GeoLayout mario_geo_load_low_poly_body[] = { PORT_MODEL(65535) };
 const GeoLayout mario_geo_render_body[] = { PORT_MODEL(65535) };
-const GeoLayout mario_geo[] = { PORT_MODEL(24) };
+const GeoLayout mario_geo[] = { PORT_MODEL(84) };
 extern const Gfx mario_butt_dl[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx mario_butt[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx mario_metal_butt[] __attribute__((alias("port_dummy_dl")));
@@ -639,7 +687,7 @@ extern const Gfx mario_cap_wings[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx mario_cap_wings_transparent[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx mario_metal_cap_wings[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx mario_metal_cap_wings_transparent[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout sparkles_geo[] = { PORT_MODEL(26) };
+const GeoLayout sparkles_geo[] = { PORT_MODEL(86) };
 extern const Gfx sparkles_seg4_dl_0402A490[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx sparkles_seg4_dl_0402A4F8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx sparkles_seg4_dl_0402A510[] __attribute__((alias("port_dummy_dl")));
@@ -647,14 +695,14 @@ extern const Gfx sparkles_seg4_dl_0402A528[] __attribute__((alias("port_dummy_dl
 extern const Gfx sparkles_seg4_dl_0402A540[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx sparkles_seg4_dl_0402A558[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx sparkles_seg4_dl_0402A570[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout sparkles_animation_geo[] = { PORT_MODEL(44) };
+const GeoLayout sparkles_animation_geo[] = { PORT_MODEL(104) };
 extern const Gfx sparkles_animation_seg4_dl_04035288[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx sparkles_animation_seg4_dl_04035300[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx sparkles_animation_seg4_dl_04035318[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx sparkles_animation_seg4_dl_04035330[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx sparkles_animation_seg4_dl_04035348[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx sparkles_animation_seg4_dl_04035360[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout small_water_splash_geo[] = { PORT_MODEL(28) };
+const GeoLayout small_water_splash_geo[] = { PORT_MODEL(88) };
 const GeoLayout mario_TODO_geo_0000E0[] = { PORT_MODEL(65535) };
 extern const Gfx stomp_smoke_seg4_dl_04025148[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx stomp_smoke_seg4_dl_04025190[] __attribute__((alias("port_dummy_dl")));
@@ -672,7 +720,7 @@ extern const Gfx stomp_smoke_seg4_dl_040252B8[] __attribute__((alias("port_dummy
 extern const Gfx stomp_smoke_seg4_dl_040252D0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx stomp_smoke_seg4_dl_040252E8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx stomp_smoke_seg4_dl_04025300[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout smoke_geo[] = { PORT_MODEL(25) };
+const GeoLayout smoke_geo[] = { PORT_MODEL(85) };
 extern const Gfx smoke_seg4_dl_040216A0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx smoke_seg4_dl_04021718[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx smoke_seg4_dl_04021730[] __attribute__((alias("port_dummy_dl")));
@@ -681,7 +729,7 @@ extern const Gfx smoke_seg4_dl_04021760[] __attribute__((alias("port_dummy_dl"))
 extern const Gfx smoke_seg4_dl_04021778[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx smoke_seg4_dl_04021790[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx smoke_seg4_dl_040217A8[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout water_splash_geo[] = { PORT_MODEL(30) };
+const GeoLayout water_splash_geo[] = { PORT_MODEL(90) };
 extern const Gfx water_splash_seg4_dl_040325C8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx water_splash_seg4_dl_04032640[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx water_splash_seg4_dl_04032658[] __attribute__((alias("port_dummy_dl")));
@@ -691,8 +739,8 @@ extern const Gfx water_splash_seg4_dl_040326A0[] __attribute__((alias("port_dumm
 extern const Gfx water_splash_seg4_dl_040326B8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx water_splash_seg4_dl_040326D0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx water_splash_seg4_dl_040326E8[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout idle_water_wave_geo[] = { PORT_MODEL(29) };
-const GeoLayout wave_trail_geo[] = { PORT_MODEL(31) };
+const GeoLayout idle_water_wave_geo[] = { PORT_MODEL(89) };
+const GeoLayout wave_trail_geo[] = { PORT_MODEL(91) };
 extern const Gfx water_wave_seg4_dl_04027358[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx water_wave_seg4_dl_040273A0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx water_wave_seg4_dl_040273D8[] __attribute__((alias("port_dummy_dl")));
@@ -702,14 +750,14 @@ extern const Gfx water_wave_seg4_dl_04027420[] __attribute__((alias("port_dummy_
 extern const Gfx water_wave_seg4_dl_04027438[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx white_particle_small_dl_begin[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx white_particle_small_dl_end[] __attribute__((alias("port_dummy_dl")));
-const Gfx white_particle_small_dl[1] = {{{PORT_MODEL_TAG, 36}}};
+const Gfx white_particle_small_dl[1] = {{{PORT_MODEL_TAG, 96}}};
 extern const Gfx white_particle_small_unused_dl[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout bullet_bill_geo[] = { PORT_MODEL(65535) };
+const GeoLayout bullet_bill_geo[] = { PORT_MODEL(191) };
 extern const Gfx bullet_bill_seg5_dl_0500E5E8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bullet_bill_seg5_dl_0500E678[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bullet_bill_seg5_dl_0500E730[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bullet_bill_seg5_dl_0500E8A8[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout heave_ho_geo[] = { PORT_MODEL(65535) };
+const GeoLayout heave_ho_geo[] = { PORT_MODEL(196) };
 extern const Gfx heave_ho_seg5_dl_05011D98[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx heave_ho_seg5_dl_05011DE0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx heave_ho_seg5_dl_05011E28[] __attribute__((alias("port_dummy_dl")));
@@ -733,8 +781,7 @@ extern const Gfx heave_ho_seg5_dl_05014560[] __attribute__((alias("port_dummy_dl
 extern const Gfx heave_ho_seg5_dl_050145D0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx heave_ho_seg5_dl_050149A8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx heave_ho_seg5_dl_05014D80[] __attribute__((alias("port_dummy_dl")));
-const struct Animation *const heave_ho_seg5_anims_0501534C[] = { NULL };
-const GeoLayout hoot_geo[] = { PORT_MODEL(65535) };
+const GeoLayout hoot_geo[] = { PORT_MODEL(193) };
 extern const Gfx hoot_seg5_dl_05001B80[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx hoot_seg5_dl_05001C00[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx hoot_seg5_dl_05001DF0[] __attribute__((alias("port_dummy_dl")));
@@ -759,18 +806,15 @@ extern const Gfx hoot_seg5_dl_05004A98[] __attribute__((alias("port_dummy_dl")))
 extern const Gfx hoot_seg5_dl_05004B38[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx hoot_seg5_dl_05004CA8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx hoot_seg5_dl_05004D48[] __attribute__((alias("port_dummy_dl")));
-const struct Animation *const hoot_seg5_anims_05005768[] = { NULL };
-const GeoLayout thwomp_geo[] = { PORT_MODEL(65535) };
+const GeoLayout thwomp_geo[] = { PORT_MODEL(195) };
 extern const Gfx thwomp_seg5_dl_0500B570[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx thwomp_seg5_dl_0500B718[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx thwomp_seg5_dl_0500B750[] __attribute__((alias("port_dummy_dl")));
-const Collision thwomp_seg5_collision_0500B7D0[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision thwomp_seg5_collision_0500B92C[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const GeoLayout yellow_sphere_geo[] = { PORT_MODEL(65535) };
+const GeoLayout yellow_sphere_geo[] = { PORT_MODEL(192) };
 extern const Gfx yellow_sphere_seg5_dl_05000840[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx yellow_sphere_seg5_dl_05000888[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx yellow_sphere_seg5_dl_050008C8[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout yoshi_egg_geo[] = { PORT_MODEL(65535) };
+const GeoLayout yoshi_egg_geo[] = { PORT_MODEL(194) };
 extern const Gfx yoshi_egg_seg5_dl_050097B8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx yoshi_egg_seg5_dl_05009820[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx yoshi_egg_seg5_dl_05009838[] __attribute__((alias("port_dummy_dl")));
@@ -780,14 +824,14 @@ extern const Gfx yoshi_egg_seg5_dl_05009880[] __attribute__((alias("port_dummy_d
 extern const Gfx yoshi_egg_seg5_dl_05009898[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx yoshi_egg_seg5_dl_050098B0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx yoshi_egg_seg5_dl_050098C8[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout birds_geo[] = { PORT_MODEL(99) };
+const GeoLayout birds_geo[] = { PORT_MODEL(159) };
 extern const Gfx birds_seg5_dl_05000528[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx birds_seg5_dl_05000598[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx birds_seg5_dl_05000600[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx birds_seg5_dl_05000670[] __attribute__((alias("port_dummy_dl")));
 const GeoLayout peach_geo_000098[] = { PORT_MODEL(65535) };
 const GeoLayout peach_geo_000254[] = { PORT_MODEL(65535) };
-const GeoLayout peach_geo[] = { PORT_MODEL(100) };
+const GeoLayout peach_geo[] = { PORT_MODEL(160) };
 extern const Gfx peach_seg5_dl_05005648[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx peach_seg5_dl_05005750[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx peach_seg5_dl_05005780[] __attribute__((alias("port_dummy_dl")));
@@ -838,7 +882,7 @@ extern const Gfx peach_seg5_dl_05009940[] __attribute__((alias("port_dummy_dl"))
 extern const Gfx peach_seg5_dl_05009E20[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx peach_seg5_dl_0500A0A8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx peach_seg5_us_dl_0500A188[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout yoshi_geo[] = { PORT_MODEL(101) };
+const GeoLayout yoshi_geo[] = { PORT_MODEL(161) };
 extern const Gfx yoshi_seg5_dl_0501D440[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx yoshi_seg5_dl_0501D488[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx yoshi_seg5_dl_0501D4E0[] __attribute__((alias("port_dummy_dl")));
@@ -1062,7 +1106,7 @@ extern const Gfx impact_smoke_seg6_dl_06062D18[] __attribute__((alias("port_dumm
 const GeoLayout bowser_1_yellow_sphere_geo[] = { PORT_MODEL(65535) };
 extern const Gfx yellow_sphere_seg6_dl_0601F388[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx yellow_sphere_seg6_dl_0601F3C0[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout bub_geo[] = { PORT_MODEL(65535) };
+const GeoLayout bub_geo[] = { PORT_MODEL(162) };
 extern const Gfx bub_seg6_dl_06011848[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bub_seg6_dl_060118C0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bub_seg6_dl_06011918[] __attribute__((alias("port_dummy_dl")));
@@ -1075,16 +1119,14 @@ extern const Gfx bub_seg6_dl_06011DC0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bub_seg6_dl_06011E48[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bub_seg6_dl_06011F18[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bub_seg6_dl_06011FA0[] __attribute__((alias("port_dummy_dl")));
-const struct Animation *const bub_seg6_anims_06012354[] = { NULL };
-const GeoLayout cyan_fish_geo[] = { PORT_MODEL(65535) };
+const GeoLayout cyan_fish_geo[] = { PORT_MODEL(165) };
 extern const Gfx cyan_fish_seg6_dl_0600DD20[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx cyan_fish_seg6_dl_0600DDD8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx cyan_fish_seg6_dl_0600DE90[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx cyan_fish_seg6_dl_0600DED8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx cyan_fish_seg6_dl_0600DFC0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx cyan_fish_seg6_dl_0600E038[] __attribute__((alias("port_dummy_dl")));
-const struct Animation *const cyan_fish_seg6_anims_0600E264[] = { NULL };
-const GeoLayout seaweed_geo[] = { PORT_MODEL(65535) };
+const GeoLayout seaweed_geo[] = { PORT_MODEL(168) };
 extern const Gfx seaweed_seg6_dl_06009E50[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx seaweed_seg6_dl_06009E98[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx seaweed_seg6_dl_06009F48[] __attribute__((alias("port_dummy_dl")));
@@ -1093,8 +1135,7 @@ extern const Gfx seaweed_seg6_dl_0600A040[] __attribute__((alias("port_dummy_dl"
 extern const Gfx seaweed_seg6_dl_0600A088[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx seaweed_seg6_dl_0600A138[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx seaweed_seg6_dl_0600A180[] __attribute__((alias("port_dummy_dl")));
-const struct Animation *const seaweed_seg6_anims_0600A4D4[] = { NULL };
-const GeoLayout skeeter_geo[] = { PORT_MODEL(65535) };
+const GeoLayout skeeter_geo[] = { PORT_MODEL(169) };
 extern const Gfx skeeter_seg6_dl_060009D0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx skeeter_seg6_dl_06000A08[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx skeeter_seg6_dl_06000AB8[] __attribute__((alias("port_dummy_dl")));
@@ -1124,9 +1165,8 @@ extern const Gfx skeeter_seg6_dl_06004678[] __attribute__((alias("port_dummy_dl"
 extern const Gfx skeeter_seg6_dl_06004A40[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx skeeter_seg6_dl_06005328[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx skeeter_seg6_dl_06005358[] __attribute__((alias("port_dummy_dl")));
-const struct Animation *const skeeter_seg6_anims_06007DE0[] = { NULL };
-const GeoLayout treasure_chest_base_geo[] = { PORT_MODEL(65535) };
-const GeoLayout treasure_chest_lid_geo[] = { PORT_MODEL(65535) };
+const GeoLayout treasure_chest_base_geo[] = { PORT_MODEL(163) };
+const GeoLayout treasure_chest_lid_geo[] = { PORT_MODEL(164) };
 extern const Gfx treasure_chest_seg6_dl_06016D58[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx treasure_chest_seg6_dl_06016DA0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx treasure_chest_seg6_dl_06016E18[] __attribute__((alias("port_dummy_dl")));
@@ -1136,18 +1176,17 @@ extern const Gfx treasure_chest_seg6_dl_06017680[] __attribute__((alias("port_du
 extern const Gfx treasure_chest_seg6_dl_06017790[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx treasure_chest_seg6_dl_06017810[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx treasure_chest_seg6_dl_060178C0[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout water_mine_geo[] = { PORT_MODEL(65535) };
+const GeoLayout water_mine_geo[] = { PORT_MODEL(167) };
 extern const Gfx water_mine_seg6_dl_0600D1F8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx water_mine_seg6_dl_0600D230[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx water_mine_seg6_dl_0600D268[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx water_mine_seg6_dl_0600D2E0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx water_mine_seg6_dl_0600D3F8[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout water_ring_geo[] = { PORT_MODEL(65535) };
+const GeoLayout water_ring_geo[] = { PORT_MODEL(166) };
 extern const Gfx water_ring_seg6_dl_06013AC0[] __attribute__((alias("port_dummy_dl")));
-const struct Animation *const water_ring_seg6_anims_06013F7C[] = { NULL };
-const GeoLayout metallic_ball_geo[] = { PORT_MODEL(106) };
+const GeoLayout metallic_ball_geo[] = { PORT_MODEL(174) };
 extern const Gfx chain_ball_seg6_dl_060212E8[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout chain_chomp_geo[] = { PORT_MODEL(107) };
+const GeoLayout chain_chomp_geo[] = { PORT_MODEL(175) };
 extern const Gfx chain_chomp_seg6_dl_06024000[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx chain_chomp_seg6_dl_06024040[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx chain_chomp_seg6_dl_06024240[] __attribute__((alias("port_dummy_dl")));
@@ -1160,8 +1199,8 @@ extern const Gfx chain_chomp_seg6_dl_06024CF0[] __attribute__((alias("port_dummy
 extern const Gfx chain_chomp_seg6_dl_06024D60[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx chain_chomp_seg6_dl_06024F50[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx chain_chomp_seg6_dl_06024FC0[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout koopa_without_shell_geo[] = { PORT_MODEL(105) };
-const GeoLayout koopa_with_shell_geo[] = { PORT_MODEL(104) };
+const GeoLayout koopa_without_shell_geo[] = { PORT_MODEL(173) };
+const GeoLayout koopa_with_shell_geo[] = { PORT_MODEL(172) };
 extern const Gfx koopa_seg6_dl_06007658[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx koopa_seg6_dl_060076B0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx koopa_seg6_dl_06007850[] __attribute__((alias("port_dummy_dl")));
@@ -1193,7 +1232,7 @@ extern const Gfx koopa_seg6_dl_0600BE10[] __attribute__((alias("port_dummy_dl"))
 extern const Gfx koopa_seg6_dl_0600BE80[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx koopa_seg6_dl_0600C240[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx koopa_seg6_dl_0600C498[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout koopa_flag_geo[] = { PORT_MODEL(108) };
+const GeoLayout koopa_flag_geo[] = { PORT_MODEL(176) };
 extern const Gfx koopa_flag_seg6_dl_06000968[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx koopa_flag_seg6_dl_06000A08[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx koopa_flag_seg6_dl_06000AB8[] __attribute__((alias("port_dummy_dl")));
@@ -1207,7 +1246,7 @@ extern const Gfx koopa_flag_seg6_dl_06000D90[] __attribute__((alias("port_dummy_
 extern const Gfx koopa_flag_seg6_dl_06000DB0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx koopa_flag_seg6_dl_06000E20[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx koopa_flag_seg6_dl_06000E38[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout piranha_plant_geo[] = { PORT_MODEL(102) };
+const GeoLayout piranha_plant_geo[] = { PORT_MODEL(170) };
 extern const Gfx piranha_plant_seg6_dl_06015438[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx piranha_plant_seg6_dl_06015480[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx piranha_plant_seg6_dl_06015530[] __attribute__((alias("port_dummy_dl")));
@@ -1233,11 +1272,11 @@ extern const Gfx piranha_plant_seg6_dl_06016D30[] __attribute__((alias("port_dum
 extern const Gfx piranha_plant_seg6_dl_06016D98[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx piranha_plant_seg6_dl_06016EB8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx piranha_plant_seg6_dl_06016F20[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout wooden_post_geo[] = { PORT_MODEL(109) };
+const GeoLayout wooden_post_geo[] = { PORT_MODEL(177) };
 extern const Gfx poundable_pole_seg6_dl_060022F0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx poundable_pole_seg6_dl_06002358[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx poundable_pole_seg6_dl_06002410[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout whomp_geo[] = { PORT_MODEL(103) };
+const GeoLayout whomp_geo[] = { PORT_MODEL(171) };
 extern const Gfx whomp_seg6_dl_0601F4F8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx whomp_seg6_dl_0601F570[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx whomp_seg6_dl_0601F5A8[] __attribute__((alias("port_dummy_dl")));
@@ -1254,12 +1293,12 @@ extern const Gfx whomp_seg6_dl_0601FE10[] __attribute__((alias("port_dummy_dl"))
 extern const Gfx whomp_seg6_dl_0601FEA8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx whomp_seg6_dl_0601FFA0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx whomp_seg6_dl_06020038[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout boo_castle_geo[] = { PORT_MODEL(111) };
+const GeoLayout boo_castle_geo[] = { PORT_MODEL(179) };
 extern const Gfx boo_castle_seg6_dl_06017A10[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx boo_castle_seg6_dl_06017A78[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx boo_castle_seg6_dl_06017AD0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx boo_castle_seg6_dl_06017CE0[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout lakitu_geo[] = { PORT_MODEL(112) };
+const GeoLayout lakitu_geo[] = { PORT_MODEL(180) };
 extern const Gfx lakitu_seg6_dl_06003C80[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx lakitu_seg6_dl_06003DB0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx lakitu_seg6_dl_06003E30[] __attribute__((alias("port_dummy_dl")));
@@ -1278,7 +1317,7 @@ extern const Gfx lakitu_seg6_dl_06005360[] __attribute__((alias("port_dummy_dl")
 extern const Gfx lakitu_seg6_dl_06005598[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx lakitu_seg6_dl_060055E8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx lakitu_seg6_dl_06005610[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout mips_geo[] = { PORT_MODEL(110) };
+const GeoLayout mips_geo[] = { PORT_MODEL(178) };
 extern const Gfx mips_seg6_dl_06010600[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx mips_seg6_dl_06010748[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx mips_seg6_dl_060107B8[] __attribute__((alias("port_dummy_dl")));
@@ -1306,7 +1345,7 @@ extern const Gfx mips_seg6_dl_06011F70[] __attribute__((alias("port_dummy_dl")))
 extern const Gfx mips_seg6_dl_06011FC0[] __attribute__((alias("port_dummy_dl")));
 const GeoLayout toad_geo_000114[] = { PORT_MODEL(65535) };
 const GeoLayout toad_geo_00027C[] = { PORT_MODEL(65535) };
-const GeoLayout toad_geo[] = { PORT_MODEL(113) };
+const GeoLayout toad_geo[] = { PORT_MODEL(181) };
 extern const Gfx toad_seg6_dl_06007300[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx toad_seg6_dl_06007498[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx toad_seg6_dl_060076C0[] __attribute__((alias("port_dummy_dl")));
@@ -1337,12 +1376,11 @@ extern const Gfx chilly_chief_seg6_dl_06002EB8[] __attribute__((alias("port_dumm
 extern const Gfx chilly_chief_seg6_dl_06002EF0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx chilly_chief_seg6_dl_06002FC8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx chilly_chief_seg6_dl_06003010[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout chilly_chief_geo[] = { PORT_MODEL(65535) };
-const GeoLayout chilly_chief_big_geo[] = { PORT_MODEL(65535) };
-const struct Animation *const chilly_chief_seg6_anims_06003994[] = { NULL };
+const GeoLayout chilly_chief_geo[] = { PORT_MODEL(182) };
+const GeoLayout chilly_chief_big_geo[] = { PORT_MODEL(183) };
 const GeoLayout moneybag_geo_000000[] = { PORT_MODEL(65535) };
 const GeoLayout moneybag_geo_000078[] = { PORT_MODEL(65535) };
-const GeoLayout moneybag_geo[] = { PORT_MODEL(65535) };
+const GeoLayout moneybag_geo[] = { PORT_MODEL(184) };
 extern const Gfx moneybag_seg6_dl_06005300[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx moneybag_seg6_dl_06005358[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx moneybag_seg6_dl_060053B8[] __attribute__((alias("port_dummy_dl")));
@@ -1353,8 +1391,7 @@ extern const Gfx moneybag_seg6_dl_06005708[] __attribute__((alias("port_dummy_dl
 extern const Gfx moneybag_seg6_dl_06005750[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx moneybag_seg6_dl_06005980[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx moneybag_seg6_dl_060059F0[] __attribute__((alias("port_dummy_dl")));
-const struct Animation *const moneybag_seg6_anims_06005E5C[] = { NULL };
-const GeoLayout dorrie_geo[] = { PORT_MODEL(65535) };
+const GeoLayout dorrie_geo[] = { PORT_MODEL(189) };
 extern const Gfx dorrie_seg6_dl_0600B8E8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx dorrie_seg6_dl_0600B940[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx dorrie_seg6_dl_0600BAF8[] __attribute__((alias("port_dummy_dl")));
@@ -1381,18 +1418,15 @@ extern const Gfx dorrie_seg6_dl_0600DDA0[] __attribute__((alias("port_dummy_dl")
 extern const Gfx dorrie_seg6_dl_0600DE38[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx dorrie_seg6_dl_0600DF60[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx dorrie_seg6_dl_0600DFA8[] __attribute__((alias("port_dummy_dl")));
-const struct Animation *const dorrie_seg6_anims_0600F638[] = { NULL };
-const Collision dorrie_seg6_collision_0600F644[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision dorrie_seg6_collision_0600FBB8[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const GeoLayout mr_i_geo[] = { PORT_MODEL(65535) };
+const GeoLayout mr_i_geo[] = { PORT_MODEL(188) };
 extern const Gfx mr_i_eyeball_seg6_dl_06002080[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout mr_i_iris_geo[] = { PORT_MODEL(65535) };
+const GeoLayout mr_i_iris_geo[] = { PORT_MODEL(187) };
 extern const Gfx mr_i_iris_seg6_dl_06004170[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx mr_i_iris_seg6_dl_060041D8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx mr_i_iris_seg6_dl_060041F0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx mr_i_iris_seg6_dl_06004208[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx mr_i_iris_seg6_dl_06004220[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout scuttlebug_geo[] = { PORT_MODEL(65535) };
+const GeoLayout scuttlebug_geo[] = { PORT_MODEL(186) };
 extern const Gfx scuttlebug_seg6_dl_06013988[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx scuttlebug_seg6_dl_060139C0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx scuttlebug_seg6_dl_060139F8[] __attribute__((alias("port_dummy_dl")));
@@ -1412,8 +1446,7 @@ extern const Gfx scuttlebug_seg6_dl_06014238[] __attribute__((alias("port_dummy_
 extern const Gfx scuttlebug_seg6_dl_06014270[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx scuttlebug_seg6_dl_06014338[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx scuttlebug_seg6_dl_06014378[] __attribute__((alias("port_dummy_dl")));
-const struct Animation *const scuttlebug_seg6_anims_06015064[] = { NULL };
-const GeoLayout snufit_geo[] = { PORT_MODEL(65535) };
+const GeoLayout snufit_geo[] = { PORT_MODEL(190) };
 extern const Gfx snufit_seg6_dl_060091E0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx snufit_seg6_dl_06009278[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx snufit_seg6_dl_060092F0[] __attribute__((alias("port_dummy_dl")));
@@ -1427,7 +1460,7 @@ extern const Gfx snufit_seg6_dl_060099D8[] __attribute__((alias("port_dummy_dl")
 extern const Gfx snufit_seg6_dl_06009A10[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx snufit_seg6_dl_06009B18[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx snufit_seg6_dl_06009B68[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout swoop_geo[] = { PORT_MODEL(65535) };
+const GeoLayout swoop_geo[] = { PORT_MODEL(185) };
 extern const Gfx swoop_seg6_dl_060065B8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx swoop_seg6_dl_060066F8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx swoop_seg6_dl_06006758[] __attribute__((alias("port_dummy_dl")));
@@ -1440,7 +1473,6 @@ extern const Gfx swoop_seg6_dl_06006B98[] __attribute__((alias("port_dummy_dl"))
 extern const Gfx swoop_seg6_dl_06006BD0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx swoop_seg6_dl_06006CC8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx swoop_seg6_dl_06006D00[] __attribute__((alias("port_dummy_dl")));
-const struct Animation *const swoop_seg6_anims_060070D0[] = { NULL };
 const GeoLayout blargg_geo[] = { PORT_MODEL(65535) };
 extern const Gfx blargg_seg5_dl_050058D0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx blargg_seg5_dl_05005A60[] __attribute__((alias("port_dummy_dl")));
@@ -1463,7 +1495,7 @@ extern const Gfx bully_seg5_dl_05003EA8[] __attribute__((alias("port_dummy_dl"))
 extern const Gfx bully_seg5_dl_05003F80[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bully_seg5_dl_05003FC8[] __attribute__((alias("port_dummy_dl")));
 const struct Animation *const bully_seg5_anims_0500470C[] = { NULL };
-const GeoLayout king_bobomb_geo[] = { PORT_MODEL(116) };
+const GeoLayout king_bobomb_geo[] = { PORT_MODEL(199) };
 extern const Gfx king_bobomb_seg5_dl_0500A4B8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx king_bobomb_seg5_dl_0500A4F0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx king_bobomb_seg5_dl_0500A5A0[] __attribute__((alias("port_dummy_dl")));
@@ -1489,18 +1521,17 @@ extern const Gfx king_bobomb_seg5_dl_0500B3C8[] __attribute__((alias("port_dummy
 extern const Gfx king_bobomb_seg5_dl_0500B418[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx king_bobomb_seg5_dl_0500B5F0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx king_bobomb_seg5_dl_0500B6C0[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout water_bomb_geo[] = { PORT_MODEL(114) };
-const GeoLayout water_bomb_shadow_geo[] = { PORT_MODEL(115) };
+const GeoLayout water_bomb_geo[] = { PORT_MODEL(197) };
+const GeoLayout water_bomb_shadow_geo[] = { PORT_MODEL(198) };
 extern const Gfx water_bubble_seg5_dl_05010D30[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx water_bubble_seg5_dl_05011000[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout clam_shell_geo[] = { PORT_MODEL(65535) };
+const GeoLayout clam_shell_geo[] = { PORT_MODEL(204) };
 extern const Gfx clam_shell_seg5_dl_050011A8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx clam_shell_seg5_dl_05001238[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx clam_shell_seg5_dl_050012B8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx clam_shell_seg5_dl_05001478[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx clam_shell_seg5_dl_050014F8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx clam_shell_seg5_dl_05001568[] __attribute__((alias("port_dummy_dl")));
-const struct Animation *const clam_shell_seg5_anims_05001744[] = { NULL };
 extern const Gfx manta_seg5_dl_05004960[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx manta_seg5_dl_050049C8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx manta_seg5_dl_05004A70[] __attribute__((alias("port_dummy_dl")));
@@ -1541,9 +1572,8 @@ extern const Gfx manta_seg5_dl_05006750[] __attribute__((alias("port_dummy_dl"))
 extern const Gfx manta_seg5_dl_05006B08[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx manta_seg5_dl_05006B70[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx manta_seg5_dl_05006C08[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout manta_seg5_geo_05008D14[] = { PORT_MODEL(65535) };
-const struct Animation *const manta_seg5_anims_05008EB4[] = { NULL };
-const GeoLayout sushi_geo[] = { PORT_MODEL(65535) };
+const GeoLayout manta_seg5_geo_05008D14[] = { PORT_MODEL(200) };
+const GeoLayout sushi_geo[] = { PORT_MODEL(202) };
 extern const Gfx sushi_seg5_dl_05009CC0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx sushi_seg5_dl_05009DD0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx sushi_seg5_dl_05009F30[] __attribute__((alias("port_dummy_dl")));
@@ -1557,8 +1587,7 @@ extern const Gfx sushi_seg5_dl_0500A860[] __attribute__((alias("port_dummy_dl"))
 extern const Gfx sushi_seg5_dl_0500A8A8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx sushi_seg5_dl_0500A958[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx sushi_seg5_dl_0500A990[] __attribute__((alias("port_dummy_dl")));
-const struct Animation *const sushi_seg5_anims_0500AE54[] = { NULL };
-const GeoLayout unagi_geo[] = { PORT_MODEL(65535) };
+const GeoLayout unagi_geo[] = { PORT_MODEL(201) };
 extern const Gfx unagi_seg5_dl_0500CCE0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx unagi_seg5_dl_0500CD30[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx unagi_seg5_dl_0500CDD0[] __attribute__((alias("port_dummy_dl")));
@@ -1582,9 +1611,8 @@ extern const Gfx unagi_seg5_dl_0500E030[] __attribute__((alias("port_dummy_dl"))
 extern const Gfx unagi_seg5_dl_0500E088[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx unagi_seg5_dl_0500E200[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx unagi_seg5_dl_0500E258[] __attribute__((alias("port_dummy_dl")));
-const struct Animation *const unagi_seg5_anims_05012824[] = { NULL };
 extern const Gfx whirlpool_seg5_dl_05013B58[] __attribute__((alias("port_dummy_dl")));
-extern const Gfx whirlpool_seg5_dl_05013CB8[] __attribute__((alias("port_dummy_dl")));
+const Gfx whirlpool_seg5_dl_05013CB8[1] = {{{PORT_MODEL_TAG, 203}}};
 const GeoLayout eyerok_geo_0002AC[] = { PORT_MODEL(65535) };
 const GeoLayout eyerok_left_hand_geo[] = { PORT_MODEL(65535) };
 const GeoLayout eyerok_right_hand_geo[] = { PORT_MODEL(65535) };
@@ -1727,7 +1755,7 @@ extern const Gfx ukiki_seg5_dl_0500CFF0[] __attribute__((alias("port_dummy_dl"))
 extern const Gfx ukiki_seg5_dl_0500D078[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx ukiki_seg5_dl_0500D108[] __attribute__((alias("port_dummy_dl")));
 const struct Animation *const ukiki_seg5_anims_05015784[] = { NULL };
-const GeoLayout penguin_geo[] = { PORT_MODEL(65535) };
+const GeoLayout penguin_geo[] = { PORT_MODEL(208) };
 extern const Gfx penguin_seg5_dl_05006188[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx penguin_seg5_dl_050061C8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx penguin_seg5_dl_050061F8[] __attribute__((alias("port_dummy_dl")));
@@ -1744,10 +1772,8 @@ extern const Gfx penguin_seg5_dl_05007238[] __attribute__((alias("port_dummy_dl"
 extern const Gfx penguin_seg5_dl_050072C8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx penguin_seg5_dl_05007358[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx penguin_seg5_dl_05007540[] __attribute__((alias("port_dummy_dl")));
-const struct Animation *const penguin_seg5_anims_05008B74[] = { NULL };
-const Collision penguin_seg5_collision_05008B88[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const GeoLayout mr_blizzard_hidden_geo[] = { PORT_MODEL(65535) };
-const GeoLayout mr_blizzard_geo[] = { PORT_MODEL(65535) };
+const GeoLayout mr_blizzard_hidden_geo[] = { PORT_MODEL(206) };
+const GeoLayout mr_blizzard_geo[] = { PORT_MODEL(207) };
 extern const Gfx snowman_seg5_dl_0500C4C8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx snowman_seg5_dl_0500C500[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx snowman_seg5_dl_0500C5B0[] __attribute__((alias("port_dummy_dl")));
@@ -1762,8 +1788,7 @@ extern const Gfx snowman_seg5_dl_0500CBC0[] __attribute__((alias("port_dummy_dl"
 extern const Gfx snowman_seg5_dl_0500CBF8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx snowman_seg5_dl_0500CCB0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx snowman_seg5_dl_0500CCE8[] __attribute__((alias("port_dummy_dl")));
-const struct Animation *const snowman_seg5_anims_0500D118[] = { NULL };
-const GeoLayout spindrift_geo[] = { PORT_MODEL(65535) };
+const GeoLayout spindrift_geo[] = { PORT_MODEL(205) };
 extern const Gfx spindrift_seg5_dl_050002A0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx spindrift_seg5_dl_05000328[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx spindrift_seg5_dl_05002710[] __attribute__((alias("port_dummy_dl")));
@@ -1778,7 +1803,6 @@ extern const Gfx spindrift_seg5_dl_05002AD8[] __attribute__((alias("port_dummy_d
 extern const Gfx spindrift_seg5_dl_05002B30[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx spindrift_seg5_dl_05002C98[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx spindrift_seg5_dl_05002D08[] __attribute__((alias("port_dummy_dl")));
-const struct Animation *const spindrift_seg5_anims_05002D68[] = { NULL };
 const GeoLayout cap_switch_geo[] = { PORT_MODEL(65535) };
 extern const Gfx capswitch_seg5_dl_05002D88[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx cap_switch_exclamation_seg5_dl_05002E00[] __attribute__((alias("port_dummy_dl")));
@@ -1798,16 +1822,16 @@ extern const Gfx springboard_checkerboard_seg5_dl_050016B8[] __attribute__((alia
 extern const Gfx springboard_spring_seg5_dl_05001800[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx springboard_checkerboard_seg5_dl_05001900[] __attribute__((alias("port_dummy_dl")));
 const Collision springboard_collision_05001A28[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const GeoLayout boo_geo[] = { PORT_MODEL(92) };
+const GeoLayout boo_geo[] = { PORT_MODEL(152) };
 extern const Gfx boo_seg5_dl_0500BEE0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx boo_seg5_dl_0500BF48[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx boo_seg5_dl_0500BFA0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx boo_seg5_dl_0500C1B0[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout bookend_geo[] = { PORT_MODEL(97) };
+const GeoLayout bookend_geo[] = { PORT_MODEL(157) };
 extern const Gfx book_seg5_dl_05002EF0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx book_seg5_dl_05002F58[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx book_seg5_dl_05002FB0[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout bookend_part_geo[] = { PORT_MODEL(96) };
+const GeoLayout bookend_part_geo[] = { PORT_MODEL(156) };
 extern const Gfx bookend_seg5_dl_050018F8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bookend_seg5_dl_05001940[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bookend_seg5_dl_05001978[] __attribute__((alias("port_dummy_dl")));
@@ -1824,7 +1848,7 @@ extern const Gfx bookend_seg5_dl_050020E8[] __attribute__((alias("port_dummy_dl"
 extern const Gfx bookend_seg5_dl_05002140[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bookend_seg5_dl_05002288[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bookend_seg5_dl_050022E0[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout haunted_chair_geo[] = { PORT_MODEL(94) };
+const GeoLayout haunted_chair_geo[] = { PORT_MODEL(154) };
 extern const Gfx chair_seg5_dl_05004E38[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx chair_seg5_dl_05004EE8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx chair_seg5_dl_050050F0[] __attribute__((alias("port_dummy_dl")));
@@ -1833,7 +1857,7 @@ extern const Gfx chair_seg5_dl_05005378[] __attribute__((alias("port_dummy_dl"))
 extern const Gfx chair_seg5_dl_05005408[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx chair_seg5_dl_050055F0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx chair_seg5_dl_05005680[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout haunted_cage_geo[] = { PORT_MODEL(98) };
+const GeoLayout haunted_cage_geo[] = { PORT_MODEL(158) };
 extern const Gfx haunted_cage_seg5_dl_0500F4C8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx haunted_cage_seg5_dl_0500F660[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx haunted_cage_seg5_dl_0500F760[] __attribute__((alias("port_dummy_dl")));
@@ -1842,7 +1866,7 @@ extern const Gfx haunted_cage_seg5_dl_0500FB40[] __attribute__((alias("port_dumm
 extern const Gfx haunted_cage_seg5_dl_0500FC28[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx haunted_cage_seg5_dl_0500FFF0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx haunted_cage_seg5_dl_05010100[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout mad_piano_geo[] = { PORT_MODEL(95) };
+const GeoLayout mad_piano_geo[] = { PORT_MODEL(155) };
 extern const Gfx mad_piano_seg5_dl_05008B68[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx mad_piano_seg5_dl_05008BD0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx mad_piano_seg5_dl_05008CB0[] __attribute__((alias("port_dummy_dl")));
@@ -1853,20 +1877,20 @@ extern const Gfx mad_piano_seg5_dl_050097F8[] __attribute__((alias("port_dummy_d
 extern const Gfx mad_piano_seg5_dl_05009840[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx mad_piano_seg5_dl_05009888[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx mad_piano_seg5_dl_050098E8[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout small_key_geo[] = { PORT_MODEL(93) };
+const GeoLayout small_key_geo[] = { PORT_MODEL(153) };
 extern const Gfx small_key_seg5_dl_05006700[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx small_key_seg5_dl_05006A08[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx small_key_seg5_dl_05006A28[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx small_key_seg5_dl_05006A48[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx small_key_seg5_dl_05006A68[] __attribute__((alias("port_dummy_dl")));
-const GeoLayout geo_bbh_0005B0[] = { PORT_MODEL(65535) };
-const GeoLayout geo_bbh_0005C8[] = { PORT_MODEL(65535) };
-const GeoLayout geo_bbh_0005E0[] = { PORT_MODEL(65535) };
-const GeoLayout geo_bbh_0005F8[] = { PORT_MODEL(65535) };
-const GeoLayout geo_bbh_000610[] = { PORT_MODEL(65535) };
-const GeoLayout geo_bbh_000628[] = { PORT_MODEL(65535) };
-const GeoLayout geo_bbh_000640[] = { PORT_MODEL(65535) };
-const GeoLayout geo_bbh_000658[] = { PORT_MODEL(65535) };
+const GeoLayout geo_bbh_0005B0[] = { PORT_MODEL(76) };
+const GeoLayout geo_bbh_0005C8[] = { PORT_MODEL(77) };
+const GeoLayout geo_bbh_0005E0[] = { PORT_MODEL(78) };
+const GeoLayout geo_bbh_0005F8[] = { PORT_MODEL(79) };
+const GeoLayout geo_bbh_000610[] = { PORT_MODEL(80) };
+const GeoLayout geo_bbh_000628[] = { PORT_MODEL(81) };
+const GeoLayout geo_bbh_000640[] = { PORT_MODEL(82) };
+const GeoLayout geo_bbh_000658[] = { PORT_MODEL(83) };
 const GeoLayout geo_bbh_000670[] = { PORT_MODEL(65535) };
 const GeoLayout geo_bbh_0006B0[] = { PORT_MODEL(65535) };
 const GeoLayout geo_bbh_0006E8[] = { PORT_MODEL(65535) };
@@ -1899,7 +1923,8 @@ const GeoLayout geo_bbh_000DF0[] = { PORT_MODEL(65535) };
 const GeoLayout geo_bbh_000E40[] = { PORT_MODEL(65535) };
 const GeoLayout geo_bbh_000E80[] = { PORT_MODEL(65535) };
 const GeoLayout geo_bbh_000EB0[] = { PORT_MODEL(65535) };
-const GeoLayout geo_bbh_000F00[] = { PORT_MODEL(65535) };
+static const u16 geo_bbh_000F00_rooms[] = {32, 6, 146, 147, 148, 149, 150, 151, 5, 152, 153, 154, 155, 156, 7, 157, 158, 159, 160, 161, 162, 163, 2, 164, 165, 1, 166, 7, 157, 158, 159, 160, 161, 162, 163, 2, 167, 168, 4, 169, 170, 171, 172, 3, 173, 174, 175, 2, 176, 177, 1, 178, 1, 179, 5, 180, 181, 182, 183, 184, 11, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 13, 146, 147, 148, 149, 150, 151, 157, 158, 159, 160, 161, 162, 163, 8, 146, 147, 148, 149, 150, 151, 164, 165, 7, 146, 147, 148, 149, 150, 151, 166, 13, 146, 147, 148, 149, 150, 151, 157, 158, 159, 160, 161, 162, 163, 8, 146, 147, 148, 149, 150, 151, 167, 168, 10, 146, 147, 148, 149, 150, 151, 169, 170, 171, 172, 11, 146, 147, 148, 149, 150, 151, 180, 181, 182, 183, 184, 7, 152, 153, 154, 155, 156, 164, 165, 8, 152, 153, 154, 155, 156, 173, 174, 175, 7, 152, 153, 154, 155, 156, 176, 177, 5, 157, 158, 159, 160, 166, 7, 157, 158, 159, 160, 161, 162, 163, 4, 164, 165, 176, 177, 6, 166, 180, 181, 182, 183, 184, 8, 173, 174, 175, 180, 181, 182, 183, 184, 3, 176, 177, 178, 2, 178, 179, 6, 179, 180, 181, 182, 183, 184};
+const GeoLayout geo_bbh_000F00[] = { PORT_AREA(65535, 4, 0, 2000, 6000, 0, 0, 0, 45, 50, 10000, 6, 0, 0, 0, (uintptr_t) geo_bbh_000F00_rooms) };
 extern const Gfx bbh_seg7_dl_070075A8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bbh_seg7_dl_07007940[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bbh_seg7_dl_07007B90[] __attribute__((alias("port_dummy_dl")));
@@ -1947,19 +1972,8 @@ extern const Gfx bbh_seg7_dl_0701FD28[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bbh_seg7_dl_0701FFE8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bbh_seg7_dl_070202F0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bbh_seg7_dl_070206F0[] __attribute__((alias("port_dummy_dl")));
-const Collision bbh_seg7_collision_level[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const RoomData bbh_seg7_rooms[1];
-const MacroObject bbh_seg7_macro_objs[] = { MACRO_OBJECT_END() };
-const Collision bbh_seg7_collision_staircase_step[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision bbh_seg7_collision_tilt_floor_platform[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision bbh_seg7_collision_07026B1C[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision bbh_seg7_collision_haunted_bookshelf[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision bbh_seg7_collision_mesh_elevator[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision bbh_seg7_collision_merry_go_round[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision bbh_seg7_collision_coffin[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
 const struct MovtexQuadCollection bbh_movtex_merry_go_round_water_entrance[1];
 const struct MovtexQuadCollection bbh_movtex_merry_go_round_water_side[1];
-const LevelScript level_bbh_entry[] = { PORT_LEVEL_MISSING() };
 const GeoLayout geo_bitdw_0003C0[] = { PORT_MODEL(65535) };
 const GeoLayout geo_bitdw_0003D8[] = { PORT_MODEL(65535) };
 const GeoLayout geo_bitdw_0003F0[] = { PORT_MODEL(65535) };
@@ -2193,7 +2207,7 @@ const LevelScript level_bits_entry[] = { PORT_LEVEL_MISSING() };
 const GeoLayout bob_geo_000440[] = { PORT_MODEL(21) };
 const GeoLayout bob_geo_000458[] = { PORT_MODEL(22) };
 const GeoLayout bob_geo_000470[] = { PORT_MODEL(23) };
-const GeoLayout bob_geo_000488[] = { PORT_AREA(41, 1, 0, 2000, 6000, 3072, 0, -4608, 45, 100, 30000, 0, 42260, 4297, 30000) };
+const GeoLayout bob_geo_000488[] = { PORT_AREA(65, 1, 0, 2000, 6000, 3072, 0, -4608, 45, 100, 30000, 0, 42260, 4297, 30000, (uintptr_t) NULL) };
 extern const Gfx bob_seg7_dl_07004390[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bob_seg7_dl_07009D80[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx bob_seg7_dl_0700A470[] __attribute__((alias("port_dummy_dl")));
@@ -2252,7 +2266,7 @@ const Collision bowser_3_seg7_collision_07004FB4[] = { COL_INIT(), COL_VERTEX_IN
 const Collision bowser_3_seg7_collision_07005038[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
 const LevelScript level_bowser_3_entry[] = { PORT_LEVEL_MISSING() };
 const GeoLayout castle_courtyard_geo_000200[] = { PORT_MODEL(20) };
-const GeoLayout castle_courtyard_geo_000218[] = { PORT_AREA(37, 16, 0, 2000, 6000, 0, 0, 0, 45, 100, 12800, 0, 0, 0, 0) };
+const GeoLayout castle_courtyard_geo_000218[] = { PORT_AREA(61, 16, 0, 2000, 6000, 0, 0, 0, 45, 100, 12800, 0, 0, 0, 0, (uintptr_t) NULL) };
 extern const Gfx castle_courtyard_seg7_dl_070048B8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx castle_courtyard_seg7_dl_07005078[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx castle_courtyard_seg7_dl_07005698[] __attribute__((alias("port_dummy_dl")));
@@ -2262,7 +2276,7 @@ const GeoLayout castle_grounds_geo_000660[] = { PORT_MODEL(6) };
 const GeoLayout castle_grounds_geo_0006F4[] = { PORT_MODEL(0) };
 const GeoLayout castle_grounds_geo_00070C[] = { PORT_MODEL(5) };
 const GeoLayout castle_grounds_geo_000724[] = { PORT_MODEL(7) };
-const GeoLayout castle_grounds_geo_00073C[] = { PORT_AREA(15, 16, 0, 1500, 2500, 0, 1500, -12000, 45, 100, 20000, 0, 0, 0, 0) };
+const GeoLayout castle_grounds_geo_00073C[] = { PORT_AREA(15, 16, 0, 1500, 2500, 0, 1500, -12000, 45, 100, 20000, 0, 0, 0, 0, (uintptr_t) NULL) };
 extern const Gfx castle_grounds_seg7_dl_07006D70[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx castle_grounds_seg7_dl_070095F0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx castle_grounds_seg7_dl_0700A290[] __attribute__((alias("port_dummy_dl")));
@@ -2301,7 +2315,8 @@ const GeoLayout castle_geo_001260[] = { PORT_MODEL(65535) };
 const GeoLayout castle_geo_0012C8[] = { PORT_MODEL(65535) };
 const GeoLayout castle_geo_001348[] = { PORT_MODEL(65535) };
 const GeoLayout castle_geo_0013B8[] = { PORT_MODEL(65535) };
-const GeoLayout castle_geo_001400[] = { PORT_AREA(32, 13, 0, 2000, 6000, 0, 0, 0, 64, 50, 7000, 32769, 0, 0, 0) };
+static const u16 castle_geo_001400_rooms[] = {17, 5, 32, 33, 34, 35, 36, 1, 37, 2, 38, 39, 3, 40, 41, 42, 2, 43, 44, 3, 45, 46, 47, 6, 48, 49, 50, 51, 52, 53, 4, 54, 55, 56, 57, 6, 32, 33, 34, 35, 36, 58, 6, 32, 33, 34, 35, 36, 37, 7, 32, 33, 34, 35, 36, 38, 39, 8, 32, 33, 34, 35, 36, 40, 41, 42, 7, 32, 33, 34, 35, 36, 43, 44, 8, 32, 33, 34, 35, 36, 45, 46, 47, 11, 32, 33, 34, 35, 36, 48, 49, 50, 51, 52, 53, 9, 32, 33, 34, 35, 36, 54, 55, 56, 57, 6, 32, 33, 34, 35, 36, 58};
+const GeoLayout castle_geo_001400[] = { PORT_AREA(65535, 13, 0, 2000, 6000, 0, 0, 0, 64, 50, 7000, 32769, 0, 0, 0, (uintptr_t) castle_geo_001400_rooms) };
 const GeoLayout castle_geo_001518[] = { PORT_MODEL(12) };
 const GeoLayout castle_geo_001530[] = { PORT_MODEL(10) };
 const GeoLayout castle_geo_001548[] = { PORT_MODEL(11) };
@@ -2316,7 +2331,8 @@ const GeoLayout castle_geo_0016D8[] = { PORT_MODEL(65535) };
 const GeoLayout castle_geo_001740[] = { PORT_MODEL(65535) };
 const GeoLayout castle_geo_001798[] = { PORT_MODEL(65535) };
 const GeoLayout castle_geo_001800[] = { PORT_MODEL(65535) };
-const GeoLayout castle_geo_001858[] = { PORT_AREA(33, 4, 0, 2000, 6000, 0, 0, 0, 64, 50, 8000, 32769, 1, 893, 8000) };
+static const u16 castle_geo_001858_rooms[] = {11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+const GeoLayout castle_geo_001858[] = { PORT_AREA(65535, 4, 0, 2000, 6000, 0, 0, 0, 64, 50, 8000, 32769, 1, 893, 8000, (uintptr_t) castle_geo_001858_rooms) };
 const GeoLayout castle_geo_001940[] = { PORT_MODEL(9) };
 const GeoLayout castle_geo_001958[] = { PORT_MODEL(65535) };
 const GeoLayout castle_geo_001980[] = { PORT_MODEL(65535) };
@@ -2328,7 +2344,8 @@ const GeoLayout castle_geo_001AB8[] = { PORT_MODEL(65535) };
 const GeoLayout castle_geo_001AF8[] = { PORT_MODEL(65535) };
 const GeoLayout castle_geo_001B48[] = { PORT_MODEL(65535) };
 const GeoLayout castle_geo_001BB0[] = { PORT_MODEL(65535) };
-const GeoLayout castle_geo_001C10[] = { PORT_AREA(34, 4, 0, 2000, 6000, 0, 0, 0, 64, 50, 6400, 32769, 0, 0, 0) };
+static const u16 castle_geo_001C10_rooms[] = {10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+const GeoLayout castle_geo_001C10[] = { PORT_AREA(65535, 4, 0, 2000, 6000, 0, 0, 0, 64, 50, 6400, 32769, 0, 0, 0, (uintptr_t) castle_geo_001C10_rooms) };
 extern const Gfx inside_castle_seg7_dl_070225D8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx inside_castle_seg7_dl_07022610[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx inside_castle_seg7_dl_070234C0[] __attribute__((alias("port_dummy_dl")));
@@ -2409,16 +2426,16 @@ extern const Gfx inside_castle_seg7_dl_07068850[] __attribute__((alias("port_dum
 extern const Gfx inside_castle_seg7_dl_07068B10[] __attribute__((alias("port_dummy_dl")));
 const struct MovtexQuadCollection inside_castle_movtex_green_room_water[1];
 const struct MovtexQuadCollection inside_castle_movtex_moat_water[1];
-const GeoLayout ccm_geo_0003D0[] = { PORT_MODEL(65535) };
-const GeoLayout ccm_geo_0003F0[] = { PORT_MODEL(65535) };
-const GeoLayout ccm_geo_00040C[] = { PORT_MODEL(65535) };
-const GeoLayout ccm_geo_00042C[] = { PORT_MODEL(65535) };
-const GeoLayout ccm_geo_00045C[] = { PORT_MODEL(65535) };
-const GeoLayout ccm_geo_000494[] = { PORT_MODEL(65535) };
-const GeoLayout ccm_geo_0004BC[] = { PORT_MODEL(65535) };
-const GeoLayout ccm_geo_0004E4[] = { PORT_MODEL(65535) };
-const GeoLayout ccm_geo_00051C[] = { PORT_MODEL(65535) };
-const GeoLayout ccm_geo_0005E8[] = { PORT_MODEL(65535) };
+const GeoLayout ccm_geo_0003D0[] = { PORT_MODEL(72) };
+const GeoLayout ccm_geo_0003F0[] = { PORT_MODEL(73) };
+const GeoLayout ccm_geo_00040C[] = { PORT_MODEL(74) };
+const GeoLayout ccm_geo_00042C[] = { PORT_MODEL(65) };
+const GeoLayout ccm_geo_00045C[] = { PORT_MODEL(66) };
+const GeoLayout ccm_geo_000494[] = { PORT_MODEL(67) };
+const GeoLayout ccm_geo_0004BC[] = { PORT_MODEL(68) };
+const GeoLayout ccm_geo_0004E4[] = { PORT_MODEL(69) };
+const GeoLayout ccm_geo_00051C[] = { PORT_AREA(134, 1, 0, 2000, 6000, 0, 0, 0, 45, 100, 12800, 4, 0, 0, 0, (uintptr_t) NULL) };
+const GeoLayout ccm_geo_0005E8[] = { PORT_AREA(135, 9, 0, 2000, 6000, 0, 0, 0, 45, 100, 12800, 32769, 0, 0, 0, (uintptr_t) NULL) };
 extern const Gfx ccm_seg7_dl_0700B090[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx ccm_seg7_dl_0700B1D8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx ccm_seg7_dl_0700C380[] __attribute__((alias("port_dummy_dl")));
@@ -2439,11 +2456,6 @@ extern const Gfx ccm_seg7_dl_070118B0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx ccm_seg7_dl_07012BD8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx ccm_seg7_dl_070136D0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx ccm_seg7_dl_07013870[] __attribute__((alias("port_dummy_dl")));
-const Collision ccm_seg7_area_1_collision[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const MacroObject ccm_seg7_area_1_macro_objs[] = { MACRO_OBJECT_END() };
-const Collision ccm_seg7_collision_070163F8[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Trajectory ccm_seg7_trajectory_snowman[] = { TRAJECTORY_END() };
-const Trajectory ccm_seg7_trajectory_0701669C[] = { TRAJECTORY_END() };
 const struct MovtexQuadCollection ccm_movtex_penguin_puddle_water[1];
 extern const Gfx ccm_seg7_dl_0701CE30[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx ccm_seg7_dl_0701E558[] __attribute__((alias("port_dummy_dl")));
@@ -2452,10 +2464,6 @@ extern const Gfx ccm_seg7_dl_0701FC78[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx ccm_seg7_dl_0701FD78[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx ccm_seg7_dl_0701FE60[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx ccm_seg7_dl_070207F0[] __attribute__((alias("port_dummy_dl")));
-const Collision ccm_seg7_area_2_collision[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const MacroObject ccm_seg7_area_2_macro_objs[] = { MACRO_OBJECT_END() };
-const Trajectory ccm_seg7_trajectory_penguin_race[] = { TRAJECTORY_END() };
-const LevelScript level_ccm_entry[] = { PORT_LEVEL_MISSING() };
 const GeoLayout cotmc_geo_0001A0[] = { PORT_MODEL(65535) };
 extern const Gfx cotmc_seg7_dl_07007D48[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx cotmc_seg7_dl_0700A160[] __attribute__((alias("port_dummy_dl")));
@@ -2591,19 +2599,19 @@ extern const Gfx intro_seg7_dl_0700B3A0[] __attribute__((alias("port_dummy_dl"))
 extern const Gfx intro_seg7_dl_0700C6A0[] __attribute__((alias("port_dummy_dl")));
 f32 intro_seg7_table_0700C790[1];
 f32 intro_seg7_table_0700C880[1];
-const GeoLayout jrb_geo_000900[] = { PORT_MODEL(65535) };
-const GeoLayout jrb_geo_000918[] = { PORT_MODEL(65535) };
-const GeoLayout jrb_geo_000930[] = { PORT_MODEL(65535) };
-const GeoLayout jrb_geo_000948[] = { PORT_MODEL(65535) };
-const GeoLayout jrb_geo_000960[] = { PORT_MODEL(65535) };
-const GeoLayout jrb_geo_000978[] = { PORT_MODEL(65535) };
-const GeoLayout jrb_geo_000990[] = { PORT_MODEL(65535) };
-const GeoLayout jrb_geo_0009B0[] = { PORT_MODEL(65535) };
-const GeoLayout jrb_geo_0009C8[] = { PORT_MODEL(65535) };
-const GeoLayout jrb_geo_0009E8[] = { PORT_MODEL(65535) };
-const GeoLayout jrb_geo_000A00[] = { PORT_MODEL(65535) };
-const GeoLayout jrb_geo_000A18[] = { PORT_MODEL(65535) };
-const GeoLayout jrb_geo_000AFC[] = { PORT_MODEL(65535) };
+const GeoLayout jrb_geo_000900[] = { PORT_MODEL(62) };
+const GeoLayout jrb_geo_000918[] = { PORT_MODEL(63) };
+const GeoLayout jrb_geo_000930[] = { PORT_MODEL(60) };
+const GeoLayout jrb_geo_000948[] = { PORT_MODEL(64) };
+const GeoLayout jrb_geo_000960[] = { PORT_MODEL(61) };
+const GeoLayout jrb_geo_000978[] = { PORT_MODEL(54) };
+const GeoLayout jrb_geo_000990[] = { PORT_MODEL(58) };
+const GeoLayout jrb_geo_0009B0[] = { PORT_MODEL(55) };
+const GeoLayout jrb_geo_0009C8[] = { PORT_MODEL(59) };
+const GeoLayout jrb_geo_0009E8[] = { PORT_MODEL(56) };
+const GeoLayout jrb_geo_000A00[] = { PORT_MODEL(57) };
+const GeoLayout jrb_geo_000A18[] = { PORT_AREA(114, 16, 0, 2000, 6000, 0, 0, 0, 45, 100, 25000, 8, 2572, 965, 25000, (uintptr_t) NULL) };
+const GeoLayout jrb_geo_000AFC[] = { PORT_AREA(115, 16, 0, 2000, 6000, 0, 0, 0, 45, 100, 10000, 32769, 0, 0, 0, (uintptr_t) NULL) };
 extern const Gfx jrb_seg7_dl_07002FD0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx jrb_seg7_dl_07004940[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx jrb_seg7_dl_07004C78[] __attribute__((alias("port_dummy_dl")));
@@ -2622,28 +2630,12 @@ extern const Gfx jrb_seg7_dl_0700A608[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx jrb_seg7_dl_0700AC68[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx jrb_seg7_dl_0700AE48[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx jrb_seg7_dl_0700AFB0[] __attribute__((alias("port_dummy_dl")));
-const Collision jrb_seg7_area_1_collision[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const MacroObject jrb_seg7_area_1_macro_objs[] = { MACRO_OBJECT_END() };
-const Collision jrb_seg7_collision_rock_solid[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision jrb_seg7_collision_floating_platform[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision jrb_seg7_collision_floating_box[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision jrb_seg7_collision_in_sunken_ship_3[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision jrb_seg7_collision_in_sunken_ship[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision jrb_seg7_collision_0700CEF0[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision jrb_seg7_collision_in_sunken_ship_2[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision jrb_seg7_collision_pillar_base[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision jrb_seg7_collision_0700D1DC[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Trajectory jrb_seg7_trajectory_unagi_1[] = { TRAJECTORY_END() };
-const Trajectory jrb_seg7_trajectory_unagi_2[] = { TRAJECTORY_END() };
 const struct MovtexQuadCollection jrb_movtex_water[1];
 const struct MovtexQuadCollection jrb_movtex_initial_mist[1];
 extern const Gfx jrb_seg7_dl_0700EF00[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx jrb_seg7_dl_0700FE48[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx jrb_seg7_dl_07010548[] __attribute__((alias("port_dummy_dl")));
-const Collision jrb_seg7_area_2_collision[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const MacroObject jrb_seg7_area_2_macro_objs[] = { MACRO_OBJECT_END() };
 const struct MovtexQuadCollection jrb_movtex_sunken_ship_water[1];
-const LevelScript level_jrb_entry[] = { PORT_LEVEL_MISSING() };
 const GeoLayout lll_geo_0009E0[] = { PORT_MODEL(65535) };
 const GeoLayout lll_geo_0009F8[] = { PORT_MODEL(65535) };
 const GeoLayout lll_geo_000A10[] = { PORT_MODEL(65535) };
@@ -3260,37 +3252,37 @@ const Collision wdw_seg7_collision_070186B4[] = { COL_INIT(), COL_VERTEX_INIT(0)
 const struct MovtexQuadCollection wdw_movtex_area1_water[1];
 const struct MovtexQuadCollection wdw_movtex_area2_water[1];
 const LevelScript level_wdw_entry[] = { PORT_LEVEL_MISSING() };
-const GeoLayout wf_geo_0007E0[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000820[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000860[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000878[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000890[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_0008A8[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_0008E8[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000900[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000940[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000958[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_0009A0[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_0009B8[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_0009D0[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_0009E8[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000A00[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000A40[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000A58[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000A98[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000AB0[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000AC8[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000AE0[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000AF8[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000B10[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000B38[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000B60[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000B78[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000B90[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000BA8[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000BC8[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000BE0[] = { PORT_MODEL(65535) };
-const GeoLayout wf_geo_000BF8[] = { PORT_MODEL(65535) };
+const GeoLayout wf_geo_0007E0[] = { PORT_MODEL(24) };
+const GeoLayout wf_geo_000820[] = { PORT_MODEL(25) };
+const GeoLayout wf_geo_000860[] = { PORT_MODEL(26) };
+const GeoLayout wf_geo_000878[] = { PORT_MODEL(27) };
+const GeoLayout wf_geo_000890[] = { PORT_MODEL(28) };
+const GeoLayout wf_geo_0008A8[] = { PORT_MODEL(29) };
+const GeoLayout wf_geo_0008E8[] = { PORT_MODEL(30) };
+const GeoLayout wf_geo_000900[] = { PORT_MODEL(31) };
+const GeoLayout wf_geo_000940[] = { PORT_MODEL(32) };
+const GeoLayout wf_geo_000958[] = { PORT_MODEL(34) };
+const GeoLayout wf_geo_0009A0[] = { PORT_MODEL(35) };
+const GeoLayout wf_geo_0009B8[] = { PORT_MODEL(36) };
+const GeoLayout wf_geo_0009D0[] = { PORT_MODEL(37) };
+const GeoLayout wf_geo_0009E8[] = { PORT_MODEL(38) };
+const GeoLayout wf_geo_000A00[] = { PORT_MODEL(39) };
+const GeoLayout wf_geo_000A40[] = { PORT_MODEL(40) };
+const GeoLayout wf_geo_000A58[] = { PORT_MODEL(41) };
+const GeoLayout wf_geo_000A98[] = { PORT_MODEL(42) };
+const GeoLayout wf_geo_000AB0[] = { PORT_MODEL(43) };
+const GeoLayout wf_geo_000AC8[] = { PORT_MODEL(44) };
+const GeoLayout wf_geo_000AE0[] = { PORT_MODEL(33) };
+const GeoLayout wf_geo_000AF8[] = { PORT_MODEL(45) };
+const GeoLayout wf_geo_000B10[] = { PORT_MODEL(46) };
+const GeoLayout wf_geo_000B38[] = { PORT_MODEL(47) };
+const GeoLayout wf_geo_000B60[] = { PORT_MODEL(48) };
+const GeoLayout wf_geo_000B78[] = { PORT_MODEL(49) };
+const GeoLayout wf_geo_000B90[] = { PORT_MODEL(50) };
+const GeoLayout wf_geo_000BA8[] = { PORT_MODEL(51) };
+const GeoLayout wf_geo_000BC8[] = { PORT_MODEL(53) };
+const GeoLayout wf_geo_000BE0[] = { PORT_MODEL(52) };
+const GeoLayout wf_geo_000BF8[] = { PORT_AREA(102, 1, 0, 2000, 6000, 0, 2000, 0, 45, 100, 12800, 3, 0, 0, 0, (uintptr_t) NULL) };
 extern const Gfx wf_seg7_dl_070050C8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx wf_seg7_dl_070052B8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx wf_seg7_dl_07005538[] __attribute__((alias("port_dummy_dl")));
@@ -3331,24 +3323,7 @@ extern const Gfx wf_seg7_dl_0700F340[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx wf_seg7_dl_0700F610[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx wf_seg7_dl_0700F6C0[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx wf_seg7_dl_0700F7F8[] __attribute__((alias("port_dummy_dl")));
-const Collision wf_seg7_collision_small_bomp[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision wf_seg7_collision_large_bomp[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision wf_seg7_collision_clocklike_rotation[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision wf_seg7_collision_sliding_brick_platform[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision wf_seg7_collision_tumbling_bridge[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision wf_seg7_collision_trapezoid[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision wf_seg7_collision_platform[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision wf_seg7_collision_breakable_wall[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision wf_seg7_collision_breakable_wall_2[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision wf_seg7_collision_kickable_board[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision wf_seg7_collision_tower_door[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision wf_seg7_collision_rotating_platform[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision wf_seg7_collision_tower[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision wf_seg7_collision_bullet_bill_cannon[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const Collision wf_seg7_collision_070102D8[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
-const MacroObject wf_seg7_macro_objs[] = { MACRO_OBJECT_END() };
 const struct MovtexQuadCollection wf_movtex_water[1];
-const LevelScript level_wf_entry[] = { PORT_LEVEL_MISSING() };
 const GeoLayout wmotr_geo_0001F0[] = { PORT_MODEL(65535) };
 extern const Gfx wmotr_seg7_dl_0700C1F8[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx wmotr_seg7_dl_0700EFD8[] __attribute__((alias("port_dummy_dl")));

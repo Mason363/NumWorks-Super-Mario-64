@@ -21,7 +21,8 @@ s32 unused8038BE90;
  */
 /* (calculator) no level: no static surfaces */
 static const u16 sNoCells[NUM_CELLS * NUM_CELLS * 3 + 1];
-static const struct PortTerrain sNoTerrain = { NULL, NULL, sNoCells, sNoCells };
+static const u16 sNoRuns[NUM_CELLS * NUM_CELLS * 3 + 1];
+static const struct PortTerrain sNoTerrain = { NULL, NULL, NULL, sNoRuns, sNoCells, sNoCells };
 const struct PortTerrain *gPortTerrain = &sNoTerrain;
 struct SurfaceNode *gDynamicSurfaceHeads[NUM_CELLS][NUM_CELLS][3];
 
@@ -147,7 +148,7 @@ static void add_surface_to_cell(s16 dynamic, s16 cellX, s16 cellZ, struct Surfac
     //  many functions only use the first triangle in surface order that fits,
     //  missing higher surfaces.
     //  upperY would be a better sort method.
-    surfacePriority = surface->vertex1[1] * sortDir;
+    surfacePriority = surface->u.d.vertex1[1] * sortDir;
 
     newNode->surface = surface;
 
@@ -156,7 +157,7 @@ static void add_surface_to_cell(s16 dynamic, s16 cellX, s16 cellZ, struct Surfac
 
     // Loop until we find the appropriate place for the surface in the list.
     while (list->next != NULL) {
-        priority = list->next->surface->vertex1[1] * sortDir;
+        priority = list->next->surface->u.d.vertex1[1] * sortDir;
 
         if (surfacePriority > priority) {
             break;
@@ -281,10 +282,10 @@ static void add_surface(struct Surface *surface, s32 dynamic) {
     // cellY maybe? s32 instead of s16, though.
     UNUSED s32 unused3 = 0;
 
-    minX = min_3(surface->vertex1[0], surface->vertex2[0], surface->vertex3[0]);
-    minZ = min_3(surface->vertex1[2], surface->vertex2[2], surface->vertex3[2]);
-    maxX = max_3(surface->vertex1[0], surface->vertex2[0], surface->vertex3[0]);
-    maxZ = max_3(surface->vertex1[2], surface->vertex2[2], surface->vertex3[2]);
+    minX = min_3(surface->u.d.vertex1[0], surface->u.d.vertex2[0], surface->u.d.vertex3[0]);
+    minZ = min_3(surface->u.d.vertex1[2], surface->u.d.vertex2[2], surface->u.d.vertex3[2]);
+    maxX = max_3(surface->u.d.vertex1[0], surface->u.d.vertex2[0], surface->u.d.vertex3[0]);
+    maxZ = max_3(surface->u.d.vertex1[2], surface->u.d.vertex2[2], surface->u.d.vertex3[2]);
 
     minCellX = lower_cell_index(minX);
     maxCellX = upper_cell_index(maxX);
@@ -369,22 +370,22 @@ static struct Surface *read_surface_data(TerrainData *vertexData, TerrainData **
         return NULL;
     }
 
-    surface->vertex1[0] = x1;
-    surface->vertex2[0] = x2;
-    surface->vertex3[0] = x3;
+    surface->u.d.vertex1[0] = x1;
+    surface->u.d.vertex2[0] = x2;
+    surface->u.d.vertex3[0] = x3;
 
-    surface->vertex1[1] = y1;
-    surface->vertex2[1] = y2;
-    surface->vertex3[1] = y3;
+    surface->u.d.vertex1[1] = y1;
+    surface->u.d.vertex2[1] = y2;
+    surface->u.d.vertex3[1] = y3;
 
-    surface->vertex1[2] = z1;
-    surface->vertex2[2] = z2;
-    surface->vertex3[2] = z3;
+    surface->u.d.vertex1[2] = z1;
+    surface->u.d.vertex2[2] = z2;
+    surface->u.d.vertex3[2] = z3;
 
     /* (calculator) its normal is worked out when it is read (SURF_NX) */
 
-    surface->lowerY = minY - 5;
-    surface->upperY = maxY + 5;
+    surface->u.d.lowerY = minY - 5;
+    surface->u.d.upperY = maxY + 5;
 
     return surface;
 }

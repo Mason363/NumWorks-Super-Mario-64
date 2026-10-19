@@ -41,6 +41,10 @@ decomp/levels/castle_grounds/script.c
 decomp/levels/castle_inside/script.c
 decomp/levels/castle_courtyard/script.c
 decomp/levels/bob/script.c
+decomp/levels/wf/script.c
+decomp/levels/jrb/script.c
+decomp/levels/ccm/script.c
+decomp/levels/bbh/script.c
 src/port/gen/symbols.c
 src/port/gen/terrain.c
 src/port/gen/anims.c

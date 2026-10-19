@@ -426,6 +426,17 @@ void port_draw_area(struct GraphNodeRoot *root) {
   r_sky(a->background, (s16) atan2s(gc->focus[2] - gc->pos[2], gc->focus[0] - gc->pos[0]));
   if (a->fog_color) r_fog((u16) a->fog_color, a->fog_near, a->fog_far);
   if (a->mesh != 0xFFFF && a->mesh < HDR->nmesh) r_mesh(MESH(a->mesh), NULL, 0xFFFFFF, 255, 0);
+  if (a->rooms) {
+    /* the room Mario is in (geo_switch_area, which also tells the objects) */
+    struct GraphNodeSwitchCase sw;
+    memset(&sw, 0, sizeof sw);
+    geo_switch_area(GEO_CONTEXT_RENDER, &sw.fnNode.node, NULL);
+    const u16 *r = a->rooms + 1;
+    for (int i = 0; i < sw.selectedCase && i < a->rooms[0]; i++) r += 1 + r[0];
+    if (sw.selectedCase >= 0 && sw.selectedCase < a->rooms[0])
+      for (int i = 1; i <= r[0]; i++)
+        if (r[i] < HDR->nmesh) r_mesh(MESH(r[i]), NULL, 0xFFFFFF, 255, 0);
+  }
   sAlpha = 255;
   /* the objects (GEO_RENDER_OBJ: every one of the area's, in the order they were made); the matrix stack in the
      renderer's memory that is free until it draws */

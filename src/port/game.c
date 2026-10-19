@@ -19,7 +19,11 @@
 /* the N64 had 4 MB for this; the levels' scripts, cameras, warps and the objects' surfaces fit in less. The
  * effects' pool (the HUD's text, the bubbles and snow) was 16 KB of it */
 #define EFFECTS_SIZE (4 * 1024)
+#ifdef HOST
+#define POOL_SIZE (60 * 1024)   /* (a computer's pointers are twice as big) */
+#else
 #define POOL_SIZE (26 * 1024 + EFFECTS_SIZE)
+#endif
 static u64 sPool[POOL_SIZE / 8];
 
 
@@ -68,6 +72,7 @@ struct GraphNode *process_geo_layout(struct AllocOnlyPool *pool, void *segptr) {
     a->background = (u16) g[13];
     a->fog_color = (u32) g[14];
     a->fog_near = (u16) g[15], a->fog_far = (u16) g[16];
+    a->rooms = (const u16 *) g[17];
     return &a->root.node;
   }
   struct PortNode *n = alloc_only_pool_alloc(pool, sizeof(struct PortNode));

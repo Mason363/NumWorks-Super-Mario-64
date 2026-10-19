@@ -387,17 +387,11 @@ static inline __attribute__((always_inline)) void span_fast_body(int y, int x0, 
     span_fast_body(y, x0, x1, p, d, dep, sh, fo, false);                                                  \
   }
 FAST(1, 0, 0) FAST(1, 1, 0) FAST(1, 0, 1) FAST(1, 1, 1)
-FAST(2, 0, 0) FAST(2, 1, 0) FAST(2, 0, 1) FAST(2, 1, 1)
-FAST(3, 0, 0) FAST(3, 1, 0) FAST(3, 0, 1) FAST(3, 1, 1)
 #undef FAST
-/* by affine or not, the texel size, then shaded + 2 * fogged */
-static void (*const fast_spans[2][3][4])(int, int, int, const PV *, const PV *) = {
-    {{span_aff_100, span_aff_110, span_aff_101, span_aff_111},
-     {span_aff_200, span_aff_210, span_aff_201, span_aff_211},
-     {span_aff_300, span_aff_310, span_aff_301, span_aff_311}},
-    {{span_fast_100, span_fast_110, span_fast_101, span_fast_111},
-     {span_fast_200, span_fast_210, span_fast_201, span_fast_211},
-     {span_fast_300, span_fast_310, span_fast_301, span_fast_311}},
+/* (the textures are 4 bits a texel: tools/pack.py) by affine or not, then shaded + 2 * fogged */
+static void (*const fast_spans[2][4])(int, int, int, const PV *, const PV *) = {
+    {span_aff_100, span_aff_110, span_aff_101, span_aff_111},
+    {span_fast_100, span_fast_110, span_fast_101, span_fast_111},
 };
 /* (the span for triangles whose depth varies little, when the batch has one) */
 static void (*span_aff)(int, int, int, const PV *, const PV *);
@@ -557,7 +551,7 @@ static void use_texture(const Batch *b) {
     else if (depth == 2) tx_texels = base + 512, span = span_t8;
     else tx_texels = base, span = span_t16;
   }
-  tx_wrap = b->wrap & 15, tx_blend = b->wrap & W_BLEND;
+  tx_wrap = b->wrap & 15, tx_blend = b->wrap & W_BLEND;   /* (the rest of wrap is the vertices') */
 }
 
 /* the scene's light for lit meshes: from the upper left, in front of the camera, in model space */
@@ -594,7 +588,15 @@ static void draw_batch(const RItem *it, const Batch *b) {
     c->z = x * M->m[0][2] + y * M->m[1][2] + z * M->m[2][2] + M->m[3][2];
     c->u = s->s * (1.0f / 32), c->v = s->t * (1.0f / 32);
     if (lit) {
-      float nx = (int8_t)s->c[0], ny = (int8_t)s->c[1], nz = (int8_t)s->c[2];
+      /* (the normal, unfolded from its octahedron, 127 long) */
+      float nx = (s->c & 255) * (2.0f / 255) - 1, ny = (s->c >> 8) * (2.0f / 255) - 1;
+      float nz = 1 - fabsf(nx) - fabsf(ny);
+      if (nz < 0) {
+        float ox = nx;
+        nx = (1 - fabsf(ny)) * (nx >= 0 ? 1 : -1), ny = (1 - fabsf(ox)) * (ny >= 0 ? 1 : -1);
+      }
+      float nl = 127 / sqrtf(nx * nx + ny * ny + nz * nz);
+      nx *= nl, ny *= nl, nz *= nl;
       float d = (nx * L[0] + ny * L[1] + nz * L[2]) * (1.0f / 127);
       if (d < 0) d = 0;
       int cr = (int)(light[0] + light[3] * d), cg = (int)(light[1] + light[4] * d), cb = (int)(light[2] + light[5] * d);
@@ -606,8 +608,14 @@ static void draw_batch(const RItem *it, const Batch *b) {
         float el = sqrtf(ex * ex + ey * ey) + 127;
         c->u = (ex / el * 0.5f + 0.5f) * tw, c->v = (-ey / el * 0.5f + 0.5f) * th;
       }
-    } else c->r = s->c[0], c->g = s->c[1], c->b = s->c[2];
-    c->a = s->c[3];
+      c->a = b->alpha;
+    } else if (b->wrap & W_VALPHA) {
+      c->r = (uint8_t)((s->c >> 12) * 17), c->g = (uint8_t)((s->c >> 8 & 15) * 17), c->b = (uint8_t)((s->c >> 4 & 15) * 17);
+      c->a = (uint8_t)((s->c & 15) * 17);
+    } else {
+      c->r = (uint8_t)((s->c >> 11) * 255 / 31), c->g = (uint8_t)((s->c >> 5 & 63) * 255 / 63);
+      c->b = (uint8_t)((s->c & 31) * 255 / 31), c->a = b->alpha;
+    }
     c->fog = (uint8_t)fog_of(c->z);
     rv_project(c);
   }
@@ -615,10 +623,10 @@ static void draw_batch(const RItem *it, const Batch *b) {
   if (it->alpha < 255) d_mode |= M_XLU;
   d_tint = it->tint, d_alpha = it->alpha;
   if ((b->mode & M_TEX) && !(d_mode & (M_XLU | M_CUTOUT | M_DECAL)) && tx_fmt == TF_565 && tx_wrap == 0 &&
-      d_tint == 0xFFFFFF)
+      d_tint == 0xFFFFFF && tx_depth == 1)
   {
     int k = ((d_mode & M_SHADE) ? 1 : 0) | ((fog_on && (d_mode & M_FOG)) ? 2 : 0);
-    span = fast_spans[1][tx_depth - 1][k], span_aff = fast_spans[0][tx_depth - 1][k];
+    span = fast_spans[1][k], span_aff = fast_spans[0][k];
   }
   need_rgb = !(d_mode & M_TEX) || (d_mode & M_SHADE) || tx_blend, need_a = d_mode & M_XLU, need_fog = fog_on && (d_mode & M_FOG);
   bool cull = !(it->flags & R_NOCULL);

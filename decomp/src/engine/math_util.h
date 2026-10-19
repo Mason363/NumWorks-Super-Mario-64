@@ -17,15 +17,16 @@
  * exploits array sizes for range analysis-based optimizations as well).
  * Thus, for non-IDO compilers we use the standard-compliant version.
  */
-extern const f32 gSineTable[]; /* (calculator) const */
-#ifdef AVOID_UB
-#define gCosineTable (gSineTable + 0x400)
-#else
-extern f32 gCosineTable[];
-#endif
+/* (calculator) a quarter of the wave, the rest by symmetry (trig_tables.inc.c) */
+extern const f32 port_sine_quarter[0x401];
+static inline f32 port_sine(u32 i) {   /* (i: 4096 to the turn) */
+    u32 k = i & 0x3FF;
+    f32 v = (i & 0x400) ? port_sine_quarter[0x400 - k] : port_sine_quarter[k];
+    return (i & 0x800) ? -v : v;
+}
 
-#define sins(x) gSineTable[(u16) (x) >> 4]
-#define coss(x) gCosineTable[(u16) (x) >> 4]
+#define sins(x) port_sine((u16) (x) >> 4)
+#define coss(x) port_sine((((u16) (x) >> 4) + 0x400) & 0xFFF)
 
 #define min(a, b) ((a) <= (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))

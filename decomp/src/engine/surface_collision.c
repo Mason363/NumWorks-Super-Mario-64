@@ -38,7 +38,7 @@ static s32 find_wall_collisions_from_list(struct PortSurfaceList surfaceNode, /*
     while ((surf = port_surface_next(&surfaceNode)) != NULL) { /* (calculator) */
 
         // Exclude a large number of walls immediately to optimize.
-        if (y < surf->lowerY || y > surf->upperY) {
+        if (y < SURF_LOWER(surf) || y > SURF_UPPER(surf)) {
             continue;
         }
 
@@ -55,8 +55,8 @@ static s32 find_wall_collisions_from_list(struct PortSurfaceList surfaceNode, /*
         //  the fact they are floating point, certain floating point positions
         //  along the seam of two walls may collide with neither wall or both walls.
         if (surf->flags & SURFACE_FLAG_X_PROJECTION) {
-            w1 = -surf->vertex1[2];            w2 = -surf->vertex2[2];            w3 = -surf->vertex3[2];
-            y1 = surf->vertex1[1];            y2 = surf->vertex2[1];            y3 = surf->vertex3[1];
+            w1 = -SURF_V(surf, 1)[2];            w2 = -SURF_V(surf, 2)[2];            w3 = -SURF_V(surf, 3)[2];
+            y1 = SURF_V(surf, 1)[1];            y2 = SURF_V(surf, 2)[1];            y3 = SURF_V(surf, 3)[1];
 
             if (SURF_NX(surf) > 0.0f) {
                 if ((y1 - y) * (w2 - w1) - (w1 - -pz) * (y2 - y1) > 0.0f) {
@@ -80,8 +80,8 @@ static s32 find_wall_collisions_from_list(struct PortSurfaceList surfaceNode, /*
                 }
             }
         } else {
-            w1 = surf->vertex1[0];            w2 = surf->vertex2[0];            w3 = surf->vertex3[0];
-            y1 = surf->vertex1[1];            y2 = surf->vertex2[1];            y3 = surf->vertex3[1];
+            w1 = SURF_V(surf, 1)[0];            w2 = SURF_V(surf, 2)[0];            w3 = SURF_V(surf, 3)[0];
+            y1 = SURF_V(surf, 1)[1];            y2 = SURF_V(surf, 2)[1];            y3 = SURF_V(surf, 3)[1];
 
             if (SURF_NZ(surf) > 0.0f) {
                 if ((y1 - y) * (w2 - w1) - (w1 - px) * (y2 - y1) > 0.0f) {
@@ -231,10 +231,10 @@ static struct Surface *find_ceil_from_list(struct PortSurfaceList surfaceNode, /
     // Stay in this loop until out of ceilings.
     while ((surf = port_surface_next(&surfaceNode)) != NULL) { /* (calculator) */
 
-        x1 = surf->vertex1[0];
-        z1 = surf->vertex1[2];
-        z2 = surf->vertex2[2];
-        x2 = surf->vertex2[0];
+        x1 = SURF_V(surf, 1)[0];
+        z1 = SURF_V(surf, 1)[2];
+        z2 = SURF_V(surf, 2)[2];
+        x2 = SURF_V(surf, 2)[0];
 
         // Checking if point is in bounds of the triangle laterally.
         if ((z1 - z) * (x2 - x1) - (x1 - x) * (z2 - z1) > 0) {
@@ -242,8 +242,8 @@ static struct Surface *find_ceil_from_list(struct PortSurfaceList surfaceNode, /
         }
 
         // Slight optimization by checking these later.
-        x3 = surf->vertex3[0];
-        z3 = surf->vertex3[2];
+        x3 = SURF_V(surf, 3)[0];
+        z3 = SURF_V(surf, 3)[2];
         if ((z2 - z) * (x3 - x2) - (x2 - x) * (z3 - z2) > 0) {
             continue;
         }
@@ -405,10 +405,10 @@ static struct Surface *find_floor_from_list(struct PortSurfaceList surfaceNode, 
     // Iterate through the list of floors until there are no more floors.
     while ((surf = port_surface_next(&surfaceNode)) != NULL) { /* (calculator) */
 
-        x1 = surf->vertex1[0];
-        z1 = surf->vertex1[2];
-        x2 = surf->vertex2[0];
-        z2 = surf->vertex2[2];
+        x1 = SURF_V(surf, 1)[0];
+        z1 = SURF_V(surf, 1)[2];
+        x2 = SURF_V(surf, 2)[0];
+        z2 = SURF_V(surf, 2)[2];
 
         // Check that the point is within the triangle bounds.
         if ((z1 - z) * (x2 - x1) - (x1 - x) * (z2 - z1) < 0) {
@@ -416,8 +416,8 @@ static struct Surface *find_floor_from_list(struct PortSurfaceList surfaceNode, 
         }
 
         // To slightly save on computation time, set this later.
-        x3 = surf->vertex3[0];
-        z3 = surf->vertex3[2];
+        x3 = SURF_V(surf, 3)[0];
+        z3 = SURF_V(surf, 3)[2];
 
         if ((z2 - z) * (x3 - x2) - (x2 - x) * (z3 - z2) < 0) {
             continue;

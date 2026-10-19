@@ -9,10 +9,12 @@
 extern const uint8_t sm_data[];
 #define DAT(type, off) ((const type *)(const void *)(sm_data + (off)))
 
-/* a vertex: position, texture coordinates (texels x 32), colour (or, lit, its normal) and alpha */
+/* a vertex: position, texture coordinates (texels x 32) and colour: RGB 565 (its alpha is the batch's), RGBA
+ * 4444 when the batch has W_VALPHA, or, lit, its normal folded onto an octahedron (x in the low byte, y in the
+ * high one: tools/pack.py's vertex_colour) */
 typedef struct {
   int16_t x, y, z, s, t;
-  uint8_t c[4];
+  uint16_t c;
 } MVert;
 
 /* how a batch of triangles is drawn */
@@ -30,6 +32,7 @@ enum {
  * colours, which show where it is clear (the N64's G_CC_BLENDRGBA: Mario's eyes, a Goomba's face) */
 enum { W_WRAP = 0, W_MIRROR = 1, W_CLAMP = 2 };
 #define W_BLEND 16
+#define W_VALPHA 32   /* (the vertices have alphas of their own) */
 
 typedef struct {
   uint16_t tex;     /* index in the texture table (when M_TEX) */
@@ -38,6 +41,7 @@ typedef struct {
   uint16_t v0, nv;       /* the vertices they use (128 at most) */
   int16_t lo[3], hi[3];  /* their bounds */
   uint8_t light[6];      /* lit: the ambient colour, then the light's */
+  uint8_t alpha, pad;    /* the vertices' alpha (but W_VALPHA) */
 } Batch;
 
 typedef struct {

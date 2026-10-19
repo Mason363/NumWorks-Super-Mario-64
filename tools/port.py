@@ -28,7 +28,11 @@ DEC = os.path.join(GAME, "decomp")
 GEN = os.path.join(GAME, "src", "port", "gen")
 
 # the levels in the game (the others lead back to the castle)
-LEVELS = ["castle_grounds", "castle_inside", "castle_courtyard", "bob"]
+LEVELS = ["castle_grounds", "castle_inside", "castle_courtyard", "bob", "wf", "jrb", "ccm", "bbh"]
+# the areas Mario can't reach without a course the game leaves out (geo layout: collision): the castle's
+# basement and upper floors, behind the doors of the keys the Bowser courses leave. They stay empty.
+UNREACHED_AREAS = {"castle_geo_001858": "inside_castle_seg7_area_2_collision",
+                   "castle_geo_001C10": "inside_castle_seg7_area_3_collision"}
 
 
 def copy(ref, rel):
@@ -104,7 +108,7 @@ def defined_in(path):
                           r"struct MovtexQuadCollection|struct MovtexQuad)\s+(?:\*const\s+)?(\w+)\s*\[?", txt))
 
 
-def write_symbols(ref, model_of, anim_tables):
+def write_symbols(ref, model_of, anim_tables, rooms_of):
     syms = header_symbols(ref)
     real = {}
     data_files = []
@@ -139,7 +143,14 @@ def write_symbols(ref, model_of, anim_tables):
             m = model_of.get(name, 0xFFFF)
             if isinstance(m, tuple):
                 v = m[1]
-                lines.append(f"const GeoLayout {name}[] = {{ PORT_AREA({', '.join(map(str, v))}) }};")
+                rooms = rooms_of.get(name)
+                table = "NULL"
+                if rooms:
+                    # (its rooms: their count, then each one's meshes: a count and the meshes)
+                    flat = [len(rooms)] + [x for r in rooms for x in [len(r)] + r]
+                    lines.append(f"static const u16 {name}_rooms[] = {{{', '.join(map(str, flat))}}};")
+                    table = f"{name}_rooms"
+                lines.append(f"const GeoLayout {name}[] = {{ PORT_AREA({', '.join(map(str, v))}, (uintptr_t) {table}) }};")
             else:
                 lines.append(f"const GeoLayout {name}[] = {{ PORT_MODEL({m}) }};")
         elif typ == "Gfx":
@@ -327,7 +338,7 @@ def wrap_range(vals):
     return base, max(1, -(-span // 255))
 
 
-def key_stride(q, tol, most=16):
+def key_stride(q, tol, most=32):
     """The longest step between key frames (1..most) that keeps every frame of q (a channel's values, in its
     steps) within tol of the line between its key frames."""
     n = len(q)
@@ -340,30 +351,33 @@ def key_stride(q, tol, most=16):
 
 
 def pack_anim_data(values, indices):
-    """A channel table and one byte a key frame (port.h's port_anim_value): a channel that keeps one value is
-    0, base (the first three, the translations, which the game may skip, take four u16 like the others: 1,
-    base, 0, 0); else 0x8000 | (stride - 1) << 9 | (step - 1), base, offset, count, with a key frame every
-    stride frames, the frames between them on the line between their values, a value base + byte * step (16
-    bits, wrapping). The game's own are two bytes a frame; these stay within 1/250 of a turn (2 units for the
-    translations) of them."""
+    """A channel table and one byte a key frame (port.h's port_anim_value), after the frames' count (two bytes,
+    the same for every channel that moves): a channel that keeps one value is 0, base (the first three, the
+    translations, which the game may skip, take three u16 like the others: 1, base, 0); else 0x8000 |
+    (stride - 1) << 9 | (step - 1), base, offset, with a key frame every stride frames, the frames between them
+    on the line between their values, a value base + byte * step (16 bits, wrapping). The game's own are two
+    bytes a frame; these stay within 1/170 of a turn (3 units for the translations) of them."""
     chans, data = [], []
+    count = 0
     for i in range(0, len(indices), 2):
         cnt, off = indices[i], indices[i + 1]
         ch = values[off:off + cnt] or [0]
         base, step = wrap_range(ch)
         if step == 0:
-            chans += [1, base, 0, 0] if i < 6 else [0, base]
+            chans += [1, base, 0] if i < 6 else [0, base]
             continue
+        assert count in (0, len(ch)), "a channel with its own count"
+        count = len(ch)
         q = [((v & 0xFFFF) - base) % 65536 / step for v in ch]
-        stride = key_stride(q, max((2 if i < 6 else 256) / step, 0.6))
+        stride = key_stride(q, max((3 if i < 6 else 384) / step, 0.6))
         keys = [q[min(j * stride, len(q) - 1)] for j in range(-(-(len(q) - 1) // stride) + 1)]
         assert step <= 512 and len(data) < 65536
-        chans += [0x8000 | (stride - 1) << 9 | (step - 1), base, len(data), len(ch)]
+        chans += [0x8000 | (stride - 1) << 9 | (step - 1), base, len(data)]
         data += [min(255, int(k + 0.5)) for k in keys]
     # (a few models have more parts than their animations have channels: the N64 read on into whatever came
     # next; here the end of the table, which reads as 0 from then on: port_anim_value)
     chans += [0xFFFF]
-    return chans, data or [0]
+    return chans, [count & 255, count >> 8] + data
 
 
 def anim_file(txt, prefix):
@@ -379,10 +393,10 @@ def anim_file(txt, prefix):
         if idx not in packed:
             chans, data = pack_anim_data(arrays[vals], arrays[idx])
             packed[idx] = f"{prefix}{idx}"
-            out.append(f"static const u8 {prefix}{idx}_q[] = {{{', '.join(map(str, data))}}};")
+            out.append(f"static const u8 {prefix}{idx}_q[] = {{{', '.join(map(str, data))}}};   /* (count, keys) */")
             out.append(f"static const u16 {prefix}{idx}_c[] = {{{', '.join(map(str, chans))}}};")
         nparts = len(arrays[idx]) // 6 - 1
-        body = f"{f[0]}, {f[1]}, {f[2]}, {f[3]}, {f[4]}, {nparts}, (const s16 *) {packed[idx]}_q, {packed[idx]}_c, 0"
+        body = f"{f[0]}, {f[1]}, {f[2]}, {f[3]}, {f[4]}, {nparts}, (const s16 *) ({packed[idx]}_q + 2), {packed[idx]}_c, 0"
         out.append(f"static const struct Animation {name}{arr or ''} = {{{'{' if arr else ''}{body}{'}' if arr else ''}}};")
         names.append(name)
     return out, names
@@ -604,8 +618,10 @@ def area_rooms(ref):
 
 
 def write_terrain(ref, data_files):
-    """Each area's surfaces (struct Surface without its normal: port.h's SURF_NX and others work it out) and, for
-    each cell, its floors, ceilings and walls as surface numbers, in the order the game would have linked them."""
+    """Each area's surfaces (struct PortLevelSurface: their corners are numbers in the area's vertices, and their
+    normals are worked out: types.h's SURF_V, SURF_NX and others) and, for each cell, its floors, ceilings and
+    walls: a run of surface numbers (those that first come in that cell) and a list of the others, each in the
+    order the game would have linked them (src/port/collision.c walks the two together)."""
     cols = parse_collision_arrays(ref, [f for f in data_files if f.startswith("levels") and f.endswith("collision.inc.c")
                                         and "/areas/" in f])
     rooms = area_rooms(ref)
@@ -614,35 +630,65 @@ def write_terrain(ref, data_files):
              '#include "engine/surface_collision.h"', '#include "engine/surface_load.h"', '#include "port.h"', ""]
     table = []
     for name, data in sorted(cols.items()):
+        if name in UNREACHED_AREAS.values():
+            continue
         surfs = terrain_surfaces(data)
         cells = partition(surfs)
-        idx = {id(s): i for i, s in enumerate(surfs)}
-        rm = rooms.get(name)
-        lines.append(f"static const struct Surface {name}_s[{max(1, len(surfs))}] = {{")
-        for s in surfs:
-            v = s["v"]
-            room = rm[s["number"]] if rm else 0
-            lines.append("    {%d, %d, %d, %d, %d, %d, {%d, %d, %d}, {%d, %d, %d}, {%d, %d, %d}, NULL}," % (
-                s["type"], s["force"], s["flags"], room, s["lo"], s["hi"], *v[0], *v[1], *v[2]))
-        lines.append("};")
-        index, starts = [], []
+        # numbered again, cell after cell: a surface where it first comes, so that a cell's list is mostly a run
+        # of numbers (the others, in more than one cell, are listed apart)
+        home, order = {}, []
         for cz in range(16):
             for cx in range(16):
                 for k in range(3):
+                    for s in cells[cz][cx][k]:
+                        if id(s) not in home:
+                            home[id(s)] = (cz, cx, k)
+                            order.append(s)
+        order += [s for s in surfs if id(s) not in home]   # (in no cell)
+        surfs = order
+        idx = {id(s): i for i, s in enumerate(surfs)}
+        rm = rooms.get(name)
+        verts, vnum = [], {}
+        for s in surfs:
+            for v in s["v"]:
+                if tuple(v) not in vnum:
+                    vnum[tuple(v)] = len(verts)
+                    verts.append(tuple(v))
+        assert len(verts) < 65536
+        lines.append(f"static const s16 {name}_v[{max(1, len(verts))}][3] = {{")
+        lines += [f"    {{{x}, {y}, {z}}}," for x, y, z in verts or [(0, 0, 0)]]
+        lines.append("};")
+        lines.append(f"static const struct PortLevelSurface {name}_s[{max(1, len(surfs))}] = {{")
+        for s in surfs:
+            room = rm[s["number"]] if rm else 0
+            c = [vnum[tuple(v)] for v in s["v"]]
+            lines.append("    {%d, %d, %d, %d, {%d, %d, %d}}," % (s["type"], s["force"], s["flags"] | 0x40, room, *c))
+        lines.append("};")
+        index, runs, starts = [], [], []
+        for cz in range(16):
+            for cx in range(16):
+                for k in range(3):
+                    own = [s for s in cells[cz][cx][k] if home[id(s)] == (cz, cx, k)]
+                    first = runs[-1] + nown if runs else 0
+                    assert [idx[id(s)] for s in own] == list(range(first, first + len(own)))
+                    runs.append(first)
+                    nown = len(own)
                     starts.append(len(index))
-                    index += [idx[id(s)] for s in cells[cz][cx][k]]
+                    index += [idx[id(s)] for s in cells[cz][cx][k] if home[id(s)] != (cz, cx, k)]
+        runs.append(runs[-1] + nown)
         starts.append(len(index))
         assert len(index) < 65536 and len(surfs) < 65536
         lines.append(f"static const u16 {name}_i[{max(1, len(index))}] = {{{', '.join(map(str, index or [0]))}}};")
         lines.append(f"static const u16 {name}_c[{len(starts)}] = {{{', '.join(map(str, starts))}}};")
+        lines.append(f"static const u16 {name}_r[{len(runs)}] = {{{', '.join(map(str, runs))}}};")
         table.append(name)
     lines.append("")
     for name in table:
         lines.append(f"extern const Collision {name}[];")
     lines.append("const struct PortTerrain port_terrains[] = {")
     for name in table:
-        lines.append(f"    {{{name}, {name}_s, {name}_i, {name}_c}},")
-    lines.append("    {NULL, NULL, NULL, NULL},")
+        lines.append(f"    {{{name}, {name}_s, {name}_v, {name}_r, {name}_i, {name}_c}},")
+    lines.append("    {NULL, NULL, NULL, NULL, NULL, NULL},")
     lines.append("};")
     open(os.path.join(GEN, "terrain.c"), "w").write("\n".join(lines) + "\n")
     print(f"terrain: {len(table)} areas")
@@ -650,7 +696,7 @@ def write_terrain(ref, data_files):
 
 def main():
     ref = sys.argv[1]
-    model_of = {}
+    model_of, rooms_of = {}, {}
     mp = os.path.join(GEN, "models.txt")
     if os.path.exists(mp):
         for line in open(mp):
@@ -661,13 +707,15 @@ def main():
                 model_of[w[1]] = int(w[2])
             elif w[0] == "area":
                 model_of[w[1]] = ("area", [int(x) for x in w[2:]])
+            elif w[0] == "rooms":
+                rooms_of[w[1]] = [[int(x) for x in r.split()] for r in " ".join(w[2:]).split("|")]
     for lv in LEVELS:
         copy(ref, f"levels/{lv}/script.c")
         copy(ref, f"levels/{lv}/header.h")
         for f in glob.glob(os.path.join(ref, "levels", lv, "*.h")):
             copy(ref, os.path.relpath(f, ref))
     write_text(ref)
-    data_files = write_symbols(ref, model_of, write_anims(ref) | write_ui(ref))
+    data_files = write_symbols(ref, model_of, write_anims(ref) | write_ui(ref), rooms_of)
     for f in data_files:
         if f.startswith("levels") and f.endswith("collision.inc.c") and "/areas/" in f:
             strip_collision(ref, f)

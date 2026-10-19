@@ -16,6 +16,8 @@ struct PortArea {
   u16 background;    /* BACKGROUND_* of the skybox, or 0xFFFF and a plain colour */
   u32 fog_color;     /* 0: no fog */
   u16 fog_near, fog_far;
+  const u16 *rooms;  /* what its rooms draw (geo_switch_area's cases): their count, then for each a count of meshes
+                        and the meshes; or NULL */
 };
 
 struct AllocOnlyPool;

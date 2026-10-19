@@ -439,7 +439,7 @@ u8 sCutsceneDialogResponse = DIALOG_RESPONSE_NONE;
 struct PlayerCameraState *sMarioCamState = &gPlayerCameraState[0];
 struct PlayerCameraState *sLuigiCamState = &gPlayerCameraState[1];
 u32 unused8032D008 = 0;
-/* (calculator) const */ const Vec3f sFixedModeBasePosition = { 646.0f, 143.0f, -1513.0f };
+Vec3f sFixedModeBasePosition = { 646.0f, 143.0f, -1513.0f };
 Vec3f sUnusedModeBasePosition_2 = { 646.0f, 143.0f, -1513.0f };
 Vec3f sUnusedModeBasePosition_3 = { 646.0f, 143.0f, -1513.0f };
 Vec3f sUnusedModeBasePosition_4 = { 646.0f, 143.0f, -1513.0f };
@@ -4381,15 +4381,15 @@ s32 is_surf_within_bounding_box(struct Surface *surf, f32 xMax, f32 yMax, f32 zM
     // result
     s32 smaller = FALSE;
 
-    sx[0] = surf->vertex1[0];
-    sx[1] = surf->vertex2[0];
-    sx[2] = surf->vertex3[0];
-    sy[0] = surf->vertex1[1];
-    sy[1] = surf->vertex2[1];
-    sy[2] = surf->vertex3[1];
-    sz[0] = surf->vertex1[2];
-    sz[1] = surf->vertex2[2];
-    sz[2] = surf->vertex3[2];
+    sx[0] = SURF_V(surf, 1)[0];
+    sx[1] = SURF_V(surf, 2)[0];
+    sx[2] = SURF_V(surf, 3)[0];
+    sy[0] = SURF_V(surf, 1)[1];
+    sy[1] = SURF_V(surf, 2)[1];
+    sy[2] = SURF_V(surf, 3)[1];
+    sz[0] = SURF_V(surf, 1)[2];
+    sz[1] = SURF_V(surf, 2)[2];
+    sz[2] = SURF_V(surf, 3)[2];
 
     for (i = 0; i < 3; i++) {
         j = i + 1;
@@ -4430,15 +4430,15 @@ s32 is_surf_within_bounding_box(struct Surface *surf, f32 xMax, f32 yMax, f32 zM
 s32 is_behind_surface(Vec3f pos, struct Surface *surf) {
     s32 behindSurface = 0;
     // Surface normal
-    f32 normX = (surf->vertex2[1] - surf->vertex1[1]) * (surf->vertex3[2] - surf->vertex2[2]) -
-                (surf->vertex3[1] - surf->vertex2[1]) * (surf->vertex2[2] - surf->vertex1[2]);
-    f32 normY = (surf->vertex2[2] - surf->vertex1[2]) * (surf->vertex3[0] - surf->vertex2[0]) -
-                (surf->vertex3[2] - surf->vertex2[2]) * (surf->vertex2[0] - surf->vertex1[0]);
-    f32 normZ = (surf->vertex2[0] - surf->vertex1[0]) * (surf->vertex3[1] - surf->vertex2[1]) -
-                (surf->vertex3[0] - surf->vertex2[0]) * (surf->vertex2[1] - surf->vertex1[1]);
-    f32 dirX = surf->vertex1[0] - pos[0];
-    f32 dirY = surf->vertex1[1] - pos[1];
-    f32 dirZ = surf->vertex1[2] - pos[2];
+    f32 normX = (SURF_V(surf, 2)[1] - SURF_V(surf, 1)[1]) * (SURF_V(surf, 3)[2] - SURF_V(surf, 2)[2]) -
+                (SURF_V(surf, 3)[1] - SURF_V(surf, 2)[1]) * (SURF_V(surf, 2)[2] - SURF_V(surf, 1)[2]);
+    f32 normY = (SURF_V(surf, 2)[2] - SURF_V(surf, 1)[2]) * (SURF_V(surf, 3)[0] - SURF_V(surf, 2)[0]) -
+                (SURF_V(surf, 3)[2] - SURF_V(surf, 2)[2]) * (SURF_V(surf, 2)[0] - SURF_V(surf, 1)[0]);
+    f32 normZ = (SURF_V(surf, 2)[0] - SURF_V(surf, 1)[0]) * (SURF_V(surf, 3)[1] - SURF_V(surf, 2)[1]) -
+                (SURF_V(surf, 3)[0] - SURF_V(surf, 2)[0]) * (SURF_V(surf, 2)[1] - SURF_V(surf, 1)[1]);
+    f32 dirX = SURF_V(surf, 1)[0] - pos[0];
+    f32 dirY = SURF_V(surf, 1)[1] - pos[1];
+    f32 dirZ = SURF_V(surf, 1)[2] - pos[2];
 
     if (dirX * normX + dirY * normY + dirZ * normZ < 0) {
         behindSurface = 1;

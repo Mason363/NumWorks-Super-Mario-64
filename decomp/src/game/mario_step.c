@@ -13,7 +13,7 @@ static s16 sMovingSandSpeeds[] = { 12, 8, 4, 0 };
 
 /* (calculator) its normal (0, 1, 0) and origin offset are port_surface_normal's (port_water_floor_offset) */
 struct Surface gWaterSurfacePseudoFloor = {
-    SURFACE_VERY_SLIPPERY, 0,    0,    0, 0, 0, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, NULL,
+    SURFACE_VERY_SLIPPERY, 0, 0, 0, { { 0, 0, 0 } }, NULL,
 };
 
 /**

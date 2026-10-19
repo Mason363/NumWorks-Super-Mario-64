@@ -10,62 +10,62 @@ UNUSED static const u64 power_meter_unused_1 = 0;
 
 #if defined(VERSION_CN)
 ALIGNED8 static const Texture texture_power_meter_left_side[] = {
-PORT_TEX_STUB(518)
+PORT_TEX_STUB(696)
 };
 
 ALIGNED8 static const Texture texture_power_meter_right_side[] = {
-PORT_TEX_STUB(519)
+PORT_TEX_STUB(697)
 };
 #else
 // 0x030233E0
 ALIGNED8 static const Texture texture_power_meter_left_side[] = {
-PORT_TEX_STUB(518)
+PORT_TEX_STUB(696)
 };
 
 // 0x030243E0
 ALIGNED8 static const Texture texture_power_meter_right_side[] = {
-PORT_TEX_STUB(519)
+PORT_TEX_STUB(697)
 };
 #endif
 
 // 0x030253E0
 ALIGNED8 static const Texture texture_power_meter_full[] = {
-PORT_TEX_STUB(520)
+PORT_TEX_STUB(698)
 };
 
 // 0x03025BE0
 ALIGNED8 static const Texture texture_power_meter_seven_segments[] = {
-PORT_TEX_STUB(521)
+PORT_TEX_STUB(699)
 };
 
 // 0x030263E0
 ALIGNED8 static const Texture texture_power_meter_six_segments[] = {
-PORT_TEX_STUB(522)
+PORT_TEX_STUB(700)
 };
 
 // 0x03026BE0
 ALIGNED8 static const Texture texture_power_meter_five_segments[] = {
-PORT_TEX_STUB(523)
+PORT_TEX_STUB(701)
 };
 
 // 0x030273E0
 ALIGNED8 static const Texture texture_power_meter_four_segments[] = {
-PORT_TEX_STUB(524)
+PORT_TEX_STUB(702)
 };
 
 // 0x03027BE0
 ALIGNED8 static const Texture texture_power_meter_three_segments[] = {
-PORT_TEX_STUB(525)
+PORT_TEX_STUB(703)
 };
 
 // 0x030283E0
 ALIGNED8 static const Texture texture_power_meter_two_segments[] = {
-PORT_TEX_STUB(526)
+PORT_TEX_STUB(704)
 };
 
 // 0x03028BE0
 ALIGNED8 static const Texture texture_power_meter_one_segments[] = {
-PORT_TEX_STUB(527)
+PORT_TEX_STUB(705)
 };
 
 // 0x030293E0

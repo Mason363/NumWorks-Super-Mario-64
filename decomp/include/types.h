@@ -228,15 +228,40 @@ struct Surface {
     /*0x02*/ TerrainData force;
     /*0x04*/ s8 flags;
     /*0x05*/ RoomData room;
-    /*0x06*/ TerrainData lowerY;
-    /*0x08*/ TerrainData upperY;
-    /*0x0A*/ Vec3Terrain vertex1;
-    /*0x10*/ Vec3Terrain vertex2;
-    /*0x16*/ Vec3Terrain vertex3;
-    /* (calculator) no normal and origin offset: SURF_NX and the others below work them out from the vertices,
-       as surface_load.c did (a third of the surfaces' room, in flash and in RAM) */
+    /* (calculator) a level's surface (in flash, SURFACE_FLAG_PORT_LEVEL) ends with the numbers of its corners in
+       its area's vertices (struct PortLevelSurface); an object's (in RAM) goes on as the game's did. Neither
+       keeps its normal and origin offset: SURF_NX and the others below work them out from the vertices, as
+       surface_load.c did. SURF_V, SURF_LOWER, SURF_UPPER and SURF_OBJECT read either. */
+    union {
+        u16 corner[3];
+        struct {
+            TerrainData lowerY;
+            TerrainData upperY;
+            Vec3Terrain vertex1;
+            Vec3Terrain vertex2;
+            Vec3Terrain vertex3;
+        } d;
+    } u;
     struct Object *object;
 };
+struct PortLevelSurface {
+    TerrainData type;
+    TerrainData force;
+    s8 flags;
+    RoomData room;
+    u16 corner[3];
+};
+#define SURFACE_FLAG_PORT_LEVEL (1 << 6)
+#define SURF_LEVEL(surf) ((surf)->flags & SURFACE_FLAG_PORT_LEVEL)
+/* corner n (1 to 3) of a surface, a const s16 * */
+#define SURF_V(surf, n)                                                                                      \
+    (SURF_LEVEL(surf) ? port_level_vertex((surf)->u.corner[(n) - 1])                                         \
+                      : (const s16 *) ((n) == 1 ? (surf)->u.d.vertex1 : (n) == 2 ? (surf)->u.d.vertex2 : (surf)->u.d.vertex3))
+#define SURF_LOWER(surf) (SURF_LEVEL(surf) ? port_level_surface_y(surf, 0) : (surf)->u.d.lowerY)
+#define SURF_UPPER(surf) (SURF_LEVEL(surf) ? port_level_surface_y(surf, 1) : (surf)->u.d.upperY)
+#define SURF_OBJECT(surf) (SURF_LEVEL(surf) ? NULL : (surf)->object)
+const s16 *port_level_vertex(u16 i);
+s32 port_level_surface_y(const struct Surface *surf, s32 upper);
 f32 port_surface_normal(const struct Surface *surf, s32 i);   /* (src/port/collision.c) */
 void port_surface_changed(void);
 extern f32 port_water_floor_offset;   /* (gWaterSurfacePseudoFloor's origin offset) */

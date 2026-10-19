@@ -12,6 +12,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import decomp  # noqa: E402
+import port  # noqa: E402
 import textures  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -103,6 +104,23 @@ def texel_error(img, fmt, pal, idx):
     a = np.stack([(v >> 11) * 255 / 31, ((v >> 5) & 63) * 255 / 63, (v & 31) * 255 / 31], -1)
     m = img[..., 3] >= 128 if fmt == 1 else np.ones(idx.shape, bool)
     return np.abs(a - img[..., :3])[m].mean() if m.any() else 0.0
+
+
+def vertex_colour(v, lit, own_alpha):
+    """A vertex's two bytes of colour: RGB 565; RGBA 4444 when the batch's vertices have alphas of their own;
+    lit, its normal folded onto an octahedron (8 bits a coordinate)."""
+    r, g, b, a = v[5:9]
+    if lit:
+        n = [(c - 256 if c > 127 else c) for c in (r, g, b)]
+        s = sum(abs(c) for c in n) or 1
+        x, y, z = n[0] / s, n[1] / s, n[2] / s
+        if z < 0:
+            x, y = (1 - abs(y)) * (1 if x >= 0 else -1), (1 - abs(x)) * (1 if y >= 0 else -1)
+        u, w = int(round((x * 0.5 + 0.5) * 255)), int(round((y * 0.5 + 0.5) * 255))
+        return u | w << 8
+    if own_alpha:
+        return (r >> 4) << 12 | (g >> 4) << 8 | (b >> 4) << 4 | a >> 4
+    return (r >> 3) << 11 | (g >> 2) << 5 | b >> 3
 
 
 class Pack:
@@ -254,10 +272,17 @@ class Pack:
                 if lit:
                     L = key[-1]
                     light = bytes(min(255, x) for x in L)
-                batches.append(struct.pack("<HBBHHHH6h6s", tex, mode, wrap, tri0, len(bt), v0, len(bverts), *blo, *bhi, light))
+                # the vertices' colour in two bytes (data.h's MVert): their alpha is the batch's when they share one
+                alphas = {v[8] for v in bverts}
+                balpha = max(alphas)
+                bwrap = wrap | (32 if len(alphas) > 1 and not lit else 0)
+                for k in range(v0, len(verts)):
+                    verts[k] = verts[k][:5] + (vertex_colour(verts[k], lit, bwrap & 32),)
+                batches.append(struct.pack("<HBBHHHH6h6sBx", tex, mode, bwrap, tri0, len(bt), v0, len(bverts), *blo, *bhi,
+                                           light, balpha))
         if not verts:
             return None
-        vdata = b"".join(struct.pack("<5h4B", *v) for v in verts)
+        vdata = b"".join(struct.pack("<5hH", *v) for v in verts)
         voff = self.blob.add(vdata)
         toff = self.blob.add(bytes(i for t in tri_idx for i in t), 1)
         boff = self.blob.add(b"".join(batches))
@@ -268,6 +293,7 @@ class Pack:
 
     @staticmethod
     def encode_vertex(v, bake, lit, m):
+        """(x, y, z, s, t, r, g, b, a): the colour, or, lit, the normal (signed bytes) and alpha"""
         x, y, z, s, t, col = v
         kind, c, al, L = col
         if kind == "c" or not lit:
@@ -301,12 +327,26 @@ class Pack:
         tree = decomp.geo_tree(self.src, geo)
         tris, info = [], {"mode": 1, "pos": (0, 0, 0), "focus": (0, 0, 0), "fov": 45, "near": 100, "far": 20000,
                           "bg": 0, "fog": None}
+        # the cases of geo_switch_area: the display lists each room draws (rooms share many)
+        rooms, in_room = [], [None]
 
         def walk(n):
             for c in n.children:
                 a = c.args
+                if c.kind == "GEO_SWITCH_CASE" and a[1].strip() == "geo_switch_area":
+                    for case in c.children:
+                        rooms.append([])
+                        in_room[0] = rooms[-1]
+                        walk(case)
+                    in_room[0] = None
+                    continue
                 if c.kind == "GEO_DISPLAY_LIST":
-                    decomp.run_dl(self.src, a[1].strip(), decomp.layer_of(a[0]), tris)
+                    if geo in port.UNREACHED_AREAS:
+                        pass
+                    elif in_room[0] is not None:
+                        in_room[0].append((a[1].strip(), decomp.layer_of(a[0])))
+                    else:
+                        decomp.run_dl(self.src, a[1].strip(), decomp.layer_of(a[0]), tris)
                     self.find_fog(a[1].strip(), info)
                 elif c.kind == "GEO_CAMERA":
                     v = [decomp.cval(x) for x in a[:7]]
@@ -322,6 +362,15 @@ class Pack:
         info["mesh"] = self.mesh("area_" + geo, tris, bake=True) if tris else 0xFFFF
         if info["mesh"] is None:
             info["mesh"] = 0xFFFF
+        # each display list a mesh once; a room, the meshes it draws
+        own = {}
+        for r in rooms:
+            for dl, layer in r:
+                if (dl, layer) not in own:
+                    t = []
+                    decomp.run_dl(self.src, dl, layer, t)
+                    own[(dl, layer)] = self.mesh(f"room_{dl}_{layer}", t, bake=True)
+        info["rooms"] = [[own[k] for k in r if own[k] is not None] for r in rooms]
         return info
 
     def find_fog(self, dl, info):
@@ -413,6 +462,8 @@ def main():
                     lines.append("area {} {} {} {} {} {} {} {} {} {} {} {}".format(
                         geo, info["mesh"], info["mode"], " ".join(map(str, info["pos"])), " ".join(map(str, info["focus"])),
                         info["fov"], info["near"], info["far"], info["bg"], fogc, fn, ff))
+                    if info["rooms"]:
+                        lines.append(f"rooms {geo} " + " | ".join(" ".join(map(str, r)) for r in info["rooms"]))
     os.makedirs(port.GEN, exist_ok=True)
     open(os.path.join(port.GEN, "models.txt"), "w").write("\n".join(sorted(set(lines))) + "\n")
     # the screens' textures: the HUD, the fonts, the power meter, the transitions (tools/glyphs.py)
