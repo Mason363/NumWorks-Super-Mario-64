@@ -25,12 +25,12 @@ static const Vtx castle_grounds_seg7_vertex_0700C9A8[] = {
 
 // 0x0700C9E8 - 0x0700D9E8
 ALIGNED8 static const Texture castle_grounds_seg7_texture_0700C9E8[] = {
-PORT_TEX_STUB(511)
+PORT_TEX_STUB(528)
 };
 
 // 0x0700D9E8 - 0x0700E9E8
 ALIGNED8 static const Texture castle_grounds_seg7_texture_0700D9E8[] = {
-PORT_TEX_STUB(512)
+PORT_TEX_STUB(529)
 };
 
 // 0x0700E9E8 - 0x0700EA20
@@ -75,7 +75,7 @@ const Gfx castle_grounds_seg7_dl_0700EA58[] = {
     gsSPEndDisplayList(),
 };
 ALIGNED8 static const Texture castle_grounds_seg7_us_texture_0700EAE8[] = {
-PORT_TEX_STUB(513)
+PORT_TEX_STUB(530)
 };
 
 // 0x0700F2E8

@@ -8,6 +8,8 @@ import math
 
 import numpy as np
 
+import art
+
 RNG = np.random.default_rng(64)
 
 
@@ -192,7 +194,7 @@ TABLE = {
 
 
 def paint(path, w, h):
-    f = TABLE.get(path)
+    f = TABLE.get(path) or (art.ACTORS.get(path[len("actors/"):]) if path.startswith("actors/") else None)
     img = f(w, h) if f else unknown(w, h, path)
     if img.shape[0] != h or img.shape[1] != w:
         img = np.resize(img, (h, w, 4))

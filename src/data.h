@@ -26,8 +26,10 @@ enum {
   M_FOG = 64,
   M_TEXGEN = 128,   /* the texture coordinates come from the normals (shiny metal) */
 };
-/* texture wrap modes, per axis (Batch.wrap: s in bits 0-1, t in bits 2-3) */
+/* texture wrap modes, per axis (Batch.wrap: s in bits 0-1, t in bits 2-3); bit 4: the texture over the vertex
+ * colours, which show where it is clear (the N64's G_CC_BLENDRGBA: Mario's eyes, a Goomba's face) */
 enum { W_WRAP = 0, W_MIRROR = 1, W_CLAMP = 2 };
+#define W_BLEND 16
 
 typedef struct {
   uint16_t tex;     /* index in the texture table (when M_TEX) */

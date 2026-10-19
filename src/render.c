@@ -184,6 +184,7 @@ static const uint8_t *tx_texels;
 static const uint16_t *tx_pal;
 static int tx_wl, tx_wm, tx_hm, tx_fmt, tx_depth;
 static uint8_t tx_wrap, d_mode;
+static bool tx_blend;   /* (W_BLEND) */
 static uint32_t d_tint;
 static uint8_t d_alpha;
 
@@ -225,7 +226,7 @@ static inline __attribute__((always_inline)) void span_body(int y, int x0, int x
   const int wm = tx_wm, hm = tx_hm, wl = tx_wl, ws = tx_wrap & 3, wt = tx_wrap >> 2 & 3;
   const int tr = d_tint >> 16 & 255, tg = d_tint >> 8 & 255, tb = d_tint & 255;
   const bool tinted = d_tint != 0xFFFFFF, fog = fog_on && (mode & M_FOG), ia = tx_fmt == TF_IA;
-  const bool key = tx_fmt == TF_565K;
+  const bool key = tx_fmt == TF_565K, blend = tx_blend;
   const int bias = (mode & M_DECAL) ? DECAL_BIAS : 0;
   const uint8_t *texels = tx_texels;
   const uint16_t *pal = tx_pal;
@@ -258,8 +259,11 @@ static inline __attribute__((always_inline)) void span_body(int y, int x0, int x
           } else ca = ca * ta >> 8;
           out = (mode & M_SHADE) ? rgb565(cr * in >> 8, cg * in >> 8, cbl * in >> 8) : rgb565(in, in, in);
         } else {
-          if (key && t == TEX_KEY) continue;
-          out = (mode & M_SHADE) ? mod565(t, cr + 1, cg + 1, cbl + 1) : t;
+          if (key && t == TEX_KEY) {
+            if (!blend) continue;
+            out = rgb565(cr > 255 ? 255 : cr < 0 ? 0 : cr, cg > 255 ? 255 : cg < 0 ? 0 : cg,
+                         cbl > 255 ? 255 : cbl < 0 ? 0 : cbl);
+          } else out = (mode & M_SHADE) ? mod565(t, cr + 1, cg + 1, cbl + 1) : t;
         }
       } else out = rgb565(cr > 255 ? 255 : cr < 0 ? 0 : cr, cg > 255 ? 255 : cg < 0 ? 0 : cg,
                           cbl > 255 ? 255 : cbl < 0 ? 0 : cbl);
@@ -553,7 +557,7 @@ static void use_texture(const Batch *b) {
     else if (depth == 2) tx_texels = base + 512, span = span_t8;
     else tx_texels = base, span = span_t16;
   }
-  tx_wrap = b->wrap;
+  tx_wrap = b->wrap & 15, tx_blend = b->wrap & W_BLEND;
 }
 
 /* the scene's light for lit meshes: from the upper left, in front of the camera, in model space */
@@ -616,7 +620,7 @@ static void draw_batch(const RItem *it, const Batch *b) {
     int k = ((d_mode & M_SHADE) ? 1 : 0) | ((fog_on && (d_mode & M_FOG)) ? 2 : 0);
     span = fast_spans[1][tx_depth - 1][k], span_aff = fast_spans[0][tx_depth - 1][k];
   }
-  need_rgb = !(d_mode & M_TEX) || (d_mode & M_SHADE), need_a = d_mode & M_XLU, need_fog = fog_on && (d_mode & M_FOG);
+  need_rgb = !(d_mode & M_TEX) || (d_mode & M_SHADE) || tx_blend, need_a = d_mode & M_XLU, need_fog = fog_on && (d_mode & M_FOG);
   bool cull = !(it->flags & R_NOCULL);
   for (int i = 0; i < b->ntri; i++, tri += 3) {
     if (tri[0] >= nv || tri[1] >= nv || tri[2] >= nv) continue;

@@ -202,7 +202,7 @@ class Pack:
             if m.tex:
                 mode |= 1
                 ia = m.fmt in (3, 4)
-                tex = self.texture(m.tex, m.w, m.h, m.cutout, ia)
+                tex = self.texture(m.tex, m.w, m.h, m.cutout or m.combine == "blend", ia)
                 if m.combine == "mod":
                     mode |= 2
             if m.cutout:
@@ -217,7 +217,7 @@ class Pack:
                 mode |= 64
             if m.texgen:
                 mode |= 128
-            wrap = (m.cms & 3) | ((m.cmt & 3) << 2)
+            wrap = (m.cms & 3) | ((m.cmt & 3) << 2) | (16 if m.tex and m.combine == "blend" else 0)
             # split into runs of at most BATCH_VERTS vertices
             pending = list(ts)
             while pending:

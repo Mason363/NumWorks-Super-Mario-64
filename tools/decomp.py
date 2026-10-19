@@ -205,9 +205,12 @@ class Tri:
 
 
 def tex_combine(cc):
-    """What the combiner does: 'shade' (no texture), 'mod' (texture x shade), 'decal' (texture alone)."""
+    """What the combiner does: 'shade' (no texture), 'mod' (texture x shade), 'decal' (texture alone), 'blend' (the
+    texture where it is opaque, the shade where it is clear: Mario's eyes on his face)."""
     if cc.startswith("G_CC_SHADE"):
         return "shade"
+    if cc.startswith("G_CC_BLENDRGB"):
+        return "blend"
     if "MODULATE" in cc:
         return "mod"
     if "DECAL" in cc:
