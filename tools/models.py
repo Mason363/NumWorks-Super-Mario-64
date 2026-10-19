@@ -141,9 +141,11 @@ def write_funcs(path):
     """src/port/gen/geo_funcs.c: the functions the models name, by number."""
     lines = ["/* Made by tools/pack.py: the game's functions its models name (geo layouts' switches, held objects and",
              " * GEO_ASM), by the number tools/models.py gave them. */",
-             '#include <ultra64.h>', '#include "types.h"', '#include "engine/graph_node.h"', ""]
-    for f in FUNCS:
-        lines.append(f"Gfx *{f}();")
+             '#include <ultra64.h>', '#include "types.h"', '#include "engine/graph_node.h"']
+    # (the headers that declare them; a function of a level brought up later may need one more)
+    lines += [f'#include "game/{h}.h"' for h in ("mario_misc", "object_helpers", "behavior_actions",
+                                                 "mario_actions_cutscene", "geo_misc", "moving_texture",
+                                                 "paintings", "envfx_snow", "level_geo", "camera", "skybox")]
     lines.append("")
     lines.append(f"const GraphNodeFunc port_geo_funcs[{len(FUNCS) + 1}] = {{")
     lines.append("    NULL,")

@@ -30,6 +30,11 @@ decomp/src/game/platform_displacement.c
 decomp/src/game/save_file.c
 decomp/src/game/spawn_object.c
 decomp/src/game/spawn_sound.c
+decomp/src/game/hud.c
+decomp/src/game/ingame_menu.c
+decomp/src/game/print.c
+decomp/src/game/screen_transition.c
+decomp/src/game/geo_misc.c
 decomp/data/behavior_data.c
 decomp/levels/scripts.c
 decomp/levels/castle_grounds/script.c
@@ -40,6 +45,9 @@ src/port/gen/symbols.c
 src/port/gen/terrain.c
 src/port/gen/anims.c
 src/port/gen/geo_funcs.c
+src/port/gen/segment2.c
+src/port/gen/power_meter.c
+src/port/gen/letter.c
 decomp/src/game/memory.c
 src/port/game.c
 src/port/stubs.c
@@ -49,6 +57,8 @@ src/port/scripts.c
 src/port/scene.c
 src/port/objects.c
 src/port/collision.c
+src/port/gfx.c
+src/port/gu.c
 src/render.c
 src/smath.c
 src/plat_host.c

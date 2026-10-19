@@ -13,6 +13,7 @@
 #include "area.h"
 #include "save_file.h"
 #include "print.h"
+#include "port_gfx.h" /* (calculator) */
 
 /* @file hud.c
  * This file implements HUD rendering and power meter animations.

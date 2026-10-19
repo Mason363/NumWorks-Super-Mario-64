@@ -28,7 +28,7 @@ static int sky_kind;
 static int16_t sky_yaw;
 static float sky_pitch;
 static uint16_t fog_col;
-static float fog_near, fog_far;
+static float fog_near, fog_far, fog_k;   /* (fog_k: 255 / (far - near)) */
 static bool fog_on;
 
 enum { I_MESH, I_SHADOW };
@@ -75,6 +75,7 @@ void r_sky(int sky, int16_t yaw) { sky_kind = sky, sky_yaw = yaw; }
 void r_fog(uint16_t color, float near, float far) {
   fog_on = far > near && far > 0;
   fog_col = color, fog_near = near, fog_far = far;
+  fog_k = far > near ? 255.0f / (far - near) : 0;
 }
 
 bool r_project(const Vec3f p, float *sx, float *sy, float *depth) {
@@ -181,7 +182,7 @@ typedef struct {
 /* the texture and the way the triangle is drawn */
 static const uint8_t *tx_texels;
 static const uint16_t *tx_pal;
-static int tx_wl, tx_wm, tx_hm, tx_fmt;
+static int tx_wl, tx_wm, tx_hm, tx_fmt, tx_depth;
 static uint8_t tx_wrap, d_mode;
 static uint32_t d_tint;
 static uint8_t d_alpha;
@@ -283,6 +284,123 @@ static void span_t8(int y, int x0, int x1, const PV *p, const PV *d) { span_body
 static void span_t16(int y, int x0, int x1, const PV *p, const PV *d) { span_body(y, x0, x1, p, d, 3); }
 static void (*span)(int, int, int, const PV *, const PV *) = span_flat;
 
+/* the common case, made apart (most of the frame's pixels): an opaque texture that wraps, maybe times the
+ * vertex colours, maybe fogged, not a decal. The texel coordinates are right every 8 pixels, on a line between
+ * (persp), or on a line all along (a triangle whose depth varies little: p and d's uz and vz are then the texel
+ * coordinates themselves); the colour and fog are the 8 pixels' middle's; s and t go together in a word (8.8
+ * each: the textures are 64 texels at most) */
+#define SPREAD(c) (((uint32_t)(c) | (uint32_t)(c) << 16) & 0x07E0F81Fu)   /* (r, g, b apart in a word) */
+static inline __attribute__((always_inline)) void span_fast_body(int y, int x0, int x1, const PV *p, const PV *d,
+                                                                 const int depth, const bool shade, const bool fog,
+                                                                 const bool persp) {
+  uint16_t *cb = F->col + (y - r_band_y) * r_w + x0, *zb = F->z + (y - r_band_y) * r_w + x0;
+  float iz = p->iz, uz = p->uz, vz = p->vz;
+  float zs = iz * z_k, ze = zs + d->iz * z_k * (float)(x1 - x0);
+  if (zs > 30000.0f) zs = 30000.0f;
+  if (zs < 0) zs = 0;
+  if (ze > 30000.0f) ze = 30000.0f;
+  if (ze < 0) ze = 0;
+  int32_t z = (int32_t)(zs * 65536.0f), dz = (int32_t)((ze - zs) * 65536.0f / (float)(x1 - x0));
+  const uint32_t wm = (uint32_t)tx_wm, vsh = 8 - (uint32_t)tx_wl, vmask = (uint32_t)(tx_hm << tx_wl);
+  const uint8_t *texels = tx_texels;
+  const uint16_t *pal = tx_pal;
+  const int fr = fog_col >> 11, fg = (fog_col >> 5) & 63, fb = fog_col & 31;
+  int32_t u, v;
+  uint32_t uv = 0, duv = 0;
+  if (persp) {
+    float z0 = 1 / (iz > 1e-7f ? iz : 1e-7f);
+    u = fix16(uz * z0), v = fix16(vz * z0);
+  } else {
+    u = fix16(uz), v = fix16(vz);
+    uv = ((uint32_t)(u >> 8) << 16) + (uint32_t)(v >> 8);
+    duv = ((uint32_t)(fix16(d->uz) >> 8) << 16) + (uint32_t)(fix16(d->vz) >> 8);
+  }
+  float cr = p->r, cg = p->g, cbl = p->b, cf = p->fog;
+#define TEXEL()                                                                                               \
+  (depth == 1 ? pal[texels[i >> 1] >> ((i & 1) << 2) & 15]                                                    \
+   : depth == 2 ? pal[texels[i]] : ((const uint16_t *)(const void *)texels)[i])
+#define PIXELS(OUT)                                                                                           \
+  for (const uint16_t *end = cb + n; cb < end; cb++, zb++, z += dz, uv += duv) {                              \
+    int zz = z >> 16;                                                                                         \
+    if (zz < *zb) continue;                                                                                   \
+    uint32_t i = ((uv >> 24) & wm) | ((uv >> vsh) & vmask);                                                   \
+    uint32_t t = TEXEL();                                                                                     \
+    *zb = (uint16_t)zz;                                                                                       \
+    *cb = (uint16_t)(OUT);                                                                                    \
+  }
+  for (int x = x0; x < x1;) {
+    int n = x1 - x > 8 ? 8 : x1 - x;
+    int32_t u1 = 0, v1 = 0;
+    if (persp) {
+      iz += d->iz * n, uz += d->uz * n, vz += d->vz * n;
+      float z1 = 1 / (iz > 1e-7f ? iz : 1e-7f);
+      u1 = fix16(uz * z1), v1 = fix16(vz * z1);
+      uv = ((uint32_t)(u >> 8) << 16) + (uint32_t)(v >> 8);
+      duv = ((uint32_t)(((u1 - u) / n) >> 8) << 16) + (uint32_t)(((v1 - v) / n) >> 8);
+    }
+    float half = (float)n * 0.5f;
+    /* the 8 pixels' colour (0..256 a channel) and fog (0..256) */
+    int mr = 256, mg = 256, mb = 256, ff = 0;
+    if (shade) {
+      mr = (int)(cr + d->r * half) + 1, mg = (int)(cg + d->g * half) + 1, mb = (int)(cbl + d->b * half) + 1;
+      mr = mr < 0 ? 0 : mr > 256 ? 256 : mr, mg = mg < 0 ? 0 : mg > 256 ? 256 : mg, mb = mb < 0 ? 0 : mb > 256 ? 256 : mb;
+      cr += d->r * n, cg += d->g * n, cbl += d->b * n;
+    }
+    if (fog) {
+      ff = (int)(cf + d->fog * half);
+      ff = ff < 0 ? 0 : ff > 255 ? 256 : ff;
+      cf += d->fog * n;
+    }
+    x += n;
+    if (!shade && (!fog || ff == 0)) {
+      PIXELS(t)
+    } else if (mr - mg < 6 && mg - mr < 6 && mg - mb < 6 && mb - mg < 6) {
+      /* (grey: the three channels at once, to 1/32) */
+      uint32_t k = (uint32_t)(((mr + mg + mb) / 3 * (256 - ff)) >> 11), kf = (uint32_t)ff >> 3;
+      if (k + kf > 32) k = 32 - kf;
+      uint32_t fogw = SPREAD(fog_col) * kf;
+      PIXELS(({
+        uint32_t w = ((SPREAD(t) * k + fogw) >> 5) & 0x07E0F81Fu;
+        w | w >> 16;
+      }))
+    } else {
+      int kr = mr * (256 - ff) >> 8, kg = mg * (256 - ff) >> 8, kb = mb * (256 - ff) >> 8;
+      int orr = fr * ff >> 8, org = fg * ff >> 8, orb = fb * ff >> 8;
+      PIXELS((((int)(t >> 11) * kr >> 8) + orr) << 11 | ((((int)(t >> 5) & 63) * kg >> 8) + org) << 5 |
+             (((int)(t & 31) * kb >> 8) + orb))
+    }
+    if (persp) u = u1, v = v1;
+  }
+#undef TEXEL
+#undef PIXELS
+}
+
+#define FAST(dep, sh, fo)                                                                                   \
+  static void span_fast_##dep##sh##fo(int y, int x0, int x1, const PV *p, const PV *d) {                   \
+    span_fast_body(y, x0, x1, p, d, dep, sh, fo, true);                                                   \
+  }                                                                                                         \
+  static void span_aff_##dep##sh##fo(int y, int x0, int x1, const PV *p, const PV *d) {                    \
+    span_fast_body(y, x0, x1, p, d, dep, sh, fo, false);                                                  \
+  }
+FAST(1, 0, 0) FAST(1, 1, 0) FAST(1, 0, 1) FAST(1, 1, 1)
+FAST(2, 0, 0) FAST(2, 1, 0) FAST(2, 0, 1) FAST(2, 1, 1)
+FAST(3, 0, 0) FAST(3, 1, 0) FAST(3, 0, 1) FAST(3, 1, 1)
+#undef FAST
+/* by affine or not, the texel size, then shaded + 2 * fogged */
+static void (*const fast_spans[2][3][4])(int, int, int, const PV *, const PV *) = {
+    {{span_aff_100, span_aff_110, span_aff_101, span_aff_111},
+     {span_aff_200, span_aff_210, span_aff_201, span_aff_211},
+     {span_aff_300, span_aff_310, span_aff_301, span_aff_311}},
+    {{span_fast_100, span_fast_110, span_fast_101, span_fast_111},
+     {span_fast_200, span_fast_210, span_fast_201, span_fast_211},
+     {span_fast_300, span_fast_310, span_fast_301, span_fast_311}},
+};
+/* (the span for triangles whose depth varies little, when the batch has one) */
+static void (*span_aff)(int, int, int, const PV *, const PV *);
+
+/* what the batch's spans take besides the depth and texel coordinates: the colours, alpha, fog */
+static bool need_rgb, need_a, need_fog;
+
 /* fills a triangle of projected vertices, the rows of the band only */
 static void fill_tri(const PV *a, const PV *b, const PV *c) {
   /* sorted by row */
@@ -295,6 +413,18 @@ static void fill_tri(const PV *a, const PV *b, const PV *c) {
   if (ys < r_band_y) ys = r_band_y;
   if (ye > r_band_y + r_band_h) ye = r_band_y + r_band_h;
   if (ys >= ye) return;
+  void (*fn)(int, int, int, const PV *, const PV *) = span;
+  PV ta, tb, tc;
+  if (span_aff) {
+    float lo = fminf(a->iz, fminf(b->iz, c->iz)), hi = fmaxf(a->iz, fmaxf(b->iz, c->iz));
+    if (hi < lo * 1.06f) {
+      /* (its depth varies little: the texel coordinates on lines over it, not divided by the depth) */
+      ta = *a, tb = *b, tc = *c;
+      ta.uz = a->uz / a->iz, ta.vz = a->vz / a->iz, tb.uz = b->uz / b->iz, tb.vz = b->vz / b->iz;
+      tc.uz = c->uz / c->iz, tc.vz = c->vz / c->iz;
+      a = &ta, b = &tb, c = &tc, fn = span_aff;
+    }
+  }
   /* the attributes' steps across a row and down a column, from the plane of the triangle */
   float dx1 = b->sx - a->sx, dy1 = b->sy - a->sy, dx2 = c->sx - a->sx, dy2 = c->sy - a->sy;
   float det = dx1 * dy2 - dx2 * dy1;
@@ -302,8 +432,11 @@ static void fill_tri(const PV *a, const PV *b, const PV *c) {
   float id = 1 / det;
 #define GX(f) (((b->f - a->f) * dy2 - (c->f - a->f) * dy1) * id)
 #define GY(f) (((c->f - a->f) * dx1 - (b->f - a->f) * dx2) * id)
-  PV dx = {0, 0, GX(iz), GX(uz), GX(vz), GX(r), GX(g), GX(b), GX(a), GX(fog)};
-  PV dy = {0, 0, GY(iz), GY(uz), GY(vz), GY(r), GY(g), GY(b), GY(a), GY(fog)};
+  PV dx = {0, 0, GX(iz), GX(uz), GX(vz), 0, 0, 0, 0, 0};
+  PV dy = {0, 0, GY(iz), GY(uz), GY(vz), 0, 0, 0, 0, 0};
+  if (need_rgb) dx.r = GX(r), dx.g = GX(g), dx.b = GX(b), dy.r = GY(r), dy.g = GY(g), dy.b = GY(b);
+  if (need_a) dx.a = GX(a), dy.a = GY(a);
+  if (need_fog) dx.fog = GX(fog), dy.fog = GY(fog);
 #undef GX
 #undef GY
   float inv_ac = 1 / (c->sy - a->sy);
@@ -326,10 +459,25 @@ static void fill_tri(const PV *a, const PV *b, const PV *c) {
     float ox = x0 + 0.5f - a->sx, oy = yc - a->sy;
     PV p;
 #define AT(f) (a->f + dx.f * ox + dy.f * oy)
-    p.iz = AT(iz), p.uz = AT(uz), p.vz = AT(vz), p.r = AT(r), p.g = AT(g), p.b = AT(b), p.a = AT(a), p.fog = AT(fog);
+    p.iz = AT(iz), p.uz = AT(uz), p.vz = AT(vz), p.r = a->r, p.g = a->g, p.b = a->b, p.a = a->a, p.fog = a->fog;
+    if (need_rgb) p.r = AT(r), p.g = AT(g), p.b = AT(b);
+    if (need_a) p.a = AT(a);
+    if (need_fog) p.fog = AT(fog);
 #undef AT
-    span(y, x0, x1, &p, &dx);
+    fn(y, x0, x1, &p, &dx);
   }
+}
+
+/* a vertex on the screen, when it is in front of the near plane */
+static inline void rv_project(RVert *c) {
+  if (c->z < cam_near) return;
+  float iz = 1 / c->z;
+  c->iz = iz, c->sx = cam_cx + cam_f * c->x * iz, c->sy = cam_cy - cam_f * c->y * iz;
+}
+
+static inline void rv_pv(const RVert *v, PV *p) {
+  p->sx = v->sx, p->sy = v->sy, p->iz = v->iz, p->uz = v->u * v->iz, p->vz = v->v * v->iz;
+  p->r = v->r, p->g = v->g, p->b = v->b, p->a = v->a, p->fog = v->fog;
 }
 
 static void project(const float *c, PV *p) {   /* (x, y, z, u, v, r, g, b, a, fog) */
@@ -347,6 +495,17 @@ static void unpack(const RVert *v, float *o) {
 
 /* a triangle in camera space: culled, clipped against the near plane, projected and filled */
 static void draw_tri(const RVert *v0, const RVert *v1, const RVert *v2, bool cull) {
+  int behind = (v0->z < cam_near) + (v1->z < cam_near) + (v2->z < cam_near);
+  if (!behind) {
+    /* (in front: the N64's back faces turn clockwise on its screen, here the other way: y goes down) */
+    if (cull && (v1->sx - v0->sx) * (v2->sy - v0->sy) - (v2->sx - v0->sx) * (v1->sy - v0->sy) >= 0) return;
+    float lo = fminf(v0->sy, fminf(v1->sy, v2->sy)), hi = fmaxf(v0->sy, fmaxf(v1->sy, v2->sy));
+    if (hi < r_band_y - 1 || lo > r_band_y + r_band_h + 1) return;
+    PV p[3];
+    rv_pv(v0, &p[0]), rv_pv(v1, &p[1]), rv_pv(v2, &p[2]);
+    fill_tri(&p[0], &p[1], &p[2]);
+    return;
+  }
   if (cull) {
     /* the N64 culls back faces: those whose corners turn clockwise on the screen */
     float e1x = v1->x - v0->x, e1y = v1->y - v0->y, e1z = v1->z - v0->z;
@@ -354,16 +513,10 @@ static void draw_tri(const RVert *v0, const RVert *v1, const RVert *v2, bool cul
     float nx = e1y * e2z - e1z * e2y, ny = e1z * e2x - e1x * e2z, nz = e1x * e2y - e1y * e2x;
     if (nx * v0->x + ny * v0->y + nz * v0->z <= 0) return;
   }
-  int behind = (v0->z < cam_near) + (v1->z < cam_near) + (v2->z < cam_near);
   if (behind == 3) return;
   float in[3][10];
   unpack(v0, in[0]), unpack(v1, in[1]), unpack(v2, in[2]);
   PV p[4];
-  if (!behind) {
-    project(in[0], &p[0]), project(in[1], &p[1]), project(in[2], &p[2]);
-    fill_tri(&p[0], &p[1], &p[2]);
-    return;
-  }
   float out[4][10];
   int n = 0;
   for (int i = 0; i < 3; i++) {
@@ -382,16 +535,17 @@ static void draw_tri(const RVert *v0, const RVert *v1, const RVert *v2, bool cul
 
 static float fog_of(float z) {
   if (!fog_on) return 0;
-  float f = (z - fog_near) / (fog_far - fog_near);
-  return f <= 0 ? 0 : f >= 1 ? 255 : f * 255;
+  float f = (z - fog_near) * fog_k;
+  return f <= 0 ? 0 : f >= 255 ? 255 : f;
 }
 
 static void use_texture(const Batch *b) {
-  span = span_flat;
+  span = span_flat, span_aff = NULL;
   if (b->mode & M_TEX) {
     const Tex *t = TEX(b->tex);
     const uint8_t *base = DAT(uint8_t, t->off);
     int depth = t->fmt >> 4;
+    tx_depth = depth;
     tx_wl = t->wl, tx_wm = (1 << t->wl) - 1, tx_hm = (1 << t->hl) - 1;
     tx_fmt = t->fmt & 15;
     tx_pal = (const uint16_t *)(const void *)base;
@@ -451,10 +605,18 @@ static void draw_batch(const RItem *it, const Batch *b) {
     } else c->r = s->c[0], c->g = s->c[1], c->b = s->c[2];
     c->a = s->c[3];
     c->fog = (uint8_t)fog_of(c->z);
+    rv_project(c);
   }
   d_mode = b->mode;
   if (it->alpha < 255) d_mode |= M_XLU;
   d_tint = it->tint, d_alpha = it->alpha;
+  if ((b->mode & M_TEX) && !(d_mode & (M_XLU | M_CUTOUT | M_DECAL)) && tx_fmt == TF_565 && tx_wrap == 0 &&
+      d_tint == 0xFFFFFF)
+  {
+    int k = ((d_mode & M_SHADE) ? 1 : 0) | ((fog_on && (d_mode & M_FOG)) ? 2 : 0);
+    span = fast_spans[1][tx_depth - 1][k], span_aff = fast_spans[0][tx_depth - 1][k];
+  }
+  need_rgb = !(d_mode & M_TEX) || (d_mode & M_SHADE), need_a = d_mode & M_XLU, need_fog = fog_on && (d_mode & M_FOG);
   bool cull = !(it->flags & R_NOCULL);
   for (int i = 0; i < b->ntri; i++, tri += 3) {
     if (tri[0] >= nv || tri[1] >= nv || tri[2] >= nv) continue;
@@ -482,9 +644,11 @@ static void draw_shadow(const RItem *it) {
     c[i].z = lx * M->m[0][2] + 2 * M->m[1][2] + lz * M->m[2][2] + M->m[3][2];
     c[i].u = c[i].v = 0, c[i].r = c[i].g = c[i].b = 0, c[i].fog = 0;
     c[i].a = i ? (square ? 255 : 110) : 255;
+    rv_project(&c[i]);
   }
+  need_rgb = need_a = true, need_fog = false;
   d_mode = M_XLU | M_DECAL, d_tint = 0xFFFFFF, d_alpha = it->alpha;
-  span = span_flat;
+  span = span_flat, span_aff = NULL;
   for (int i = 1; i <= n; i++) draw_tri(&c[0], &c[i], &c[i % n + 1], false);
 }
 

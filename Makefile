@@ -21,7 +21,7 @@ REF ?=
 GAME_SRC = $(filter-out tests/play.c src/plat_host.c src/data.S,$(shell grep -v '^\#' src/port/files.txt)) src/main.c \
   src/plat_eadk.c
 # the drawing runs for every pixel at -O2; the rest is small at -Os
-HOT = src/render.c
+HOT = src/render.c src/port/gfx.c
 COLD = $(filter-out $(HOT),$(GAME_SRC))
 OBJ = $(patsubst %.c,$(BUILD_DIR)/obj/%.o,$(GAME_SRC))
 HEADERS = $(wildcard src/*.h src/port/*.h) ../common/epsilon_app.h ../common/epsilon_files.h
@@ -51,7 +51,7 @@ $(BUILD_DIR)/obj/decomp/%.o: decomp/%.c src/port/port.h
 $(BUILD_DIR)/obj/src/port/gen/%.o: src/port/gen/%.c src/port/port.h
 	@mkdir -p $(@D)
 	$(Q) $(CC) $(CFLAGS) -Os -w -c $< -o $@
-$(BUILD_DIR)/obj/src/render.o: src/render.c $(HEADERS)
+$(patsubst %.c,$(BUILD_DIR)/obj/%.o,$(HOT)): $(BUILD_DIR)/obj/%.o: %.c $(HEADERS)
 	@mkdir -p $(@D)
 	$(Q) $(CC) $(CFLAGS) -O2 $(WARN) -c $< -o $@
 $(BUILD_DIR)/obj/src/%.o: src/%.c $(HEADERS)

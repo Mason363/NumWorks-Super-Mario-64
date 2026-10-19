@@ -151,6 +151,28 @@ class Pack:
         self.tex_index[key] = len(self.tex_entries) - 1
         return self.tex_index[key]
 
+    def ui_texture(self, name, img, kind):
+        """A texture of the screens (tools/glyphs.py), already painted: kind 'ia' or 'rgba' (a transparent key)."""
+        fmt = 2 if kind == "ia" else 1
+        h, w = img.shape[:2]
+        pal, idx = quantize(img, fmt, 16)
+        depth = 1
+        if texel_error(img, fmt, pal, idx) > 6:
+            pal, idx = quantize(img, fmt, 256)
+            depth = 2
+        pal = pal + [pal[0]] * ((16 if depth == 1 else 256) - len(pal))
+        flat = idx.reshape(-1).astype(np.uint8)
+        if depth == 1:
+            if len(flat) % 2:
+                flat = np.append(flat, 0)
+            texels = (flat[0::2] | (flat[1::2] << 4)).astype(np.uint8)
+        else:
+            texels = flat
+        off = self.blob.add(struct.pack(f"<{len(pal)}H", *pal) + texels.tobytes())
+        wl, hl = int(round(np.log2(w))), int(round(np.log2(h)))
+        self.tex_entries.append(struct.pack("<IBBBB", off, wl, hl, fmt | (depth << 4), 0))
+        return len(self.tex_entries) - 1
+
     # ------------------------------------------------------------------------------------------ meshes
     def mesh(self, name, tris, bake=True, cell=2048):
         """Packs triangles (decomp.Tri) as a mesh: batches per material and, for big meshes, per cell of the
@@ -393,6 +415,15 @@ def main():
                         info["fov"], info["near"], info["far"], info["bg"], fogc, fn, ff))
     os.makedirs(port.GEN, exist_ok=True)
     open(os.path.join(port.GEN, "models.txt"), "w").write("\n".join(sorted(set(lines))) + "\n")
+    # the screens' textures: the HUD, the fonts, the power meter, the transitions (tools/glyphs.py)
+    import glyphs
+    ui = []
+    for name, path in port.ui_textures(ref):
+        if any(k in name for k in ("_cn_", "_jp_", "_eu_", "EU_", "beta")) or name in dict(ui):
+            continue
+        w, h, kind = glyphs.ui_size(name, path)
+        ui.append((name, p.ui_texture(name, glyphs.paint_ui(name, w, h), kind)))
+    open(os.path.join(port.GEN, "uitex.txt"), "w").write("".join(f"{n} {i}\n" for n, i in ui))
     p.write(mb)
     M.write_funcs(os.path.join(port.GEN, "geo_funcs.c"))
     print(f"{len(mb.models)} models, {len(mb.dl_mesh)} display lists, {len(M.FUNCS)} functions")

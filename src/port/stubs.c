@@ -39,6 +39,8 @@ void play_puzzle_jingle(void) {}
 void play_power_star_jingle(u8 arg0) {}
 void play_race_fanfare(void) {}
 void play_toads_jingle(void) {}
+void play_dialog_sound(u8 dialogID) {}
+void play_star_fanfare(void) {}
 void play_menu_sounds(s16 soundMenuFlags) {}
 void play_painting_eject_sound(void) {}
 void play_infinite_stairs_music(void) {}
@@ -72,7 +74,6 @@ void make_viewport_clip_rect(Vp *viewport) {}
 void clear_viewport(Vp *viewport, s32 color) {}
 void clear_framebuffer(s32 color) {}
 
-void guMtxF2L(float mf[4][4], Mtx *m) {}
 void osViBlack(u8 active) {}
 void osViSetSpecialFeatures(u32 func) {}
 s32 osPiStartDma(OSIoMesg *mb, s32 priority, s32 direction, uintptr_t devAddr, void *vAddr, size_t nbytes,
@@ -102,6 +103,8 @@ void try_do_mario_debug_object_spawn(void) {}
 void try_print_debug_mario_level_info(void) {}
 void try_print_debug_mario_object_info(void) {}
 void profiler_log_thread5_time(enum ProfilerGameEvent eventID) {}
+void set_text_array_x_y(s32 xOffset, s32 yOffset) {}
+void nop_change_course(void) {}
 
 /* ---------------------------------------------------------------------------------------------- Goddard */
 void gd_copy_p1_contpad(OSContPad *p1cont) {}

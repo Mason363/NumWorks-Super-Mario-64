@@ -15,6 +15,14 @@
 #define PORT_AREA(mesh, mode, px, py, pz, fx, fy, fz, fov, near, far, bg, fogc, fogn, fogf) \
   PORT_MODEL_TAG, (mesh), PORT_AREA_TAG, (mode), (px), (py), (pz), (fx), (fy), (fz), (fov), (near), (far), (bg), \
   (fogc), (fogn), (fogf)
+/* a texture of the screens (src/port/gen/segment2.c, power_meter.c): the index of the calculator's own in
+ * src/data.bin, after a tag (src/port/gfx.c reads it) */
+#define PORT_TEX_STUB(i) 0x50, 0x54, 0x58, 0x54, (i) & 0xFF, ((i) >> 8) & 0xFF
+
+/* a text in the game's characters (tools/port.py turns the decompilation's _("...") into them): one macro
+ * argument, however many bytes */
+#define PORT_TEXT(...) __VA_ARGS__
+
 /* a level the game does not have: its paintings and pipes don't take Mario there */
 #define PORT_LEVEL_MISSING() EXIT()
 
@@ -44,17 +52,25 @@ struct PortSurfaceList port_static_list(int cellZ, int cellX, int kind);
 struct Animation;
 extern const struct Animation *const port_mario_anims[];
 extern const int port_mario_anim_count;
-/* the animations are packed (tools/port.py's pack_anim_data): a value is one byte, its channel (four u16:
- * count, offset, base, step) says what it stands for. The next channel's value at frame (what the game's
- * values[retrieve_animation_index(frame, &attr)] was) */
+/* the animations are packed (tools/port.py's pack_anim_data): a channel that keeps one value is 0, base (or
+ * 1, base, 0, 0: the first three, the translations, which the game may skip, take PORT_ANIM_CHANNEL u16); else
+ * 0x8000 | (stride - 1) << 9 | (step - 1), base, offset, count: a byte at offset for every stride frames (the
+ * frames between them on the line between their values), a value base + byte * step; 0xFFFF ends the table.
+ * The next channel's value at frame (what the game's values[retrieve_animation_index(frame, &attr)] was) */
 #define PORT_ANIM_CHANNEL 4
 static inline short port_anim_value(int frame, unsigned short **attr, const void *values) {
   const unsigned short *c = *attr;
-  if (c[0] == 0xFFFF) return 0;   /* (the table's end) */
-  int i = frame < c[0] ? frame : c[0] - 1;
-  *attr += PORT_ANIM_CHANNEL;
+  unsigned info = c[0];
+  if (info == 0xFFFF) return 0;   /* (the table's end) */
+  *attr += info == 0 ? 2 : PORT_ANIM_CHANNEL;
+  if (info < 0x8000) return (short) c[1];
+  int n = c[3], s = (int) ((info >> 9) & 15) + 1, step = (int) (info & 511) + 1;
+  int i = frame < n ? frame : n - 1;
   if (i < 0) i = 0;
-  return (short) (c[2] + ((const unsigned char *) values)[c[1] + i] * c[3]);
+  const unsigned char *v = (const unsigned char *) values + c[2];
+  int k = i / s, r = i - k * s;
+  if (r == 0) return (short) (c[1] + v[k] * step);
+  return (short) (c[1] + ((v[k] * (s - r) + v[k + 1] * r) * step + s / 2) / s);
 }
 
 /* the model a geo layout or display list stub stands for (0xFFFF: none) */

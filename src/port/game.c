@@ -16,8 +16,10 @@
 #include "port_game.h"
 #include "plat.h"
 
-/* the N64 had 4 MB for this; the levels' scripts, cameras, warps and the objects' surfaces fit in less */
-#define POOL_SIZE (26 * 1024)
+/* the N64 had 4 MB for this; the levels' scripts, cameras, warps and the objects' surfaces fit in less. The
+ * effects' pool (the HUD's text, the bubbles and snow) was 16 KB of it */
+#define EFFECTS_SIZE (4 * 1024)
+#define POOL_SIZE (26 * 1024 + EFFECTS_SIZE)
 static u64 sPool[POOL_SIZE / 8];
 
 
@@ -183,17 +185,18 @@ s32 port_start_level(void) { return port_start_level_num; }
 static struct LevelCommand *sScript;
 /* the frame's display list memory: nothing draws with display lists, but the game's code takes matrices and a
  * few commands from it (alloc_display_list), until the frame is drawn */
-static Gfx sGfxPool[128];
+static Gfx sGfxPool[512];
 
 void init_rcp(void) {}
 
 void port_game_init(void) {
   main_pool_init(sPool, (u8 *) sPool + sizeof sPool);
+  gEffectsMemoryPool = mem_pool_init(EFFECTS_SIZE, MEMORY_POOL_LEFT);
   port_objects_init();
   gPlayer1Controller->statusData = NULL;
   gPlayer1Controller->controllerData = &sPad;
   gDisplayListHead = sGfxPool;
-  gGfxPoolEnd = (u8 *) (sGfxPool + 128);
+  gGfxPoolEnd = (u8 *) (sGfxPool + 512);
   save_file_load_all();
   sScript = (struct LevelCommand *) port_level_script_entry;
 }
@@ -201,7 +204,7 @@ void port_game_init(void) {
 void port_game_frame(void) {
   read_controller();
   gDisplayListHead = sGfxPool;
-  gGfxPoolEnd = (u8 *) (sGfxPool + 128);
+  gGfxPoolEnd = (u8 *) (sGfxPool + 512);
   sScript = level_script_execute(sScript);
   gGlobalTimer++;
   port_peaks();

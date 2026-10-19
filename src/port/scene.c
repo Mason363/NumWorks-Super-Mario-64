@@ -22,6 +22,7 @@
 #include "behavior_data.h"
 #include "port.h"
 #include "port_game.h"
+#include "port_gfx.h"
 #include "../render.h"
 
 extern struct LakituState gLakituState;
@@ -451,6 +452,9 @@ void geo_process_root(struct GraphNodeRoot *node, Vp *b, Vp *c, s32 clearColor) 
   if (node->node.flags & GRAPH_RENDER_ACTIVE) port_draw_area(node);
 }
 
+/* the screens' display list (the HUD, the menus, the text and the transitions), over each band */
+static void run_screens(const void *cmd) { port_gfx_run(*(const Gfx *const *) cmd); }
+
 /* the frame: everything the renderer needs is here, on the stack, until the frame is on the screen */
 void port_render(void) {
   RFrame f;
@@ -459,6 +463,10 @@ void port_render(void) {
   mtx_identity(&view);
   r_frame(&view, 0, 45, 100, 20000);
   init_rcp();
+  Gfx *screens = gDisplayListHead;
   render_game();
+  gSPEndDisplayList(gDisplayListHead++);
+  const Gfx **cmd = r_overlay_alloc(run_screens, sizeof(const Gfx *));
+  if (cmd != NULL) *cmd = screens;
   r_draw();
 }

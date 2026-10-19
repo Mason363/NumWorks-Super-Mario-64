@@ -128,7 +128,7 @@ def write_symbols(ref, model_of, anim_tables):
             lines.append(f'#include "{f}"')
     lines.append("")
     lines.append("/* a display list nobody draws: the calculator draws its own models */")
-    lines.append("const Gfx port_dummy_dl[1] = {{{0, 0}}};")
+    lines.append("const Gfx port_dummy_dl[] = { gsSPEndDisplayList() };")
     done = set(real) | anim_tables
     levels_scripts = set()
     for typ, name, ptrarr, hdr in syms:
@@ -168,11 +168,147 @@ def write_symbols(ref, model_of, anim_tables):
             lines.append(f"struct Painting {name};")
         elif typ == "RoomData":
             lines.append(f"const RoomData {name}[1];")
+        elif name == "flying_carpet_static_vertex_data":
+            lines.append(f"const s16 {name}[21];")   # (as geo_misc.c declares it)
         elif typ in ("u8", "s16", "f32", "Vtx"):
             lines.append(f"{typ} {name}[1];")
     os.makedirs(GEN, exist_ok=True)
     open(os.path.join(GEN, "symbols.c"), "w").write("\n".join(lines) + "\n")
     return data_files
+
+
+# ------------------------------------------------------------------------------------------------ text
+def charmap(ref):
+    """The game's characters (the decompilation's charmap.txt, its US values): text -> bytes."""
+    cm = {}
+    for line in open(os.path.join(ref, "charmap.txt"), encoding="utf-8"):
+        m = re.match(r"'((?:[^'\\]|\\.)+)'\s*=\s*(.*)$", line.strip())
+        if not m:
+            continue
+        key = m.group(1).encode().decode("unicode_escape") if "\\" in m.group(1) else m.group(1)
+        val = re.sub(r"CN_DIFF\(\s*(0x[0-9A-Fa-f]+)\s*,\s*\([^)]*\)\s*\)", r"\1", m.group(2))
+        val = val.replace("CN_ZERO", "").replace("CN_FF", "")
+        cm[key] = [int(x, 16) for x in re.findall(r"0x[0-9A-Fa-f]+", val)]
+    return cm
+
+
+def convert_text(txt, cm, macros):
+    """Every _("...") of the source as the game's bytes (as the decompilation's textconv did after the C
+    preprocessor): its strings, and the macros that stand for strings, joined; ends with 0xFF."""
+    keys = sorted(cm, key=len, reverse=True)
+    keys1 = [k for k in keys if len(k) == 1]
+
+    def literal(body):
+        parts = re.findall(r'"((?:[^"\\]|\\.)*)"|(\b[A-Z_][A-Z0-9_]*\b)', body, re.S)
+        out = ""
+        for lit, name in parts:
+            if name:
+                lit = macros[name]
+            out += re.sub(r"\\(.)", lambda e: {"n": "\n", '"': '"', "\\": "\\", "'": "'"}.get(e.group(1), e.group(0)),
+                          lit.replace("\\\n", ""))
+        return out
+
+    def encode(s, single):
+        b, i = [], 0
+        while i < len(s):
+            for k in (keys1 if single else keys):
+                if s.startswith(k, i):
+                    b += cm[k]
+                    i += len(k)
+                    break
+            else:
+                raise SystemExit(f"text: no character for {s[i]!r} in {s!r}")
+        return b + [0xFF]
+
+    # (_("...") may pair letters into one character, "the" say; __("...") does not)
+    def rep(m):
+        return "PORT_TEXT(" + ", ".join(f"0x{x:02X}" for x in encode(literal(m.group(2)), m.group(1) == "_")) + ")"
+    ws = r"(?:\s|\\\n)*"
+    return re.sub(r'\b_(_?)%?\(((?:' + ws + r'(?:"(?:[^"\\]|\\.)*"|[A-Z_][A-Z0-9_]*)' + ws + r')*)\)', rep, txt,
+                  flags=re.S)
+
+
+def write_text(ref):
+    """src/port/gen/text_*: the dialogs, course and act names in the game's bytes, and their tables."""
+    cm = charmap(ref)
+    for name in ("dialogs", "courses"):
+        txt = open(os.path.join(ref, "text", "us", name + ".h"), encoding="utf-8").read()
+        # (the US version's words: the #else of #ifdef VERSION_EU)
+        macros = {}
+        for m in list(re.finditer(r"#ifdef VERSION_EU(.*?)#else(.*?)#endif", txt, re.S))[::-1]:
+            for mm in re.finditer(r'#define\s+(\w+)\s+"((?:[^"\\]|\\.)*)"', m.group(2), re.S):
+                macros[mm.group(1)] = mm.group(2)
+            txt = txt[:m.start()] + txt[m.end():]
+        out = convert_text(txt, cm, macros)
+        open(os.path.join(GEN, f"text_{name}.h"), "w").write(
+            "/* Made by tools/port.py from the decompilation's text/us/%s.h: the words in the game's bytes. */\n"
+            % name + out)
+    # the menus' words (include/text_strings.h.in, text_menu_strings.h.in)
+    for name in ("text_strings", "text_menu_strings"):
+        ts = open(os.path.join(ref, "include", name + ".h.in"), encoding="utf-8").read()
+        open(os.path.join(GEN, name + ".h"), "w").write(
+            f"/* Made by tools/port.py from the decompilation's include/{name}.h.in. */\n" + convert_text(ts, cm, {}))
+    dbg = open(os.path.join(ref, "text", "debug_text.inc.c"), encoding="utf-8").read()
+    open(os.path.join(GEN, "text_debug.inc.c"), "w").write(
+        "/* Made by tools/port.py from the decompilation's text/debug_text.inc.c. */\n" + convert_text(dbg, cm, {}))
+    dt = open(os.path.join(ref, "text", "define_text.inc.c")).read()
+    dt = dt.replace('#include "dialogs.h"', '#include "text_dialogs.h"').replace(
+        '#include "courses.h"', '#include "text_courses.h"').replace(
+        '#include "define_courses.inc.c"', '#include "text_define_courses.inc.c"')
+    open(os.path.join(GEN, "text_define.inc.c"), "w").write("/* Made by tools/port.py (text/define_text.inc.c) */\n" + dt)
+    dc = open(os.path.join(ref, "text", "define_courses.inc.c")).read().replace('#include "courses.h"',
+                                                                               '#include "text_courses.h"')
+    open(os.path.join(GEN, "text_define_courses.inc.c"), "w").write(
+        "/* Made by tools/port.py (text/define_courses.inc.c) */\n" + dc)
+
+
+# ------------------------------------------------------------------------------------------------ the screens' data
+# the files of the HUD, the fonts, the dialog boxes and the transitions: their display lists are the game's, their
+# textures the calculator's (tools/pack.py paints them; src/port/gen/uitex.txt gives their numbers)
+UI_FILES = {"bin/segment2.c": "segment2.c", "actors/power_meter/model.inc.c": "power_meter.c",
+            # Peach's letter and her signature (the intro's message, ingame_menu.c)
+            "levels/castle_grounds/areas/1/12/model.inc.c": "letter.c",
+            "levels/castle_grounds/areas/1/13/model.inc.c": "letter.c"}
+UI_TEX = re.compile(r'(Texture\s+(\w+)\s*\[\]\s*=\s*\{\s*)#include\s+"([^"]+)"')
+
+
+def ui_textures(ref):
+    """(symbol, path) of every texture the screens' files define."""
+    out = []
+    for f in UI_FILES:
+        for m in UI_TEX.finditer(open(os.path.join(ref, f)).read()):
+            out.append((m.group(2), m.group(3)))
+    return out
+
+
+def write_ui(ref):
+    idx = {}
+    p = os.path.join(GEN, "uitex.txt")
+    for line in open(p):
+        w = line.split()
+        if w:
+            idx[w[0]] = int(w[1])
+    names = set()
+    files = {}
+    for f, out in UI_FILES.items():
+        txt = open(os.path.join(ref, f)).read()
+        txt = UI_TEX.sub(lambda m: m.group(1) + f"PORT_TEX_STUB({idx.get(m.group(2), 0xFFFF)})", txt)
+        txt = txt.replace('#include "text/us/define_text.inc.c"', '#include "text_define.inc.c"').replace(
+            '#include "text/debug_text.raw.inc.c"', '#include "text_debug.inc.c"')
+        if out not in files:
+            head = ""
+            if not f.startswith("bin"):
+                head = ('#include <ultra64.h>\n#include "sm64.h"\n#include "types.h"\n#include "make_const_nonconst.h"\n'
+                        '#include "port.h"\n')
+            files[out] = [f"/* Made by tools/port.py from the decompilation's {f}", head]
+        else:
+            files[out][0] += f", {f}"
+        files[out].append(txt)
+        names |= set(re.findall(r"\b(?:Gfx|Texture)\s+(?:\*const\s+)?(\w+)\s*\[", txt))
+    for out, parts in files.items():
+        open(os.path.join(GEN, out), "w").write(parts[0] + ": its textures are the calculator's (PORT_TEX_STUB). */\n"
+                                                + "".join(parts[1:]))
+    return names
 
 
 # ------------------------------------------------------------------------------------------------ animations
@@ -191,23 +327,42 @@ def wrap_range(vals):
     return base, max(1, -(-span // 255))
 
 
+def key_stride(q, tol, most=16):
+    """The longest step between key frames (1..most) that keeps every frame of q (a channel's values, in its
+    steps) within tol of the line between its key frames."""
+    n = len(q)
+    for s in range(most, 1, -1):
+        keys = [q[min(j * s, n - 1)] for j in range(-(-(n - 1) // s) + 1)]
+        if all(abs((keys[i // s] * (s - i % s) + keys[i // s + 1] * (i % s)) / s - q[i]) <= tol
+               for i in range(n) if i % s):
+            return s
+    return 1
+
+
 def pack_anim_data(values, indices):
-    """A channel table (count, offset, base, step a channel) and one byte a value: the value is base + byte * step
-    (16 bits, wrapping). The game's own are two bytes a value; these lose 1/500 of a turn at most."""
+    """A channel table and one byte a key frame (port.h's port_anim_value): a channel that keeps one value is
+    0, base (the first three, the translations, which the game may skip, take four u16 like the others: 1,
+    base, 0, 0); else 0x8000 | (stride - 1) << 9 | (step - 1), base, offset, count, with a key frame every
+    stride frames, the frames between them on the line between their values, a value base + byte * step (16
+    bits, wrapping). The game's own are two bytes a frame; these stay within 1/250 of a turn (2 units for the
+    translations) of them."""
     chans, data = [], []
     for i in range(0, len(indices), 2):
         cnt, off = indices[i], indices[i + 1]
         ch = values[off:off + cnt] or [0]
         base, step = wrap_range(ch)
         if step == 0:
-            chans += [cnt, 0, base, 0]
+            chans += [1, base, 0, 0] if i < 6 else [0, base]
             continue
-        chans += [cnt, len(data), base, step]
-        data += [(((v & 0xFFFF) - base) % 65536 + step // 2) // step for v in ch]
-        assert max(data[-len(ch):]) <= 255
+        q = [((v & 0xFFFF) - base) % 65536 / step for v in ch]
+        stride = key_stride(q, max((2 if i < 6 else 256) / step, 0.6))
+        keys = [q[min(j * stride, len(q) - 1)] for j in range(-(-(len(q) - 1) // stride) + 1)]
+        assert step <= 512 and len(data) < 65536
+        chans += [0x8000 | (stride - 1) << 9 | (step - 1), base, len(data), len(ch)]
+        data += [min(255, int(k + 0.5)) for k in keys]
     # (a few models have more parts than their animations have channels: the N64 read on into whatever came
     # next; here the end of the table, which reads as 0 from then on: port_anim_value)
-    chans += [0xFFFF, 0, 0, 0]
+    chans += [0xFFFF]
     return chans, data or [0]
 
 
@@ -511,7 +666,8 @@ def main():
         copy(ref, f"levels/{lv}/header.h")
         for f in glob.glob(os.path.join(ref, "levels", lv, "*.h")):
             copy(ref, os.path.relpath(f, ref))
-    data_files = write_symbols(ref, model_of, write_anims(ref))
+    write_text(ref)
+    data_files = write_symbols(ref, model_of, write_anims(ref) | write_ui(ref))
     for f in data_files:
         if f.startswith("levels") and f.endswith("collision.inc.c") and "/areas/" in f:
             strip_collision(ref, f)

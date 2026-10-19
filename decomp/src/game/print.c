@@ -7,6 +7,7 @@
 #include "memory.h"
 #include "print.h"
 #include "segment2.h"
+#include "port_gfx.h" /* (calculator) */
 
 /**
  * This file handles printing and formatting the colorful text that

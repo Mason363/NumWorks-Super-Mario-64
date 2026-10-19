@@ -12,6 +12,7 @@
 #include "screen_transition.h"
 #include "segment2.h"
 #include "sm64.h"
+#include "port_gfx.h" /* (calculator) */
 
 u8 sTransitionColorFadeCount[4] = { 0 };
 u16 sTransitionTextureFadeCount[2] = { 0 };

@@ -20,9 +20,10 @@
 #define R_MAX_VERTS 128            /* a batch's vertices (tools/pack.py: BATCH_VERTS) */
 #define R_OVERLAY_BYTES 1024
 
-/* a vertex in camera space with what is interpolated (colours 0..255, fog 0..255) */
+/* a vertex in camera space with what is interpolated (colours 0..255, fog 0..255), and on the screen (sx, sy,
+ * 1 / z: when it is in front of the near plane) */
 typedef struct {
-  float x, y, z, u, v;
+  float x, y, z, u, v, sx, sy, iz;
   uint8_t r, g, b, a, fog, pad[3];
 } RVert;
 

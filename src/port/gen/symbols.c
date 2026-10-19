@@ -55,7 +55,7 @@
 #include "actors/wooden_signpost/collision.inc.c"
 
 /* a display list nobody draws: the calculator draws its own models */
-const Gfx port_dummy_dl[1] = {{{0, 0}}};
+const Gfx port_dummy_dl[] = { gsSPEndDisplayList() };
 const GeoLayout dAmpGeo[] = { PORT_MODEL(70) };
 extern const Gfx dAmpElectricityDl[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx dAmpEyeDl[] __attribute__((alias("port_dummy_dl")));
@@ -348,10 +348,6 @@ extern const Gfx mushroom_1up_seg3_dl_0302A628[] __attribute__((alias("port_dumm
 extern const Gfx mushroom_1up_seg3_dl_0302A660[] __attribute__((alias("port_dummy_dl")));
 const GeoLayout number_geo[] = { PORT_MODEL(65) };
 const Gfx pebble_seg3_dl_0301CB00[1] = {{{PORT_MODEL_TAG, 47}}};
-u8 power_meter_health_segments_lut[1];
-extern const Gfx dl_power_meter_base[] __attribute__((alias("port_dummy_dl")));
-extern const Gfx dl_power_meter_health_segments_begin[] __attribute__((alias("port_dummy_dl")));
-extern const Gfx dl_power_meter_health_segments_end[] __attribute__((alias("port_dummy_dl")));
 const Gfx sand_seg3_dl_0302BCD0[1] = {{{PORT_MODEL_TAG, 45}}};
 const GeoLayout star_geo[] = { PORT_MODEL(33) };
 extern const Gfx star_seg3_dl_0302B7B0[] __attribute__((alias("port_dummy_dl")));
@@ -2283,8 +2279,6 @@ extern const Gfx castle_grounds_seg7_dl_0700C6E8[] __attribute__((alias("port_du
 extern const Gfx castle_grounds_seg7_dl_0700C728[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx castle_grounds_seg7_dl_0700C768[] __attribute__((alias("port_dummy_dl")));
 const struct Animation *const castle_grounds_seg7_anims_flags[] = { NULL };
-extern const Gfx castle_grounds_seg7_dl_0700EA58[] __attribute__((alias("port_dummy_dl")));
-extern const Gfx castle_grounds_seg7_us_dl_0700F2E8[] __attribute__((alias("port_dummy_dl")));
 const struct MovtexQuadCollection castle_grounds_movtex_water[1];
 const Movtex castle_grounds_movtex_tris_waterfall[1];
 extern const Gfx castle_grounds_dl_waterfall[] __attribute__((alias("port_dummy_dl")));
@@ -2874,7 +2868,7 @@ extern const Gfx rr_seg7_dl_07015C68[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx rr_seg7_dl_07017530[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx rr_seg7_dl_07018B58[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx rr_seg7_dl_070191A0[] __attribute__((alias("port_dummy_dl")));
-s16 flying_carpet_static_vertex_data[1];
+const s16 flying_carpet_static_vertex_data[21];
 extern const Gfx dl_flying_carpet_begin[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx dl_flying_carpet_model_half[] __attribute__((alias("port_dummy_dl")));
 extern const Gfx dl_flying_carpet_end[] __attribute__((alias("port_dummy_dl")));

@@ -22,6 +22,7 @@
 #include "sm64.h"
 #include "text_strings.h"
 #include "types.h"
+#include "port_gfx.h" /* (calculator) */
 
 #ifdef VERSION_EU
 #undef LANGUAGE_FUNCTION
@@ -151,20 +152,13 @@ void create_dl_identity_matrix(void) {
 }
 
 void create_dl_translation_matrix(s8 pushOp, f32 x, f32 y, f32 z) {
-    Mtx *matrix = (Mtx *) alloc_display_list(sizeof(Mtx));
-
-    if (matrix == NULL) {
-        return;
-    }
-
-    guTranslate(matrix, x, y, z);
-
+    /* (calculator) one command, not a matrix: the menus only move along x and y */
     if (pushOp == MENU_MTX_PUSH) {
-        gSPMatrix(gDisplayListHead++, VIRTUAL_TO_PHYSICAL(matrix), G_MTX_MODELVIEW | G_MTX_MUL | G_MTX_PUSH);
+        gPortTranslate(gDisplayListHead++, 1, x, y);
     }
 
     if (pushOp == MENU_MTX_NOPUSH) {
-        gSPMatrix(gDisplayListHead++, VIRTUAL_TO_PHYSICAL(matrix), G_MTX_MODELVIEW | G_MTX_MUL | G_MTX_NOPUSH);
+        gPortTranslate(gDisplayListHead++, 0, x, y);
     }
 }
 

@@ -3,25 +3,17 @@
 #include <ultra64.h>
 #include "types.h"
 #include "engine/graph_node.h"
-
-Gfx *geo_mirror_mario_backface_culling();
-Gfx *geo_mirror_mario_set_alpha();
-Gfx *geo_switch_mario_stand_run();
-Gfx *geo_switch_mario_cap_effect();
-Gfx *geo_move_mario_part_from_parent();
-Gfx *geo_mario_tilt_torso();
-Gfx *geo_mario_head_rotation();
-Gfx *geo_switch_mario_cap_on_off();
-Gfx *geo_switch_mario_eyes();
-Gfx *geo_mario_rotate_wing_cap_wings();
-Gfx *geo_switch_mario_hand();
-Gfx *geo_mario_hand_foot_scaler();
-Gfx *geo_switch_mario_hand_grab_pos();
-Gfx *geo_switch_anim_state();
-Gfx *geo_update_layer_transparency();
-Gfx *geo_scale_bowser_key();
-Gfx *geo_update_held_mario_pos();
-Gfx *geo_switch_peach_eyes();
+#include "game/mario_misc.h"
+#include "game/object_helpers.h"
+#include "game/behavior_actions.h"
+#include "game/mario_actions_cutscene.h"
+#include "game/geo_misc.h"
+#include "game/moving_texture.h"
+#include "game/paintings.h"
+#include "game/envfx_snow.h"
+#include "game/level_geo.h"
+#include "game/camera.h"
+#include "game/skybox.h"
 
 const GraphNodeFunc port_geo_funcs[19] = {
     NULL,
