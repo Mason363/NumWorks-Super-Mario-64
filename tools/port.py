@@ -183,6 +183,15 @@ def write_symbols(ref, model_of, anim_tables, rooms_of):
             lines.append(f"const s16 {name}[21];")   # (as geo_misc.c declares it)
         elif typ in ("u8", "s16", "f32", "Vtx"):
             lines.append(f"{typ} {name}[1];")
+    # the levels on the calculator (port.h's port_level_exists)
+    enums = dict((folder, enum) for enum, folder in re.findall(
+        r'DEFINE_LEVEL\(\s*"[^"]*"\s*,\s*(LEVEL_\w+)\s*,\s*\w+\s*,\s*(\w+)',
+        open(os.path.join(ref, "levels", "level_defines.h")).read()))
+    lines.append("")
+    lines.append('#include "level_table.h"')
+    lines.append("int port_level_exists(int level) {")
+    lines.append("    return " + " || ".join(f"level == {enums[lv]}" for lv in LEVELS) + ";")
+    lines.append("}")
     os.makedirs(GEN, exist_ok=True)
     open(os.path.join(GEN, "symbols.c"), "w").write("\n".join(lines) + "\n")
     return data_files

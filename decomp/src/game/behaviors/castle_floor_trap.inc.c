@@ -20,7 +20,8 @@ void bhv_castle_floor_trap_open_detect(void) {
         o->oAction = 4; // rotates trapdoor so it looks always open
     } else {
         o->oAngleVelRoll = 0x400;
-        if (o->oInteractStatus & INT_STATUS_TRAP_TURN) {
+        /* (calculator) it stays shut: Bowser in the Dark World is not on the calculator */
+        if ((o->oInteractStatus & INT_STATUS_TRAP_TURN) && port_level_exists(LEVEL_BITDW)) {
             o->oAction = 1; // detects interact then opens the trapdoor
         }
     }

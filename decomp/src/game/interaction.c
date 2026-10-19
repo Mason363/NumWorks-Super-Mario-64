@@ -872,6 +872,12 @@ u32 interact_warp(struct MarioState *m, UNUSED u32 interactType, struct Object *
             }
         }
     } else {
+        /* (calculator) the way into a level the calculator does not have does nothing */
+        struct ObjectWarpNode *node = area_get_warp_node((o->oBhvParams >> 16) & 0xFF);
+        if (node != NULL && !port_level_exists(node->node.destLevel & 0x7F)) {
+            return FALSE;
+        }
+
         if (m->action != ACT_EMERGE_FROM_PIPE) {
             o->oInteractStatus = INT_STATUS_INTERACTED;
             m->interactObj = o;

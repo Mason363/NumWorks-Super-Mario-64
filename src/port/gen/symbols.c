@@ -3331,3 +3331,8 @@ extern const Gfx wmotr_seg7_dl_07010608[] __attribute__((alias("port_dummy_dl"))
 const Collision wmotr_seg7_collision[] = { COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() };
 const MacroObject wmotr_seg7_macro_objs[] = { MACRO_OBJECT_END() };
 const LevelScript level_wmotr_entry[] = { PORT_LEVEL_MISSING() };
+
+#include "level_table.h"
+int port_level_exists(int level) {
+    return level == LEVEL_CASTLE_GROUNDS || level == LEVEL_CASTLE || level == LEVEL_CASTLE_COURTYARD || level == LEVEL_BOB || level == LEVEL_WF || level == LEVEL_JRB || level == LEVEL_CCM || level == LEVEL_BBH;
+}
