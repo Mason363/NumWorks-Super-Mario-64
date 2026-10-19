@@ -327,7 +327,7 @@ void king_bobomb_act_5(void) { // bobomb returns home
     }
 }
 
-void (*sKingBobombActions[])(void) = {
+/* (calculator) const */ void (*const sKingBobombActions[])(void) = {
     king_bobomb_act_0,
     king_bobomb_act_1,
     king_bobomb_act_2,

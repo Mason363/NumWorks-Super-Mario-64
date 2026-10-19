@@ -1,6 +1,6 @@
 // recovery_heart.inc.c
 
-struct ObjectHitbox sRecoveryHeartHitbox = {
+/* (calculator) const */ const struct ObjectHitbox sRecoveryHeartHitbox = {
     /* interactType:      */ 0,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 0,

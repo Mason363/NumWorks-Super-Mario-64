@@ -211,10 +211,13 @@ static inline __attribute__((always_inline)) void span_body(int y, int x0, int x
                                                             const int depth) {
   uint16_t *cb = F->col + (y - r_band_y) * r_w, *zb = F->z + (y - r_band_y) * r_w;
   float iz = p->iz, uz = p->uz, vz = p->vz;
-  float zs = iz * z_k;
-  if (zs > 24000.0f) zs = 24000.0f;
+  /* (the depth at both ends of the row, kept in range: past the triangle's corners it can run away) */
+  float zs = iz * z_k, ze = zs + d->iz * z_k * (float)(x1 - x0);
+  if (zs > 30000.0f) zs = 30000.0f;
   if (zs < 0) zs = 0;
-  int32_t z = (int32_t)(zs * 65536.0f), dz = (int32_t)(d->iz * z_k * 65536.0f);
+  if (ze > 30000.0f) ze = 30000.0f;
+  if (ze < 0) ze = 0;
+  int32_t z = (int32_t)(zs * 65536.0f), dz = (int32_t)((ze - zs) * 65536.0f / (float)(x1 - x0));
   int32_t r = fix16(p->r), g = fix16(p->g), b = fix16(p->b), dr = fix16(d->r), dg = fix16(d->g), db = fix16(d->b);
   int32_t a = fix16(p->a), da = fix16(d->a), f = fix16(p->fog), df = fix16(d->fog);
   const uint8_t mode = d_mode;

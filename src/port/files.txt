@@ -38,7 +38,7 @@ decomp/levels/castle_courtyard/script.c
 decomp/levels/bob/script.c
 src/port/gen/symbols.c
 src/port/gen/terrain.c
-src/port/gen/mario_anims.c
+src/port/gen/anims.c
 src/port/gen/geo_funcs.c
 decomp/src/game/memory.c
 src/port/game.c
@@ -48,6 +48,7 @@ src/port/menu.c
 src/port/scripts.c
 src/port/scene.c
 src/port/objects.c
+src/port/collision.c
 src/render.c
 src/smath.c
 src/plat_host.c

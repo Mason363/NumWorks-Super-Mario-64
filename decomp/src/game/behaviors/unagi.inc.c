@@ -1,6 +1,6 @@
 // unagi.inc.c
 
-struct ObjectHitbox sUnagiHitbox = {
+/* (calculator) const */ const struct ObjectHitbox sUnagiHitbox = {
     /* interactType:      */ INTERACT_CLAM_OR_BUBBA,
     /* downOffset:        */ 50,
     /* damageOrCoinValue: */ 3,

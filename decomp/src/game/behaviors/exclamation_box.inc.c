@@ -1,6 +1,6 @@
 // exclamation_box.inc.c
 
-struct ObjectHitbox sExclamationBoxHitbox = {
+/* (calculator) const */ const struct ObjectHitbox sExclamationBoxHitbox = {
     /* interactType:      */ INTERACT_BREAKABLE,
     /* downOffset:        */ 5,
     /* damageOrCoinValue: */ 0,
@@ -20,7 +20,7 @@ struct ExclamationBoxContents {
     const BehaviorScript *behavior;
 };
 
-struct ExclamationBoxContents sExclamationBoxContents[] = {
+/* (calculator) const */ const struct ExclamationBoxContents sExclamationBoxContents[] = {
     { EXCLAMATION_BOX_BP_WING_CAP,         0,                0, MODEL_MARIOS_WING_CAP,  bhvWingCap               },
     { EXCLAMATION_BOX_BP_METAL_CAP,        0,                0, MODEL_MARIOS_METAL_CAP, bhvMetalCap              },
     { EXCLAMATION_BOX_BP_VANISH_CAP,       0,                0, MODEL_MARIOS_CAP,       bhvVanishCap             },
@@ -163,7 +163,7 @@ void exclamation_box_act_5(void) {
     }
 }
 
-void (*sExclamationBoxActions[])(void) = {
+/* (calculator) const */ void (*const sExclamationBoxActions[])(void) = {
     exclamation_box_act_0,
     exclamation_box_act_1,
     exclamation_box_act_2,

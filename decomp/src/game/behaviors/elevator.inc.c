@@ -115,7 +115,7 @@ void bhv_elevator_init(void) {
     }
 }
 
-void (*sElevatorActions[])(void) = {
+/* (calculator) const */ void (*const sElevatorActions[])(void) = {
     elevator_act_0,
     elevator_act_1,
     elevator_act_2,

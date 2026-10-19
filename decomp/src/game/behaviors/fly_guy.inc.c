@@ -6,7 +6,7 @@
 /**
  * Hitbox for fly guy.
  */
-static struct ObjectHitbox sFlyGuyHitbox = {
+/* (calculator) const */ static const struct ObjectHitbox sFlyGuyHitbox = {
     /* interactType:      */ INTERACT_BOUNCE_TOP,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 2,

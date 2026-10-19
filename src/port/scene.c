@@ -124,7 +124,8 @@ static void set_anim(struct AnimInfo *a, s32 has_anim) {
   sAnim.mul = anim->animYTransDivisor == 0 ? 1.0f : (f32) a->animYTrans / (f32) anim->animYTransDivisor;
 }
 
-#define ANIM_VALUE() (sAnim.data[retrieve_animation_index(sAnim.frame, &sAnim.attr)])
+#define ANIM_VALUE() port_anim_value(sAnim.frame, &sAnim.attr, sAnim.data)
+#define CH PORT_ANIM_CHANNEL
 
 /* geo_process_animated_part's: the part's translation and rotation from the animation */
 static void animated_part(const MNode *n, Mat4 out, Mat4 parent) {
@@ -137,16 +138,16 @@ static void animated_part(const MNode *n, Mat4 out, Mat4 parent) {
     sAnim.type = ANIM_TYPE_ROTATION;
   } else if (sAnim.type == ANIM_TYPE_LATERAL_TRANSLATION) {
     t[0] += ANIM_VALUE() * sAnim.mul;
-    sAnim.attr += 2;
+    sAnim.attr += CH;
     t[2] += ANIM_VALUE() * sAnim.mul;
     sAnim.type = ANIM_TYPE_ROTATION;
   } else if (sAnim.type == ANIM_TYPE_VERTICAL_TRANSLATION) {
-    sAnim.attr += 2;
+    sAnim.attr += CH;
     t[1] += ANIM_VALUE() * sAnim.mul;
-    sAnim.attr += 2;
+    sAnim.attr += CH;
     sAnim.type = ANIM_TYPE_ROTATION;
   } else if (sAnim.type == ANIM_TYPE_NO_TRANSLATION) {
-    sAnim.attr += 6;
+    sAnim.attr += 3 * CH;
     sAnim.type = ANIM_TYPE_ROTATION;
   }
   if (sAnim.type == ANIM_TYPE_ROTATION) {
@@ -175,9 +176,9 @@ static void shadow_node(const MNode *n, const MNode *child, Mat4 cur) {
   if (sAnim.enabled && (sAnim.type == ANIM_TYPE_TRANSLATION || sAnim.type == ANIM_TYPE_LATERAL_TRANSLATION)) {
     f32 objScale = child != NULL && child->kind == N_SCALE ? child->scale / 65536.0f : 1;
     f32 ox = ANIM_VALUE() * sAnim.mul * objScale;
-    sAnim.attr += 2;
+    sAnim.attr += CH;
     f32 oz = ANIM_VALUE() * sAnim.mul * objScale;
-    sAnim.attr -= 6;
+    sAnim.attr -= 3 * CH;
     f32 s = sins(gCurGraphNodeObject->angle[1]), c = coss(gCurGraphNodeObject->angle[1]);
     pos[0] += ox * c + oz * s;
     pos[2] += -ox * s + oz * c;

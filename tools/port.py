@@ -92,19 +92,9 @@ def actor_data_files(ref):
     for f in sorted(glob.glob(os.path.join(ref, "actors", "*", "collision.inc.c"))):
         if os.path.basename(os.path.dirname(f)) in used:
             keep.append(os.path.relpath(f, ref))
-    for d in sorted(glob.glob(os.path.join(ref, "actors", "*", "anims"))):
-        if os.path.basename(os.path.dirname(d)) not in used:
-            continue
-        # data.inc.c includes the animations, table.inc.c lists them
-        for f in ("data.inc.c", "table.inc.c"):
-            if os.path.exists(os.path.join(d, f)):
-                keep.append(os.path.relpath(os.path.join(d, f), ref))
     return keep
 
 
-def actor_anim_files(ref):
-    """Every file of the actors' animations (data.inc.c includes them by name)."""
-    return [os.path.relpath(f, ref) for f in sorted(glob.glob(os.path.join(ref, "actors", "*", "anims", "*.inc.c")))]
 
 
 def defined_in(path):
@@ -114,7 +104,7 @@ def defined_in(path):
                           r"struct MovtexQuadCollection|struct MovtexQuad)\s+(?:\*const\s+)?(\w+)\s*\[?", txt))
 
 
-def write_symbols(ref, model_of):
+def write_symbols(ref, model_of, anim_tables):
     syms = header_symbols(ref)
     real = {}
     data_files = []
@@ -130,13 +120,16 @@ def write_symbols(ref, model_of):
              '#include "macro_presets.h"', '#include "special_presets.h"', '#include "dialog_ids.h"',
              '#include "level_commands.h"', '#include "game/paintings.h"', '#include "game/moving_texture.h"',
              '#include "make_const_nonconst.h"', '#include "port.h"', ""]
-    # the real data, file by file (each defines its own symbols)
+    # the real data, file by file (each defines its own symbols); the areas' collision without its surfaces
     for f in data_files:
-        lines.append(f'#include "{f}"')
+        if f.startswith("levels") and f.endswith("collision.inc.c") and "/areas/" in f:
+            lines.append(f'#include "{f[:-len(".inc.c")]}_left.inc.c"')
+        else:
+            lines.append(f'#include "{f}"')
     lines.append("")
     lines.append("/* a display list nobody draws: the calculator draws its own models */")
     lines.append("const Gfx port_dummy_dl[1] = {{{0, 0}}};")
-    done = set(real)
+    done = set(real) | anim_tables
     levels_scripts = set()
     for typ, name, ptrarr, hdr in syms:
         if name in done:
@@ -182,31 +175,97 @@ def write_symbols(ref, model_of):
     return data_files
 
 
-# ------------------------------------------------------------------------------------------------ mario's anims
-def write_mario_anims(ref):
-    files = sorted(glob.glob(os.path.join(ref, "assets", "anims", "*.inc.c")))
-    names = []
-    for f in files:
-        copy(ref, os.path.relpath(f, ref))
-        for m in re.finditer(r"struct Animation\s+(anim_([0-9A-Fa-f]+))\s*\[\]", open(f).read()):
-            names.append((int(m.group(2), 16), m.group(1)))
-    names.sort()
-    lines = ["/* Made by tools/port.py: Mario's animations (the decompilation's assets/anims), by number: each",
-             " * file's values and indices first, then the animations that name them. */",
+# ------------------------------------------------------------------------------------------------ animations
+ANIM_FIELDS = re.compile(r"static const struct Animation (\w+)(\[\])?\s*=\s*\{\s*(?:\{)?(.*?)\}", re.S)
+
+
+def wrap_range(vals):
+    """The base and step that put every value (16-bit angles, around the circle) in 0..255 steps."""
+    u = sorted(set(v & 0xFFFF for v in vals))
+    if len(u) == 1:
+        return u[0], 0
+    gaps = [((u[(k + 1) % len(u)] - u[k]) % 65536, k) for k in range(len(u))]
+    gap, k = max(gaps)
+    base = u[(k + 1) % len(u)]
+    span = 65536 - gap
+    return base, max(1, -(-span // 255))
+
+
+def pack_anim_data(values, indices):
+    """A channel table (count, offset, base, step a channel) and one byte a value: the value is base + byte * step
+    (16 bits, wrapping). The game's own are two bytes a value; these lose 1/500 of a turn at most."""
+    chans, data = [], []
+    for i in range(0, len(indices), 2):
+        cnt, off = indices[i], indices[i + 1]
+        ch = values[off:off + cnt] or [0]
+        base, step = wrap_range(ch)
+        if step == 0:
+            chans += [cnt, 0, base, 0]
+            continue
+        chans += [cnt, len(data), base, step]
+        data += [(((v & 0xFFFF) - base) % 65536 + step // 2) // step for v in ch]
+        assert max(data[-len(ch):]) <= 255
+    # (a few models have more parts than their animations have channels: the N64 read on into whatever came
+    # next; here the end of the table, which reads as 0 from then on: port_anim_value)
+    chans += [0xFFFF, 0, 0, 0]
+    return chans, data or [0]
+
+
+def anim_file(txt, prefix):
+    """The animations of an .inc.c file, packed: C source and the names of its animations."""
+    arrays = {}
+    for m in re.finditer(r"static const (s16|u16) (\w+)\[\] = \{(.*?)\};", txt, re.S):
+        arrays[m.group(2)] = [int(x, 0) for x in re.findall(r"-?0x[0-9A-Fa-f]+|-?\d+", m.group(3))]
+    out, names, packed = [], [], {}
+    for m in ANIM_FIELDS.finditer(txt):
+        name, arr = m.group(1), m.group(2)
+        f = [x.strip() for x in m.group(3).split(",") if x.strip()]
+        vals, idx = f[6], f[7]
+        if idx not in packed:
+            chans, data = pack_anim_data(arrays[vals], arrays[idx])
+            packed[idx] = f"{prefix}{idx}"
+            out.append(f"static const u8 {prefix}{idx}_q[] = {{{', '.join(map(str, data))}}};")
+            out.append(f"static const u16 {prefix}{idx}_c[] = {{{', '.join(map(str, chans))}}};")
+        nparts = len(arrays[idx]) // 6 - 1
+        body = f"{f[0]}, {f[1]}, {f[2]}, {f[3]}, {f[4]}, {nparts}, (const s16 *) {packed[idx]}_q, {packed[idx]}_c, 0"
+        out.append(f"static const struct Animation {name}{arr or ''} = {{{'{' if arr else ''}{body}{'}' if arr else ''}}};")
+        names.append(name)
+    return out, names
+
+
+def write_anims(ref):
+    """src/port/gen/anims.c: Mario's animations (by number) and those of the actors the game's levels load,
+    packed (pack_anim_data), with the actors' tables the behaviors name."""
+    lines = ["/* Made by tools/port.py: the animations, packed: see tools/port.py's pack_anim_data and port.h's",
+             " * port_anim_value. Mario's (the decompilation's assets/anims) by number, then the actors'. */",
              "#include <ultra64.h>", '#include "types.h"', '#include "port.h"', ""]
-    for f in files:
-        txt = open(f).read()
-        blocks = re.findall(r"static const[^;{]*\{.*?\};", txt, re.S)
-        lines += [b for b in blocks if "struct Animation" not in b]
-        lines += [b for b in blocks if "struct Animation" in b]
-    lines.append("")
-    lines.append(f"const struct Animation *const port_mario_anims[{len(names)}] = {{")
-    for i, (n, nm) in enumerate(names):
+    mario = []
+    for f in sorted(glob.glob(os.path.join(ref, "assets", "anims", "*.inc.c"))):
+        out, names = anim_file(open(f).read(), "")
+        lines += out
+        mario += [(int(n.split("_")[1], 16), n) for n in names]
+    mario.sort()
+    lines.append(f"const struct Animation *const port_mario_anims[{len(mario)}] = {{")
+    for i, (n, nm) in enumerate(mario):
         assert n == i, (n, i)
         lines.append(f"    {nm},")
     lines.append("};")
-    lines.append(f"const int port_mario_anim_count = {len(names)};")
-    open(os.path.join(GEN, "mario_anims.c"), "w").write("\n".join(lines) + "\n")
+    lines.append(f"const int port_mario_anim_count = {len(mario)};")
+    used = used_actors(ref)
+    done = set()
+    for d in sorted(glob.glob(os.path.join(ref, "actors", "*", "anims"))):
+        actor = os.path.basename(os.path.dirname(d))
+        if actor not in used:
+            continue
+        # (an actor's animations share values across its files)
+        out, names = anim_file("\n".join(open(f).read() for f in sorted(glob.glob(os.path.join(d, "*.inc.c")))
+                                       if os.path.basename(f) not in ("data.inc.c", "table.inc.c")), "")
+        lines += out
+        table = open(os.path.join(d, "table.inc.c")).read()
+        lines.append(table)
+        done |= set(re.findall(r"Animation \*const (\w+)\[\]", table))
+    open(os.path.join(GEN, "anims.c"), "w").write("\n".join(lines) + "\n")
+    return done
 
 
 # ------------------------------------------------------------------------------------------------ terrain
@@ -237,6 +296,7 @@ def terrain_surfaces(data):
     """The static surfaces of terrain data (a list of s16), as surface_load.c makes them."""
     out = []
     i = 0
+    number = -1
     verts = None
     while True:
         cmd = data[i]
@@ -260,6 +320,7 @@ def terrain_surfaces(data):
             i += 1
             force = typ in SURFACE_FORCE
             for _ in range(n):
+                number += 1
                 a, b, c = data[i], data[i + 1], data[i + 2]
                 fc = data[i + 3] if force else 0
                 i += 4 if force else 3
@@ -274,7 +335,7 @@ def terrain_surfaces(data):
                 inv = np.float32(1.0 / float(mag))
                 nx, ny, nz = np.float32(nx) * inv, np.float32(ny) * inv, np.float32(nz) * inv
                 off = -(nx * np.float32(x1) + ny * np.float32(y1) + nz * np.float32(z1))
-                out.append({"type": typ, "force": fc, "flags": (0x02 if typ in NO_CAM else 0), "v": p,
+                out.append({"type": typ, "force": fc, "flags": (0x02 if typ in NO_CAM else 0), "v": p, "number": number,
                             "n": (float(nx), float(ny), float(nz)), "off": float(off),
                             "lo": min(y1, y2, y3) - 5, "hi": max(y1, y2, y3) + 5})
     return out
@@ -352,9 +413,47 @@ def surface_constants(ref):
     return c
 
 
+def strip_collision(ref, rel):
+    """decomp/<rel>_left.inc.c: an area's collision without its vertices and triangles (src/port/gen/terrain.c
+    has them, ready): the special objects and the water boxes the game reads when the area loads."""
+    out = []
+    for line in open(os.path.join(ref, rel)):
+        s = line.strip()
+        if s.startswith(("COL_VERTEX(", "COL_TRI_INIT(", "COL_TRI(", "COL_TRI_SPECIAL(")):
+            continue
+        if s.startswith("COL_VERTEX_INIT("):
+            line = line[:line.index("COL_VERTEX_INIT(")] + "COL_VERTEX_INIT(0),\n"
+        out.append(line)
+    dst = os.path.join(DEC, rel[:-len(".inc.c")] + "_left.inc.c")
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    open(dst, "w").write("/* (calculator) the surfaces are in src/port/gen/terrain.c */\n" + "".join(out))
+
+
+def area_rooms(ref):
+    """terrain array -> its rooms (RoomData values), from the levels' scripts (TERRAIN and ROOMS in an AREA)."""
+    sys.path.insert(0, HERE)
+    import decomp
+    out = {}
+    for lv in LEVELS:
+        txt = decomp.strip_comments(open(os.path.join(ref, "levels", lv, "script.c")).read())
+        for block in re.findall(r"AREA\(.*?END_AREA\(\)", txt, re.S):
+            t = re.search(r"TERRAIN\(\s*(\w+)\s*\)", block)
+            r = re.search(r"ROOMS\(\s*(\w+)\s*\)", block)
+            if t and r:
+                for f in glob.glob(os.path.join(ref, "levels", lv, "areas", "*", "room.inc.c")):
+                    m = re.search(r"RoomData\s+" + r.group(1) + r"\[\]\s*=\s*\{(.*?)\};", open(f).read(), re.S)
+                    if m:
+                        out[t.group(1)] = [int(x, 0) for x in re.findall(r"\b\d+\b|0x[0-9A-Fa-f]+",
+                                                                      decomp.strip_comments(m.group(1)))]
+    return out
+
+
 def write_terrain(ref, data_files):
+    """Each area's surfaces (struct Surface without its normal: port.h's SURF_NX and others work it out) and, for
+    each cell, its floors, ceilings and walls as surface numbers, in the order the game would have linked them."""
     cols = parse_collision_arrays(ref, [f for f in data_files if f.startswith("levels") and f.endswith("collision.inc.c")
                                         and "/areas/" in f])
+    rooms = area_rooms(ref)
     lines = ["/* Made by tools/port.py: each level area's collision, in the game's 16 x 16 cells, in flash. */",
              "#include <ultra64.h>", '#include "types.h"', '#include "surface_terrains.h"',
              '#include "engine/surface_collision.h"', '#include "engine/surface_load.h"', '#include "port.h"', ""]
@@ -363,49 +462,32 @@ def write_terrain(ref, data_files):
         surfs = terrain_surfaces(data)
         cells = partition(surfs)
         idx = {id(s): i for i, s in enumerate(surfs)}
+        rm = rooms.get(name)
         lines.append(f"static const struct Surface {name}_s[{max(1, len(surfs))}] = {{")
         for s in surfs:
             v = s["v"]
-            lines.append("    {%d, %d, %d, 0, %d, %d, {%d, %d, %d}, {%d, %d, %d}, {%d, %d, %d}, {%r, %r, %r}, %r, NULL}," % (
-                s["type"], s["force"], s["flags"], s["lo"], s["hi"], *v[0], *v[1], *v[2],
-                np.float32(s["n"][0]).item(), np.float32(s["n"][1]).item(), np.float32(s["n"][2]).item(),
-                np.float32(s["off"]).item()))
+            room = rm[s["number"]] if rm else 0
+            lines.append("    {%d, %d, %d, %d, %d, %d, {%d, %d, %d}, {%d, %d, %d}, {%d, %d, %d}, NULL}," % (
+                s["type"], s["force"], s["flags"], room, s["lo"], s["hi"], *v[0], *v[1], *v[2]))
         lines.append("};")
-        nodes = []
-        heads = []
+        index, starts = [], []
         for cz in range(16):
             for cx in range(16):
                 for k in range(3):
-                    lst = cells[cz][cx][k]
-                    first = len(nodes) if lst else -1
-                    for j, s in enumerate(lst):
-                        nxt = len(nodes) + 1 if j + 1 < len(lst) else -1
-                        nodes.append((nxt, idx[id(s)]))
-                    heads.append(first)
-        lines.append(f"static const struct SurfaceNode {name}_n[{max(1, len(nodes))}] = {{")
-        for nxt, si in nodes:
-            nx = f"(struct SurfaceNode *) &{name}_n[{nxt}]" if nxt >= 0 else "NULL"
-            lines.append(f"    {{{nx}, (struct Surface *) &{name}_s[{si}]}},")
-        lines.append("};")
-        lines.append(f"static const SpatialPartitionCell {name}_p[16][16] = {{")
-        for cz in range(16):
-            row = []
-            for cx in range(16):
-                cell = []
-                for k in range(3):
-                    h = heads[(cz * 16 + cx) * 3 + k]
-                    cell.append(f"{{(struct SurfaceNode *) &{name}_n[{h}], NULL}}" if h >= 0 else "{NULL, NULL}")
-                row.append("{" + ", ".join(cell) + "}")
-            lines.append("    {" + ", ".join(row) + "},")
-        lines.append("};")
+                    starts.append(len(index))
+                    index += [idx[id(s)] for s in cells[cz][cx][k]]
+        starts.append(len(index))
+        assert len(index) < 65536 and len(surfs) < 65536
+        lines.append(f"static const u16 {name}_i[{max(1, len(index))}] = {{{', '.join(map(str, index or [0]))}}};")
+        lines.append(f"static const u16 {name}_c[{len(starts)}] = {{{', '.join(map(str, starts))}}};")
         table.append(name)
     lines.append("")
     for name in table:
         lines.append(f"extern const Collision {name}[];")
     lines.append("const struct PortTerrain port_terrains[] = {")
     for name in table:
-        lines.append(f"    {{{name}, {name}_p}},")
-    lines.append("    {NULL, NULL},")
+        lines.append(f"    {{{name}, {name}_s, {name}_i, {name}_c}},")
+    lines.append("    {NULL, NULL, NULL, NULL},")
     lines.append("};")
     open(os.path.join(GEN, "terrain.c"), "w").write("\n".join(lines) + "\n")
     print(f"terrain: {len(table)} areas")
@@ -429,8 +511,11 @@ def main():
         copy(ref, f"levels/{lv}/header.h")
         for f in glob.glob(os.path.join(ref, "levels", lv, "*.h")):
             copy(ref, os.path.relpath(f, ref))
-    data_files = write_symbols(ref, model_of)
-    for f in data_files + actor_anim_files(ref):
+    data_files = write_symbols(ref, model_of, write_anims(ref))
+    for f in data_files:
+        if f.startswith("levels") and f.endswith("collision.inc.c") and "/areas/" in f:
+            strip_collision(ref, f)
+            continue
         copy(ref, f)
         # (a texture some of them include: the calculator has its own, these stay empty)
         for inc in re.findall(r'#include\s+"([^"]+\.(?:rgba16|rgba32|ia16|ia8|ia4|i8|i4|ci4|ci8)\.inc\.c)"', open(os.path.join(ref, f)).read()):
@@ -438,7 +523,6 @@ def main():
             if not os.path.exists(p):
                 os.makedirs(os.path.dirname(p), exist_ok=True)
                 open(p, "w").write("0\n")
-    write_mario_anims(ref)
     write_terrain(ref, data_files)
     hdrs = sorted(glob.glob(os.path.join(ref, "levels", "*", "header.h")))
     open(os.path.join(GEN, "level_headers.h"), "w").write(

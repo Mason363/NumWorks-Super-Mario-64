@@ -33,7 +33,7 @@ void mr_i_piranha_particle_act_1(void) {
     }
 }
 
-void (*sMrIParticleActions[])(void) = {
+/* (calculator) const */ void (*const sMrIParticleActions[])(void) = {
     mr_i_piranha_particle_act_0,
     mr_i_piranha_particle_act_1,
 };
@@ -285,14 +285,14 @@ void mr_i_act_0(void) {
     }
 }
 
-void (*sMrIActions[])(void) = {
+/* (calculator) const */ void (*const sMrIActions[])(void) = {
     mr_i_act_0,
     mr_i_act_1,
     mr_i_act_2,
     mr_i_act_3,
 };
 
-struct ObjectHitbox sMrIHitbox = {
+/* (calculator) const */ const struct ObjectHitbox sMrIHitbox = {
     /* interactType:      */ INTERACT_DAMAGE,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 2,

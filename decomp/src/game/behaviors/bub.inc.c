@@ -29,7 +29,7 @@ void bub_spawner_act_3(void) {
     o->oAction = 0;
 }
 
-void (*sBirdChirpChirpActions[])(void) = {
+/* (calculator) const */ void (*const sBirdChirpChirpActions[])(void) = {
     bub_spawner_act_0,
     bub_spawner_act_1,
     bub_spawner_act_2,
@@ -150,7 +150,7 @@ void bub_act_2(void) {
     }
 }
 
-void (*sCheepCheepActions[])(void) = {
+/* (calculator) const */ void (*const sCheepCheepActions[])(void) = {
     bub_act_0,
     bub_act_1,
     bub_act_2,

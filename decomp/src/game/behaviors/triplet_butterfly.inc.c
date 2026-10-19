@@ -1,6 +1,6 @@
 // triplet_butterfly.inc.c
 
-static struct ObjectHitbox sTripletButterflyExplodeHitbox = {
+/* (calculator) const */ static const struct ObjectHitbox sTripletButterflyExplodeHitbox = {
     /* interactType:      */ INTERACT_MR_BLIZZARD,
     /* downOffset:        */ 50,
     /* damageOrCoinValue: */ 2,

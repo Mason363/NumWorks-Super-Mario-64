@@ -20,17 +20,42 @@
 
 struct Surface;
 struct SurfaceNode;
-/* collision in flash (src/port/gen/terrain.c): the terrain data of a level area, and its cells */
+/* collision in flash (src/port/gen/terrain.c): a level area's surfaces, and its 16 x 16 cells' lists of floors,
+ * ceilings and walls as surface numbers (cell z, x, list k starts at cells[(z * 16 + x) * 3 + k], ends where
+ * the next starts) */
 struct PortTerrain {
-  const short *terrain;
-  const void *cells;   /* SpatialPartitionCell[16][16] */
+  const short *terrain;               /* the game's collision data it stands for */
+  const struct Surface *surfaces;
+  const unsigned short *index;
+  const unsigned short *cells;
 };
 extern const struct PortTerrain port_terrains[];
+/* a list of surfaces to walk: the objects' (linked nodes in RAM) or the level's (numbers in flash) */
+struct PortSurfaceList {
+  struct SurfaceNode *node;
+  const unsigned short *at, *end;
+  const struct Surface *surfaces;
+};
+struct Surface *port_surface_next(struct PortSurfaceList *list);
+struct PortSurfaceList port_dynamic_list(int cellZ, int cellX, int kind);
+struct PortSurfaceList port_static_list(int cellZ, int cellX, int kind);
 
-/* Mario's animations, by number (src/port/gen/mario_anims.c) */
+/* Mario's animations, by number (src/port/gen/anims.c) */
 struct Animation;
 extern const struct Animation *const port_mario_anims[];
 extern const int port_mario_anim_count;
+/* the animations are packed (tools/port.py's pack_anim_data): a value is one byte, its channel (four u16:
+ * count, offset, base, step) says what it stands for. The next channel's value at frame (what the game's
+ * values[retrieve_animation_index(frame, &attr)] was) */
+#define PORT_ANIM_CHANNEL 4
+static inline short port_anim_value(int frame, unsigned short **attr, const void *values) {
+  const unsigned short *c = *attr;
+  if (c[0] == 0xFFFF) return 0;   /* (the table's end) */
+  int i = frame < c[0] ? frame : c[0] - 1;
+  *attr += PORT_ANIM_CHANNEL;
+  if (i < 0) i = 0;
+  return (short) (c[2] + ((const unsigned char *) values)[c[1] + i] * c[3]);
+}
 
 /* the model a geo layout or display list stub stands for (0xFFFF: none) */
 int port_model_of(const void *geo_or_dl);

@@ -2,7 +2,7 @@
 
 #define SPAWN_CASTLE_BOO_STAR_REQUIREMENT 12
 
-static struct ObjectHitbox sBooGivingStarHitbox = {
+/* (calculator) const */ static const struct ObjectHitbox sBooGivingStarHitbox = {
     /* interactType:      */ 0,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 3,
@@ -464,7 +464,7 @@ static void boo_act_4(void) {
     }
 }
 
-static void (*sBooActions[])(void) = {
+/* (calculator) const */ static void (*const sBooActions[])(void) = {
     boo_act_0,
     boo_act_1,
     boo_act_2,
@@ -646,7 +646,7 @@ static void big_boo_act_4(void) {
     }
 }
 
-static void (*sBooGivingStarActions[])(void) = {
+/* (calculator) const */ static void (*const sBooGivingStarActions[])(void) = {
     big_boo_act_0,
     big_boo_act_1,
     big_boo_act_2,
@@ -724,7 +724,7 @@ void bhv_boo_with_cage_init(void) {
     }
 }
 
-static void (*sBooWithCageActions[])(void) = {
+/* (calculator) const */ static void (*const sBooWithCageActions[])(void) = {
     boo_with_cage_act_0,
     boo_with_cage_act_1,
     boo_with_cage_act_2,

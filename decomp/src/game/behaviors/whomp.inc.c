@@ -265,7 +265,7 @@ void king_whomp_stop_music(void) {
     }
 }
 
-void (*sWhompActions[])(void) = {
+/* (calculator) const */ void (*const sWhompActions[])(void) = {
     whomp_init,
     whomp_patrol,
     king_whomp_chase,

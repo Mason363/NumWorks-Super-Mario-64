@@ -1,6 +1,6 @@
 // bowser_key.inc.c
 
-struct ObjectHitbox sBowserKeyHitbox = {
+/* (calculator) const */ const struct ObjectHitbox sBowserKeyHitbox = {
     /* interactType:      */ INTERACT_STAR_OR_KEY,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 0,

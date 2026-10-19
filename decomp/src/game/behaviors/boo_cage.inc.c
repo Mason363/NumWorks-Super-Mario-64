@@ -10,7 +10,7 @@
  * Boo cage hitbox. It's not tangible; this is the hitbox
  * Mario has to enter to enter BBH.
  */
-static struct ObjectHitbox sBooCageHitbox = {
+/* (calculator) const */ static const struct ObjectHitbox sBooCageHitbox = {
     /* interactType:      */ INTERACT_BBH_ENTRANCE,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 0,

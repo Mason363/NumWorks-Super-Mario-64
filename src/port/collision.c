@@ -1,0 +1,61 @@
+/* The surfaces on the calculator: the level's stay in flash (src/port/gen/terrain.c), listed by number in each
+ * cell, the objects' are linked in RAM as the game did; and neither keeps its normal, worked out here when it is
+ * read, exactly as surface_load.c's read_surface_data did when it made the surface. */
+#include <math.h>
+#include <ultra64.h>
+#include "sm64.h"
+#include "types.h"
+#include "engine/surface_load.h"
+#include "port.h"
+
+/* (the last surface asked about: its normal is read a coordinate at a time) */
+static const struct Surface *sLast;
+static f32 sNormal[4];
+
+void port_surface_changed(void) { sLast = NULL; }
+
+/* the water's pseudo floor (mario_step.c): flat, its origin offset set where it is used */
+extern struct Surface gWaterSurfacePseudoFloor;
+f32 port_water_floor_offset;
+
+f32 port_surface_normal(const struct Surface *surf, s32 i) {
+  if (surf == &gWaterSurfacePseudoFloor) return i == 1 ? 1.0f : i == 3 ? port_water_floor_offset : 0.0f;
+  if (surf != sLast) {
+    s32 x1 = surf->vertex1[0], y1 = surf->vertex1[1], z1 = surf->vertex1[2];
+    s32 x2 = surf->vertex2[0], y2 = surf->vertex2[1], z2 = surf->vertex2[2];
+    s32 x3 = surf->vertex3[0], y3 = surf->vertex3[1], z3 = surf->vertex3[2];
+    f32 nx = (y2 - y1) * (z3 - z2) - (z2 - z1) * (y3 - y2);
+    f32 ny = (z2 - z1) * (x3 - x2) - (x2 - x1) * (z3 - z2);
+    f32 nz = (x2 - x1) * (y3 - y2) - (y2 - y1) * (x3 - x2);
+    f32 mag = sqrtf(nx * nx + ny * ny + nz * nz);
+    mag = (f32) (1.0 / mag);
+    nx *= mag;
+    ny *= mag;
+    nz *= mag;
+    sNormal[0] = nx, sNormal[1] = ny, sNormal[2] = nz;
+    sNormal[3] = -(nx * x1 + ny * y1 + nz * z1);
+    sLast = surf;
+  }
+  return sNormal[i];
+}
+
+struct Surface *port_surface_next(struct PortSurfaceList *list) {
+  if (list->node != NULL) {
+    struct Surface *s = list->node->surface;
+    list->node = list->node->next;
+    return s;
+  }
+  if (list->at < list->end) return (struct Surface *) &list->surfaces[*list->at++];
+  return NULL;
+}
+
+struct PortSurfaceList port_dynamic_list(int cellZ, int cellX, int kind) {
+  struct PortSurfaceList l = {gDynamicSurfaceHeads[cellZ][cellX][kind], NULL, NULL, NULL};
+  return l;
+}
+
+struct PortSurfaceList port_static_list(int cellZ, int cellX, int kind) {
+  const u16 *c = gPortTerrain->cells + (cellZ * 16 + cellX) * 3 + kind;
+  struct PortSurfaceList l = {NULL, gPortTerrain->index + c[0], gPortTerrain->index + c[1], gPortTerrain->surfaces};
+  return l;
+}

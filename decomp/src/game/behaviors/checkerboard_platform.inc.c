@@ -6,7 +6,7 @@ struct Struct8032F754 {
     f32 unk2;
 };
 
-struct Struct8032F754 D_8032F754[] = {
+/* (calculator) const */ const struct Struct8032F754 D_8032F754[] = {
     { 145, { 0.7f, 1.5f, 0.7f }, 7.0f },
     { 235, { 1.2f, 2.0f, 1.2f }, 11.6f },
 };

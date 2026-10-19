@@ -58,7 +58,7 @@ static u8 sStarsNeededForDialog[] = { 1, 3, 8, 30, 50, 70 };
  * The last three numbers of each entry are x, y and z coordinates of points
  * that define the curve.
  */
-static Vec4s sJumboStarKeyframes[27] = {
+/* (calculator) const */ static const Vec4s sJumboStarKeyframes[27] = {
     { 20, 0, 678, -2916 },      { 30, 0, 680, -3500 },      { 40, 1000, 700, -4000 },
     { 50, 2500, 750, -3500 },   { 50, 3500, 800, -2000 },   { 50, 4000, 850, 0 },
     { 50, 3500, 900, 2000 },    { 50, 2000, 950, 3500 },    { 50, 0, 1000, 4000 },
@@ -1545,13 +1545,13 @@ s32 act_squished(struct MarioState *m) {
     }
 
     // steep floor
-    if (m->floor != NULL && m->floor->normal.y < 0.5f) {
-        surfAngle = atan2s(m->floor->normal.z, m->floor->normal.x);
+    if (m->floor != NULL && SURF_NY(m->floor) < 0.5f) {
+        surfAngle = atan2s(SURF_NZ(m->floor), SURF_NX(m->floor));
         underSteepSurf = TRUE;
     }
     // steep ceiling
-    if (m->ceil != NULL && -0.5f < m->ceil->normal.y) {
-        surfAngle = atan2s(m->ceil->normal.z, m->ceil->normal.x);
+    if (m->ceil != NULL && -0.5f < SURF_NY(m->ceil)) {
+        surfAngle = atan2s(SURF_NZ(m->ceil), SURF_NX(m->ceil));
         underSteepSurf = TRUE;
     }
 

@@ -49,7 +49,7 @@ void bowser_tail_anchor_act_touched_mario(void) {
     cur_obj_become_intangible();
 }
 
-void (*sBowserTailAnchorActions[])(void) = {
+/* (calculator) const */ void (*const sBowserTailAnchorActions[])(void) = {
     bowser_tail_anchor_act_default,
     bowser_tail_anchor_thrown,
     bowser_tail_anchor_act_touched_mario,
@@ -1422,7 +1422,7 @@ struct BowserTiltPlatformInfo {
 /**
  * Data for the BitFS tilt Platform
  */
-struct BowserTiltPlatformInfo sBowsertiltPlatformData[] = {
+/* (calculator) const */ const struct BowserTiltPlatformInfo sBowsertiltPlatformData[] = {
     {  1,   10,  40 },
     {  0,    0,  74 },
     { -1,  -10, 114 },
@@ -1515,7 +1515,7 @@ s32 bowser_check_fallen_off_stage(void) {
 /**
  * Set Bowser's actions
  */
-void (*sBowserActions[])(void) = {
+/* (calculator) const */ void (*const sBowserActions[])(void) = {
     bowser_act_default,
     bowser_act_thrown,
     bowser_act_jump_onto_stage,

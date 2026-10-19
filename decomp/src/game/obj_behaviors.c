@@ -157,9 +157,9 @@ s8 obj_find_wall(f32 objNewX, f32 objY, f32 objNewZ, f32 objVelX, f32 objVelZ) {
         o->oPosY = hitbox.y;
         o->oPosZ = hitbox.z;
 
-        wall_nX = hitbox.walls[0]->normal.x;
-        wall_nY = hitbox.walls[0]->normal.y;
-        wall_nZ = hitbox.walls[0]->normal.z;
+        wall_nX = SURF_NX(hitbox.walls[0]);
+        wall_nY = SURF_NY(hitbox.walls[0]);
+        wall_nZ = SURF_NZ(hitbox.walls[0]);
 
         objVelXCopy = objVelX;
         objVelZCopy = objVelZ;
@@ -186,9 +186,9 @@ s8 turn_obj_away_from_steep_floor(struct Surface *objFloor, f32 floorY, f32 objV
         return FALSE;
     }
 
-    floor_nX = objFloor->normal.x;
-    floor_nY = objFloor->normal.y;
-    floor_nZ = objFloor->normal.z;
+    floor_nX = SURF_NX(objFloor);
+    floor_nY = SURF_NY(objFloor);
+    floor_nZ = SURF_NZ(objFloor);
 
     // If the floor is steep and we are below it (i.e. walking into it), turn away from the floor.
     if (floor_nY < 0.5 && floorY > o->oPosY) {
@@ -254,9 +254,9 @@ void calc_obj_friction(f32 *objFriction, f32 floor_nY) {
  * Updates an objects speed for gravity and updates Y position.
  */
 void calc_new_obj_vel_and_pos_y(struct Surface *objFloor, f32 objFloorY, f32 objVelX, f32 objVelZ) {
-    f32 floor_nX = objFloor->normal.x;
-    f32 floor_nY = objFloor->normal.y;
-    f32 floor_nZ = objFloor->normal.z;
+    f32 floor_nX = SURF_NX(objFloor);
+    f32 floor_nY = SURF_NY(objFloor);
+    f32 floor_nZ = SURF_NZ(objFloor);
     f32 objFriction;
 
     // Caps vertical speed with a "terminal velocity".
@@ -312,9 +312,9 @@ void calc_new_obj_vel_and_pos_y(struct Surface *objFloor, f32 objFloorY, f32 obj
 
 void calc_new_obj_vel_and_pos_y_underwater(struct Surface *objFloor, f32 floorY, f32 objVelX, f32 objVelZ,
                                     f32 waterY) {
-    f32 floor_nX = objFloor->normal.x;
-    f32 floor_nY = objFloor->normal.y;
-    f32 floor_nZ = objFloor->normal.z;
+    f32 floor_nX = SURF_NX(objFloor);
+    f32 floor_nY = SURF_NY(objFloor);
+    f32 floor_nZ = SURF_NZ(objFloor);
 
     f32 netYAccel = (1.0f - o->oBuoyancy) * (-1.0f * o->oGravity);
     o->oVelY -= netYAccel;

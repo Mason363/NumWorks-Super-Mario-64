@@ -1,6 +1,6 @@
 // koopa_shell.inc.c
 
-struct ObjectHitbox sKoopaShellHitbox = {
+/* (calculator) const */ const struct ObjectHitbox sKoopaShellHitbox = {
     /* interactType:      */ INTERACT_KOOPA_SHELL,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 4,

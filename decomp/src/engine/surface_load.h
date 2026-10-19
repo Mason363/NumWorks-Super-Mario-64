@@ -25,11 +25,12 @@ typedef struct SurfaceNode SpatialPartitionCell[3];
 // Needed for bs bss reordering memes.
 extern s32 unused8038BE90;
 
-/* (calculator) the level's surfaces are cut into cells beforehand and stay in flash (tools/port.py): the game
-   only points at them */
-extern SpatialPartitionCell (*gStaticSurfacePartitionPtr)[NUM_CELLS];
-#define gStaticSurfacePartition gStaticSurfacePartitionPtr
-extern SpatialPartitionCell gDynamicSurfacePartition[NUM_CELLS][NUM_CELLS];
+/* (calculator) the level's surfaces are cut into cells beforehand and stay in flash (tools/port.py,
+   src/port/gen/terrain.c): the game only points at the area's. The objects' cells keep only the first node of
+   their lists (the rest of an N64 node was unused there) */
+extern const struct PortTerrain *gPortTerrain;
+extern struct SurfaceNode *gDynamicSurfaceHeads[NUM_CELLS][NUM_CELLS][3];
+#define DYNAMIC_CELL_LIST(z, x, k) ((struct SurfaceNode *) &gDynamicSurfaceHeads[z][x][k])
 extern struct SurfaceNode *sSurfaceNodePool;
 extern struct Surface *sSurfacePool;
 extern s16 sSurfacePoolSize;

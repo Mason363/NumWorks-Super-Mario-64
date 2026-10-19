@@ -1,6 +1,6 @@
 // fire_piranha_plant.inc.c
 
-struct ObjectHitbox sFirePiranhaPlantHitbox = {
+/* (calculator) const */ const struct ObjectHitbox sFirePiranhaPlantHitbox = {
     /* interactType:      */ INTERACT_BOUNCE_TOP,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 2,
@@ -12,12 +12,12 @@ struct ObjectHitbox sFirePiranhaPlantHitbox = {
     /* hurtboxHeight:     */ 150,
 };
 
-f32 D_80331B5C[] = {
+/* (calculator) const */ const f32 D_80331B5C[] = {
     0.5f,
     2.0f,
 };
 
-struct ObjectHitbox sPiranhaPlantFireHitbox = {
+/* (calculator) const */ const struct ObjectHitbox sPiranhaPlantFireHitbox = {
     /* interactType:      */ INTERACT_FLAME,
     /* downOffset:        */ 10,
     /* damageOrCoinValue: */ 0,

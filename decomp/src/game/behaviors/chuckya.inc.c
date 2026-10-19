@@ -228,7 +228,7 @@ void chuckya_act_2(void) {
     }
 }
 
-void (*sChuckyaActions[])(void) = {
+/* (calculator) const */ void (*const sChuckyaActions[])(void) = {
     chuckya_act_0,
     chuckya_act_1,
     chuckya_act_2,

@@ -1,6 +1,6 @@
 // spindrift.inc.c
 
-struct ObjectHitbox sSpindriftHitbox = {
+/* (calculator) const */ const struct ObjectHitbox sSpindriftHitbox = {
     /* interactType:      */ INTERACT_BOUNCE_TOP,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 2,

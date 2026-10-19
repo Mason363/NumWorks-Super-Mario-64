@@ -1,6 +1,6 @@
 // moving_coin.inc.c
 
-static struct ObjectHitbox sMovingYellowCoinHitbox = {
+/* (calculator) const */ static const struct ObjectHitbox sMovingYellowCoinHitbox = {
     /* interactType:      */ INTERACT_COIN,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 1,
@@ -12,7 +12,7 @@ static struct ObjectHitbox sMovingYellowCoinHitbox = {
     /* hurtboxHeight:     */ 0,
 };
 
-static struct ObjectHitbox sMovingBlueCoinHitbox = {
+/* (calculator) const */ static const struct ObjectHitbox sMovingBlueCoinHitbox = {
     /* interactType:      */ INTERACT_COIN,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 5,

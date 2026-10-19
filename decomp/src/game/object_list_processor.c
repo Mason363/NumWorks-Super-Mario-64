@@ -170,7 +170,7 @@ struct ObjectNode gObjectListArray[16];
 /**
  * The order that object lists are processed in a frame.
  */
-s8 sObjectListUpdateOrder[] = { OBJ_LIST_SPAWNER,
+/* (calculator) const */ const s8 sObjectListUpdateOrder[] = { OBJ_LIST_SPAWNER,
                                 OBJ_LIST_SURFACE,
                                 OBJ_LIST_POLELIKE,
                                 OBJ_LIST_PLAYER,
@@ -196,7 +196,7 @@ struct ParticleProperties {
 /**
  * A table mapping particle flags to various properties use when spawning a particle.
  */
-struct ParticleProperties sParticleTypes[] = {
+/* (calculator) const */ const struct ParticleProperties sParticleTypes[] = {
     { PARTICLE_DUST,                 ACTIVE_PARTICLE_DUST,                 MODEL_MIST,                 bhvMistParticleSpawner },
     { PARTICLE_VERTICAL_STAR,        ACTIVE_PARTICLE_V_STAR,               MODEL_NONE,                 bhvVertStarParticleSpawner },
     { PARTICLE_HORIZONTAL_STAR,      ACTIVE_PARTICLE_H_STAR,               MODEL_NONE,                 bhvHorStarParticleSpawner },

@@ -17,7 +17,7 @@
 #include "plat.h"
 
 /* the N64 had 4 MB for this; the levels' scripts, cameras, warps and the objects' surfaces fit in less */
-#define POOL_SIZE (36 * 1024)
+#define POOL_SIZE (26 * 1024)
 static u64 sPool[POOL_SIZE / 8];
 
 
@@ -141,22 +141,24 @@ static void read_controller(void) {
   *gPlayer3Controller = *gPlayer1Controller;
 }
 
+#include "game/object_list_processor.h"
+/* the most the game used of its objects, pool and surfaces (tests read them: tests/play.c --stats, and in the
+ * calculator's emulator, by their names) */
+s32 port_stat_objects, port_stat_surfaces, port_stat_nodes;
+u32 port_stat_pool = 0xFFFFFFFF;
+static void port_peaks(void) {
+  if (gPrevFrameObjectCount > port_stat_objects) port_stat_objects = gPrevFrameObjectCount;
+  if (gSurfacesAllocated - gNumStaticSurfaces > port_stat_surfaces) port_stat_surfaces = gSurfacesAllocated - gNumStaticSurfaces;
+  if (gSurfaceNodesAllocated - gNumStaticSurfaceNodes > port_stat_nodes) port_stat_nodes = gSurfaceNodesAllocated - gNumStaticSurfaceNodes;
+  if (main_pool_available() < port_stat_pool) port_stat_pool = main_pool_available();
+}
+
 #ifdef HOST
 #include <stdio.h>
 #include <stdlib.h>
 #include "game/mario.h"
-#include "game/object_list_processor.h"
 #include "behavior_data.h"
 extern struct LakituState gLakituState;
-/* the most the game used of its objects, pool and surfaces (tests/play.c --stats) */
-static s32 sPeakObjects, sPeakSurfaces, sPeakNodes;
-static u32 sLeastFree = 0xFFFFFFFF;
-static void port_debug_peaks(void) {
-  if (gPrevFrameObjectCount > sPeakObjects) sPeakObjects = gPrevFrameObjectCount;
-  if (gSurfacesAllocated - gNumStaticSurfaces > sPeakSurfaces) sPeakSurfaces = gSurfacesAllocated - gNumStaticSurfaces;
-  if (gSurfaceNodesAllocated - gNumStaticSurfaceNodes > sPeakNodes) sPeakNodes = gSurfaceNodesAllocated - gNumStaticSurfaceNodes;
-  if (main_pool_available() < sLeastFree) sLeastFree = main_pool_available();
-}
 /* the state of the game, for tests (tests/play.c --stats) */
 void port_debug_print(void) {
   struct MarioState *m = gMarioState;
@@ -168,7 +170,8 @@ void port_debug_print(void) {
     for (int i = 0; i < OBJECT_POOL_CAPACITY; i++)
       if (gObjectPool[i].activeFlags) printf("  obj %ld\n", (long) ((const char *) gObjectPool[i].behavior - (const char *) bhvMario));
   printf("  objects %d of %d (most %d), transforms most %d, surfaces most %d, nodes most %d, pool free %u (least %u)\n", gPrevFrameObjectCount,
-         gObjectPoolCapacity, sPeakObjects, port_transforms_most, sPeakSurfaces, sPeakNodes, (unsigned) main_pool_available(), (unsigned) sLeastFree);
+         gObjectPoolCapacity, port_stat_objects, port_transforms_most, port_stat_surfaces, port_stat_nodes,
+         (unsigned) main_pool_available(), (unsigned) port_stat_pool);
 }
 #endif
 
@@ -180,7 +183,7 @@ s32 port_start_level(void) { return port_start_level_num; }
 static struct LevelCommand *sScript;
 /* the frame's display list memory: nothing draws with display lists, but the game's code takes matrices and a
  * few commands from it (alloc_display_list), until the frame is drawn */
-static Gfx sGfxPool[192];
+static Gfx sGfxPool[128];
 
 void init_rcp(void) {}
 
@@ -190,7 +193,7 @@ void port_game_init(void) {
   gPlayer1Controller->statusData = NULL;
   gPlayer1Controller->controllerData = &sPad;
   gDisplayListHead = sGfxPool;
-  gGfxPoolEnd = (u8 *) (sGfxPool + 192);
+  gGfxPoolEnd = (u8 *) (sGfxPool + 128);
   save_file_load_all();
   sScript = (struct LevelCommand *) port_level_script_entry;
 }
@@ -198,10 +201,8 @@ void port_game_init(void) {
 void port_game_frame(void) {
   read_controller();
   gDisplayListHead = sGfxPool;
-  gGfxPoolEnd = (u8 *) (sGfxPool + 192);
+  gGfxPoolEnd = (u8 *) (sGfxPool + 128);
   sScript = level_script_execute(sScript);
   gGlobalTimer++;
-#ifdef HOST
-  port_debug_peaks();
-#endif
+  port_peaks();
 }

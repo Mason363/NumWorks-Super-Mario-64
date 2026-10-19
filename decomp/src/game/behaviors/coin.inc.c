@@ -1,6 +1,6 @@
 // coin.inc.c
 
-struct ObjectHitbox sYellowCoinHitbox = {
+/* (calculator) const */ const struct ObjectHitbox sYellowCoinHitbox = {
     /* interactType:      */ INTERACT_COIN,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 1,
@@ -78,8 +78,8 @@ void bhv_spawned_coin_loop(void) {
         }
         if (o->oSubAction == 1) {
             o->oBounciness = 0;
-            if (floor->normal.y < 0.9) {
-                s16 sp1A = atan2s(floor->normal.z, floor->normal.x);
+            if (SURF_NY(floor) < 0.9) {
+                s16 sp1A = atan2s(SURF_NZ(floor), SURF_NX(floor));
                 cur_obj_rotate_yaw_toward(sp1A, 0x400);
             }
         }
@@ -156,7 +156,7 @@ void bhv_coin_formation_spawn_loop(void) {
     }
 }
 
-s16 sCoinArrowPositions[][2] = {
+/* (calculator) const */ const s16 sCoinArrowPositions[][2] = {
     { 0, -150 },
     { 0, -50 },
     { 0, 50 },
@@ -302,7 +302,7 @@ void coin_inside_boo_act_0(void) {
     }
 }
 
-void (*sCoinInsideBooActions[])(void) = {
+/* (calculator) const */ void (*const sCoinInsideBooActions[])(void) = {
     coin_inside_boo_act_0,
     coin_inside_boo_act_1,
 };

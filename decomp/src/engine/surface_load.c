@@ -20,13 +20,14 @@ s32 unused8038BE90;
  * the 16x16 cells that each level is split into.
  */
 /* (calculator) no level: no static surfaces */
-static const SpatialPartitionCell sNoStaticSurfaces[NUM_CELLS][NUM_CELLS];
-SpatialPartitionCell (*gStaticSurfacePartitionPtr)[NUM_CELLS] = (SpatialPartitionCell (*)[NUM_CELLS]) sNoStaticSurfaces;
-SpatialPartitionCell gDynamicSurfacePartition[NUM_CELLS][NUM_CELLS];
+static const u16 sNoCells[NUM_CELLS * NUM_CELLS * 3 + 1];
+static const struct PortTerrain sNoTerrain = { NULL, NULL, sNoCells, sNoCells };
+const struct PortTerrain *gPortTerrain = &sNoTerrain;
+struct SurfaceNode *gDynamicSurfaceHeads[NUM_CELLS][NUM_CELLS][3];
 
 /* (calculator) the objects' surfaces, the only ones made in RAM (the N64 had 2300 surfaces, 7000 nodes) */
-#define DYNAMIC_SURFACES 256
-#define DYNAMIC_NODES 768
+#define DYNAMIC_SURFACES 200
+#define DYNAMIC_NODES 600
 /* (calculator) the water and gas boxes of the level: their heights change (the moat drains) */
 static TerrainData sEnvironmentRegions[1 + 20 * 6];
 
@@ -74,6 +75,7 @@ static struct Surface *alloc_surface(void) {
     }
     surface = &sSurfacePool[gSurfacesAllocated];
     gSurfacesAllocated++;
+    port_surface_changed(); /* (calculator) its normal is new */
 
     surface->type = 0;
     surface->force = 0;
@@ -103,7 +105,7 @@ static void clear_spatial_partition(SpatialPartitionCell *cells) {
  * Clears the static (level) surface partitions for new use.
  */
 static void clear_static_surfaces(void) {
-    gStaticSurfacePartitionPtr = (SpatialPartitionCell (*)[NUM_CELLS]) sNoStaticSurfaces;
+    gPortTerrain = &sNoTerrain;
 }
 
 /**
@@ -124,17 +126,17 @@ static void add_surface_to_cell(s16 dynamic, s16 cellX, s16 cellZ, struct Surfac
     if (newNode == NULL) {
         return;
     }
-    if (surface->normal.y > 0.01) {
+    if (SURF_NY(surface) > 0.01) {
         listIndex = SPATIAL_PARTITION_FLOORS;
         sortDir = 1; // highest to lowest, then insertion order
-    } else if (surface->normal.y < -0.01) {
+    } else if (SURF_NY(surface) < -0.01) {
         listIndex = SPATIAL_PARTITION_CEILS;
         sortDir = -1; // lowest to highest, then insertion order
     } else {
         listIndex = SPATIAL_PARTITION_WALLS;
         sortDir = 0; // insertion order
 
-        if (surface->normal.x < -0.707 || surface->normal.x > 0.707) {
+        if (SURF_NX(surface) < -0.707 || SURF_NX(surface) > 0.707) {
             surface->flags |= SURFACE_FLAG_X_PROJECTION;
         }
     }
@@ -149,11 +151,8 @@ static void add_surface_to_cell(s16 dynamic, s16 cellX, s16 cellZ, struct Surfac
 
     newNode->surface = surface;
 
-    if (dynamic) {
-        list = &gDynamicSurfacePartition[cellZ][cellX][listIndex];
-    } else {
-        list = &gStaticSurfacePartition[cellZ][cellX][listIndex];
-    }
+    /* (calculator) only the objects' surfaces come here */
+    list = DYNAMIC_CELL_LIST(cellZ, cellX, listIndex);
 
     // Loop until we find the appropriate place for the surface in the list.
     while (list->next != NULL) {
@@ -382,11 +381,7 @@ static struct Surface *read_surface_data(TerrainData *vertexData, TerrainData **
     surface->vertex2[2] = z2;
     surface->vertex3[2] = z3;
 
-    surface->normal.x = nx;
-    surface->normal.y = ny;
-    surface->normal.z = nz;
-
-    surface->originOffset = -(nx * x1 + ny * y1 + nz * z1);
+    /* (calculator) its normal is worked out when it is read (SURF_NX) */
 
     surface->lowerY = minY - 5;
     surface->upperY = maxY + 5;
@@ -624,7 +619,7 @@ void load_area_terrain(s16 index, TerrainData *data, RoomData *surfaceRooms, s16
         const struct PortTerrain *t;
         for (t = port_terrains; t->terrain != NULL; t++) {
             if (t->terrain == data) {
-                gStaticSurfacePartitionPtr = (SpatialPartitionCell (*)[NUM_CELLS]) t->cells;
+                gPortTerrain = t;
                 break;
             }
         }
@@ -685,7 +680,7 @@ void clear_dynamic_surfaces(void) {
         gSurfacesAllocated = gNumStaticSurfaces;
         gSurfaceNodesAllocated = gNumStaticSurfaceNodes;
 
-        clear_spatial_partition(&gDynamicSurfacePartition[0][0]);
+        bzero(gDynamicSurfaceHeads, sizeof(gDynamicSurfaceHeads)); /* (calculator) */
     }
 }
 

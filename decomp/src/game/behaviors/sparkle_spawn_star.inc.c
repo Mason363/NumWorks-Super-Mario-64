@@ -1,6 +1,6 @@
 // sparkle_spawn_star.inc.c
 
-struct ObjectHitbox sSparkleSpawnStarHitbox = {
+/* (calculator) const */ const struct ObjectHitbox sSparkleSpawnStarHitbox = {
     /* interactType:      */ INTERACT_STAR_OR_KEY,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 0,

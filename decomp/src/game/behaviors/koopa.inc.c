@@ -11,7 +11,7 @@
  * Hitbox for koopa - this is used for every form except Koopa the Quick, which
  * uses a hardcoded soft hitbox.
  */
-static struct ObjectHitbox sKoopaHitbox = {
+/* (calculator) const */ static const struct ObjectHitbox sKoopaHitbox = {
     /* interactType:      */ INTERACT_KOOPA,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 0,

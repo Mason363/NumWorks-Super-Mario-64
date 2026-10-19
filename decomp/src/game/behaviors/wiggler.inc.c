@@ -10,7 +10,7 @@
 /**
  * Hitbox for wiggler's non-head body parts.
  */
-static struct ObjectHitbox sWigglerBodyPartHitbox = {
+/* (calculator) const */ static const struct ObjectHitbox sWigglerBodyPartHitbox = {
     /* interactType:      */ INTERACT_BOUNCE_TOP,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 3,
@@ -25,7 +25,7 @@ static struct ObjectHitbox sWigglerBodyPartHitbox = {
 /**
  * Hitbox for wiggler's head.
  */
-static struct ObjectHitbox sWigglerHitbox = {
+/* (calculator) const */ static const struct ObjectHitbox sWigglerHitbox = {
     /* interactType:      */ INTERACT_BOUNCE_TOP,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 3,

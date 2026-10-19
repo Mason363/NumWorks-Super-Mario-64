@@ -1,6 +1,6 @@
 // bowser_flame.inc.c
 
-struct ObjectHitbox sGrowingBowserFlameHitbox = {
+/* (calculator) const */ const struct ObjectHitbox sGrowingBowserFlameHitbox = {
     /* interactType:      */ INTERACT_FLAME,
     /* downOffset:        */ 20,
     /* damageOrCoinValue: */ 1,
@@ -12,7 +12,7 @@ struct ObjectHitbox sGrowingBowserFlameHitbox = {
     /* hurtboxHeight:     */ 0,
 };
 
-struct ObjectHitbox sBowserFlameHitbox = {
+/* (calculator) const */ const struct ObjectHitbox sBowserFlameHitbox = {
     /* interactType:      */ INTERACT_FLAME,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 1,
@@ -156,7 +156,7 @@ void bhv_flame_floating_landing_init(void) {
     o->oFlameSpeedTimerOffset = random_float() * 64.0f;
 }
 
-f32 sFlameFloatingYLimit[] = { -8.0f, -6.0f, -3.0f };
+/* (calculator) const */ const f32 sFlameFloatingYLimit[] = { -8.0f, -6.0f, -3.0f };
 
 void bhv_flame_floating_landing_loop(void) {
     UNUSED u8 filler[4];

@@ -310,7 +310,7 @@ void ukiki_act_jump(void) {
 /**
  * Waypoints that lead from the top of the mountain to the cage.
  */
-static Trajectory sCageUkikiPath[] = {
+/* (calculator) const */ static const Trajectory sCageUkikiPath[] = {
     TRAJECTORY_POS(0, /*pos*/  1011, 2306,  -285),
     TRAJECTORY_POS(0, /*pos*/  1151, 2304,  -510),
     TRAJECTORY_POS(0, /*pos*/  1723, 1861,  -964),
@@ -453,7 +453,7 @@ struct SoundState sUkikiSoundStates[] = {
  * An array of each of Ukiki's actions. A function is called
  * every frame.
  */
-void (*sUkikiActions[])(void) = {
+/* (calculator) const */ void (*const sUkikiActions[])(void) = {
     ukiki_act_idle,
     ukiki_act_run,
     ukiki_act_turn_to_mario,

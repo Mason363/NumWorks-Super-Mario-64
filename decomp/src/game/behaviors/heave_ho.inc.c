@@ -1,6 +1,6 @@
 // heave_ho.inc.c
 
-s16 D_8032F460[][2] = {
+/* (calculator) const */ const s16 D_8032F460[][2] = {
     { 30, 0 }, { 42, 1 }, { 52, 0 },  { 64, 1 },  { 74, 0 },
     { 86, 1 }, { 96, 0 }, { 108, 1 }, { 118, 0 }, { -1, 0 },
 };
@@ -103,7 +103,7 @@ void heave_ho_act_0(void) {
     }
 }
 
-void (*sHeaveHoActions[])(void) = {
+/* (calculator) const */ void (*const sHeaveHoActions[])(void) = {
     heave_ho_act_0,
     heave_ho_act_1,
     heave_ho_act_2,

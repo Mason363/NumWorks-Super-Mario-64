@@ -89,9 +89,9 @@ void bhv_jrb_sliding_box_loop(void) {
     find_floor(sp20[0], sp20[1], sp20[2], &sp38);
 
     if (sp38 != NULL) {
-        sp2C[0] = sp38->normal.x;
-        sp2C[1] = sp38->normal.y;
-        sp2C[2] = sp38->normal.z;
+        sp2C[0] = SURF_NX(sp38);
+        sp2C[1] = SURF_NY(sp38);
+        sp2C[2] = SURF_NZ(sp38);
 
         o->oFaceAnglePitch = sp1E;
     }

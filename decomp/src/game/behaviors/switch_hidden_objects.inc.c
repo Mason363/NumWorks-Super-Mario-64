@@ -1,6 +1,6 @@
 // switch_hidden_objects.inc.c
 
-struct ObjectHitbox sBreakableBoxHitbox = {
+/* (calculator) const */ const struct ObjectHitbox sBreakableBoxHitbox = {
     /* interactType:      */ INTERACT_BREAKABLE,
     /* downOffset:        */ 20,
     /* damageOrCoinValue: */ 0,

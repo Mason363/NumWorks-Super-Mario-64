@@ -183,9 +183,10 @@ s16 find_mario_anim_flags_and_translation(struct Object *obj, s32 yaw, Vec3s tra
     f32 s = (f32) sins(yaw);
     f32 c = (f32) coss(yaw);
 
-    dx = *(animValues + (retrieve_animation_index(animFrame, &animIndex))) / 4.0f;
-    translation[1] = *(animValues + (retrieve_animation_index(animFrame, &animIndex))) / 4.0f;
-    dz = *(animValues + (retrieve_animation_index(animFrame, &animIndex))) / 4.0f;
+    /* (calculator) packed animations */
+    dx = port_anim_value(animFrame, &animIndex, animValues) / 4.0f;
+    translation[1] = port_anim_value(animFrame, &animIndex, animValues) / 4.0f;
+    dz = port_anim_value(animFrame, &animIndex, animValues) / 4.0f;
 
     translation[0] = (dx * c) + (dz * s);
     translation[2] = (-dx * s) + (dz * c);
@@ -416,7 +417,7 @@ s32 mario_get_floor_class(struct MarioState *m) {
     }
 
     // Crawling allows Mario to not slide on certain steeper surfaces.
-    if (m->action == ACT_CRAWLING && m->floor->normal.y > 0.5f && floorClass == SURFACE_CLASS_DEFAULT) {
+    if (m->action == ACT_CRAWLING && SURF_NY(m->floor) > 0.5f && floorClass == SURFACE_CLASS_DEFAULT) {
         floorClass = SURFACE_CLASS_NOT_SLIPPERY;
     }
 
@@ -424,7 +425,7 @@ s32 mario_get_floor_class(struct MarioState *m) {
 }
 
 // clang-format off
-s8 sTerrainSounds[7][6] = {
+/* (calculator) const */ const s8 sTerrainSounds[7][6] = {
     // default,              hard,                 slippery,
     // very slippery,        noisy default,        noisy slippery
     { SOUND_TERRAIN_DEFAULT, SOUND_TERRAIN_STONE,  SOUND_TERRAIN_GRASS,
@@ -566,7 +567,7 @@ u32 mario_floor_is_slippery(struct MarioState *m) {
     f32 normY;
 
     if ((m->area->terrainType & TERRAIN_MASK) == TERRAIN_SLIDE
-        && m->floor->normal.y < 0.9998477f //~cos(1 deg)
+        && SURF_NY(m->floor) < 0.9998477f //~cos(1 deg)
     ) {
         return TRUE;
     }
@@ -589,7 +590,7 @@ u32 mario_floor_is_slippery(struct MarioState *m) {
             break;
     }
 
-    return m->floor->normal.y <= normY;
+    return SURF_NY(m->floor) <= normY;
 }
 
 /**
@@ -599,7 +600,7 @@ s32 mario_floor_is_slope(struct MarioState *m) {
     f32 normY;
 
     if ((m->area->terrainType & TERRAIN_MASK) == TERRAIN_SLIDE
-        && m->floor->normal.y < 0.9998477f) { // ~cos(1 deg)
+        && SURF_NY(m->floor) < 0.9998477f) { // ~cos(1 deg)
         return TRUE;
     }
 
@@ -621,7 +622,7 @@ s32 mario_floor_is_slope(struct MarioState *m) {
             break;
     }
 
-    return m->floor->normal.y <= normY;
+    return SURF_NY(m->floor) <= normY;
 }
 
 /**
@@ -654,7 +655,7 @@ s32 mario_floor_is_steep(struct MarioState *m) {
                 break;
         }
 
-        result = m->floor->normal.y <= normY;
+        result = SURF_NY(m->floor) <= normY;
     }
 
     return result;
@@ -1188,7 +1189,7 @@ s32 set_water_plunge_action(struct MarioState *m) {
  * These are the scaling values for the x and z axis for Mario
  * when he is close to unsquishing.
  */
-u8 sSquishScaleOverTime[16] = { 0x46, 0x32, 0x32, 0x3C, 0x46, 0x50, 0x50, 0x3C,
+/* (calculator) const */ const u8 sSquishScaleOverTime[16] = { 0x46, 0x32, 0x32, 0x3C, 0x46, 0x50, 0x50, 0x3C,
                                 0x28, 0x14, 0x14, 0x1E, 0x32, 0x3C, 0x3C, 0x28 };
 
 /**
@@ -1227,8 +1228,8 @@ void debug_print_speed_action_normal(struct MarioState *m) {
 
     if (gShowDebugText) {
         steepness = sqrtf(
-            ((m->floor->normal.x * m->floor->normal.x) + (m->floor->normal.z * m->floor->normal.z)));
-        floor_nY = m->floor->normal.y;
+            ((SURF_NX(m->floor) * SURF_NX(m->floor)) + (SURF_NZ(m->floor) * SURF_NZ(m->floor))));
+        floor_nY = SURF_NY(m->floor);
 
         print_text_fmt_int(210, 88, "ANG %d", (atan2s(floor_nY, steepness) * 180.0f) / 32768.0f);
 
@@ -1326,7 +1327,7 @@ void update_mario_geometry_inputs(struct MarioState *m) {
     m->waterLevel = find_water_level(m->pos[0], m->pos[2]);
 
     if (m->floor != NULL) {
-        m->floorAngle = atan2s(m->floor->normal.z, m->floor->normal.x);
+        m->floorAngle = atan2s(SURF_NZ(m->floor), SURF_NX(m->floor));
         m->terrainSoundAddend = mario_get_terrain_sound_addend(m);
 
         if ((m->pos[1] > m->waterLevel - 40) && mario_floor_is_slippery(m)) {

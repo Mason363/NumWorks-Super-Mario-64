@@ -8,7 +8,7 @@
 /**
  * Hitbox for evil lakitu.
  */
-static struct ObjectHitbox sEnemyLakituHitbox = {
+/* (calculator) const */ static const struct ObjectHitbox sEnemyLakituHitbox = {
     /* interactType:      */ INTERACT_HIT_FROM_BELOW,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 2,

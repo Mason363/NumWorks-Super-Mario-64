@@ -9,7 +9,7 @@
  * Hitbox for spiny both while thrown and walking. The interaction type is
  * changed to INTERACT_UNKNOWN_08 while walking.
  */
-static struct ObjectHitbox sSpinyHitbox = {
+/* (calculator) const */ static const struct ObjectHitbox sSpinyHitbox = {
     /* interactType:      */ INTERACT_MR_BLIZZARD,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 2,

@@ -5,7 +5,7 @@ struct Struct80331C38 {
     s16 unk02;
 };
 
-struct ObjectHitbox sSkeeterHitbox = {
+/* (calculator) const */ const struct ObjectHitbox sSkeeterHitbox = {
     /* interactType:      */ INTERACT_BOUNCE_TOP,
     /* downOffset:        */ 20,
     /* damageOrCoinValue: */ 2,
@@ -17,7 +17,7 @@ struct ObjectHitbox sSkeeterHitbox = {
     /* hurtboxHeight:     */ 90,
 };
 
-struct Struct80331C38 D_80331C38[] = {
+/* (calculator) const */ const struct Struct80331C38 D_80331C38[] = {
     { 0xFF7E, 0xFF42 },
     { 0x0082, 0xFF42 },
     { 0xFF4C, 0x0082 },

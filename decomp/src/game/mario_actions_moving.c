@@ -23,39 +23,39 @@ struct LandingAction {
     u32 slideAction;
 };
 
-struct LandingAction sJumpLandAction = {
+/* (calculator) const */ const struct LandingAction sJumpLandAction = {
     4, 5, ACT_FREEFALL, ACT_JUMP_LAND_STOP, ACT_DOUBLE_JUMP, ACT_FREEFALL, ACT_BEGIN_SLIDING,
 };
 
-struct LandingAction sFreefallLandAction = {
+/* (calculator) const */ const struct LandingAction sFreefallLandAction = {
     4, 5, ACT_FREEFALL, ACT_FREEFALL_LAND_STOP, ACT_DOUBLE_JUMP, ACT_FREEFALL, ACT_BEGIN_SLIDING,
 };
 
-struct LandingAction sSideFlipLandAction = {
+/* (calculator) const */ const struct LandingAction sSideFlipLandAction = {
     4, 5, ACT_FREEFALL, ACT_SIDE_FLIP_LAND_STOP, ACT_DOUBLE_JUMP, ACT_FREEFALL, ACT_BEGIN_SLIDING,
 };
 
-struct LandingAction sHoldJumpLandAction = {
+/* (calculator) const */ const struct LandingAction sHoldJumpLandAction = {
     4, 5, ACT_HOLD_FREEFALL, ACT_HOLD_JUMP_LAND_STOP, ACT_HOLD_JUMP, ACT_HOLD_FREEFALL, ACT_HOLD_BEGIN_SLIDING,
 };
 
-struct LandingAction sHoldFreefallLandAction = {
+/* (calculator) const */ const struct LandingAction sHoldFreefallLandAction = {
     4, 5, ACT_HOLD_FREEFALL, ACT_HOLD_FREEFALL_LAND_STOP, ACT_HOLD_JUMP, ACT_HOLD_FREEFALL, ACT_HOLD_BEGIN_SLIDING,
 };
 
-struct LandingAction sLongJumpLandAction = {
+/* (calculator) const */ const struct LandingAction sLongJumpLandAction = {
     6, 5, ACT_FREEFALL, ACT_LONG_JUMP_LAND_STOP, ACT_LONG_JUMP, ACT_FREEFALL, ACT_BEGIN_SLIDING,
 };
 
-struct LandingAction sDoubleJumpLandAction = {
+/* (calculator) const */ const struct LandingAction sDoubleJumpLandAction = {
     4, 5, ACT_FREEFALL, ACT_DOUBLE_JUMP_LAND_STOP, ACT_JUMP, ACT_FREEFALL, ACT_BEGIN_SLIDING,
 };
 
-struct LandingAction sTripleJumpLandAction = {
+/* (calculator) const */ const struct LandingAction sTripleJumpLandAction = {
     4, 0, ACT_FREEFALL, ACT_TRIPLE_JUMP_LAND_STOP, ACT_UNINITIALIZED, ACT_FREEFALL, ACT_BEGIN_SLIDING,
 };
 
-struct LandingAction sBackflipLandAction = {
+/* (calculator) const */ const struct LandingAction sBackflipLandAction = {
     4, 0, ACT_FREEFALL, ACT_BACKFLIP_LAND_STOP, ACT_BACKFLIP, ACT_FREEFALL, ACT_BEGIN_SLIDING,
 };
 
@@ -116,12 +116,12 @@ void check_ledge_climb_down(struct MarioState *m) {
             floorHeight = find_floor(wallCols.x, wallCols.y, wallCols.z, &floor);
             if (floor != NULL && (wallCols.y - floorHeight > 160.0f)) {
                 wall = wallCols.walls[wallCols.numWalls - 1];
-                wallAngle = atan2s(wall->normal.z, wall->normal.x);
+                wallAngle = atan2s(SURF_NZ(wall), SURF_NX(wall));
                 wallDYaw = wallAngle - m->faceAngle[1];
 
                 if (wallDYaw > -0x4000 && wallDYaw < 0x4000) {
-                    m->pos[0] = wallCols.x - 20.0f * wall->normal.x;
-                    m->pos[2] = wallCols.z - 20.0f * wall->normal.z;
+                    m->pos[0] = wallCols.x - 20.0f * SURF_NX(wall);
+                    m->pos[2] = wallCols.z - 20.0f * SURF_NZ(wall);
 
                     m->faceAngle[0] = 0;
                     m->faceAngle[1] = wallAngle + 0x8000;
@@ -161,9 +161,9 @@ void update_sliding_angle(struct MarioState *m, f32 accel, f32 lossFactor) {
     s16 facingDYaw;
 
     struct Surface *floor = m->floor;
-    s16 slopeAngle = atan2s(floor->normal.z, floor->normal.x);
-    f32 steepness = sqrtf(floor->normal.x * floor->normal.x + floor->normal.z * floor->normal.z);
-    UNUSED f32 normalY = floor->normal.y;
+    s16 slopeAngle = atan2s(SURF_NZ(floor), SURF_NX(floor));
+    f32 steepness = sqrtf(SURF_NX(floor) * SURF_NX(floor) + SURF_NZ(floor) * SURF_NZ(floor));
+    UNUSED f32 normalY = SURF_NY(floor);
 
     m->slideVelX += accel * steepness * sins(slopeAngle);
     m->slideVelZ += accel * steepness * coss(slopeAngle);
@@ -284,9 +284,9 @@ void apply_slope_accel(struct MarioState *m) {
     f32 slopeAccel;
 
     struct Surface *floor = m->floor;
-    f32 steepness = sqrtf(floor->normal.x * floor->normal.x + floor->normal.z * floor->normal.z);
+    f32 steepness = sqrtf(SURF_NX(floor) * SURF_NX(floor) + SURF_NZ(floor) * SURF_NZ(floor));
 
-    UNUSED f32 normalY = floor->normal.y;
+    UNUSED f32 normalY = SURF_NY(floor);
     s16 floorDYaw = m->floorAngle - m->faceAngle[1];
 
     if (mario_floor_is_slope(m)) {
@@ -354,7 +354,7 @@ void update_shell_speed(struct MarioState *m) {
     if (m->floorHeight < m->waterLevel) {
         m->floorHeight = m->waterLevel;
         m->floor = &gWaterSurfacePseudoFloor;
-        m->floor->originOffset = m->waterLevel; //! Negative origin offset
+        port_water_floor_offset = m->waterLevel; //! Negative origin offset
     }
 
     if (m->floor != NULL && m->floor->type == SURFACE_SLOW) {
@@ -375,7 +375,7 @@ void update_shell_speed(struct MarioState *m) {
         m->forwardVel += 1.1f;
     } else if (m->forwardVel <= targetSpeed) {
         m->forwardVel += 1.1f - m->forwardVel / 58.0f;
-    } else if (m->floor->normal.y >= 0.95f) {
+    } else if (SURF_NY(m->floor) >= 0.95f) {
         m->forwardVel -= 1.0f;
     }
 
@@ -451,7 +451,7 @@ void update_walking_speed(struct MarioState *m) {
         m->forwardVel += 1.1f;
     } else if (m->forwardVel <= targetSpeed) {
         m->forwardVel += 1.1f - m->forwardVel / 43.0f;
-    } else if (m->floor->normal.y >= 0.95f) {
+    } else if (SURF_NY(m->floor) >= 0.95f) {
         m->forwardVel -= 1.0f;
     }
 
@@ -506,7 +506,7 @@ s32 begin_braking_action(struct MarioState *m) {
         return set_mario_action(m, ACT_STANDING_AGAINST_WALL, 0);
     }
 
-    if (m->forwardVel >= 16.0f && m->floor->normal.y >= 0.17364818f) {
+    if (m->forwardVel >= 16.0f && SURF_NY(m->floor) >= 0.17364818f) {
         return set_mario_action(m, ACT_BRAKING, 0);
     }
 
@@ -681,7 +681,7 @@ void push_or_sidle_wall(struct MarioState *m, Vec3f startPos) {
     }
 
     if (m->wall != NULL) {
-        wallAngle = atan2s(m->wall->normal.z, m->wall->normal.x);
+        wallAngle = atan2s(SURF_NZ(m->wall), SURF_NX(m->wall));
         dWallAngle = wallAngle - m->faceAngle[1];
     }
 
@@ -1393,7 +1393,7 @@ void common_slide_action(struct MarioState *m, u32 endAction, u32 airAction, s32
 #endif
                 slide_bonk(m, ACT_GROUND_BONK, endAction);
             } else if (m->wall != NULL) {
-                s16 wallAngle = atan2s(m->wall->normal.z, m->wall->normal.x);
+                s16 wallAngle = atan2s(SURF_NZ(m->wall), SURF_NX(m->wall));
                 f32 slideSpeed = sqrtf(m->slideVelX * m->slideVelX + m->slideVelZ * m->slideVelZ);
 
                 if ((slideSpeed *= 0.9) < 4.0f) {
@@ -1760,7 +1760,7 @@ s32 common_landing_cancels(struct MarioState *m, struct LandingAction *landingAc
     //! Everything here, including floor steepness, is checked before checking
     // if Mario is actually on the floor. This leads to e.g. remote sliding.
 
-    if (m->floor->normal.y < 0.2923717f) {
+    if (SURF_NY(m->floor) < 0.2923717f) {
         return mario_push_off_steep_floor(m, landingAction->verySteepAction, 0);
     }
 

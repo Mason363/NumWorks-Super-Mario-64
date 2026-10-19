@@ -13,33 +13,33 @@
  *
  * Note that pieces 11 and 14 do not move.
  */
-static s8 sPieceActions01[] = { 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+/* (calculator) const */ static const s8 sPieceActions01[] = { 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
                                 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, -1 };
-static s8 sPieceActions02[] = { 2, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+/* (calculator) const */ static const s8 sPieceActions02[] = { 2, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
                                 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 2, -1 };
-static s8 sPieceActions05[] = { 2, 2, 2, 5, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+/* (calculator) const */ static const s8 sPieceActions05[] = { 2, 2, 2, 5, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
                                 2, 2, 2, 2, 2, 2, 2, 2, 6, 2, 2, 2, -1 };
-static s8 sPieceActions06[] = { 2, 2, 2, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+/* (calculator) const */ static const s8 sPieceActions06[] = { 2, 2, 2, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2,
                                 2, 2, 2, 2, 2, 2, 2, 4, 2, 2, 2, 2, -1 };
-static s8 sPieceActions10[] = { 2, 2, 2, 2, 2, 5, 2, 2, 2, 2, 2, 2, 2, 2,
+/* (calculator) const */ static const s8 sPieceActions10[] = { 2, 2, 2, 2, 2, 5, 2, 2, 2, 2, 2, 2, 2, 2,
                                 2, 2, 2, 2, 2, 2, 6, 2, 2, 2, 2, 2, -1 };
-static s8 sPieceActions09[] = { 2, 2, 2, 2, 2, 2, 4, 2, 2, 2, 2, 2, 2, 2,
+/* (calculator) const */ static const s8 sPieceActions09[] = { 2, 2, 2, 2, 2, 2, 4, 2, 2, 2, 2, 2, 2, 2,
                                 2, 2, 2, 2, 2, 3, 2, 2, 2, 2, 2, 2, -1 };
-static s8 sPieceActions13[] = { 2, 2, 2, 2, 2, 2, 2, 5, 2, 2, 2, 2, 2, 2,
+/* (calculator) const */ static const s8 sPieceActions13[] = { 2, 2, 2, 2, 2, 2, 2, 5, 2, 2, 2, 2, 2, 2,
                                 2, 2, 2, 2, 6, 2, 2, 2, 2, 2, 2, 2, -1 };
-static s8 sPieceActions12[] = { 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 2, 2, 2, 2,
+/* (calculator) const */ static const s8 sPieceActions12[] = { 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 2, 2, 2, 2,
                                 2, 2, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, -1 };
-static s8 sPieceActions08[] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 2, 2, 2, 2,
+/* (calculator) const */ static const s8 sPieceActions08[] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 2, 2, 2, 2,
                                 2, 2, 5, 2, 2, 2, 2, 2, 2, 2, 2, 2, -1 };
-static s8 sPieceActions07[] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 2, 2,
+/* (calculator) const */ static const s8 sPieceActions07[] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 2, 2,
                                 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, -1 };
-static s8 sPieceActions03[] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 2, 2,
+/* (calculator) const */ static const s8 sPieceActions03[] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 2, 2,
                                 5, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, -1 };
-static s8 sPieceActions04[] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 4,
+/* (calculator) const */ static const s8 sPieceActions04[] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 4,
                                 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, -1 };
-static s8 sPieceActions11[] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+/* (calculator) const */ static const s8 sPieceActions11[] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
                                 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, -1 };
-static s8 sPieceActions14[] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+/* (calculator) const */ static const s8 sPieceActions14[] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
                                 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, -1 };
 
 struct BowserPuzzlePiece {
@@ -255,7 +255,7 @@ void bhv_lll_bowser_puzzle_piece_move_down(void) {
     bhv_lll_bowser_puzzle_piece_move(0.0f, 120.0f, 4, 3);
 }
 
-void (*sBowserPuzzlePieceActions[])(void) = {
+/* (calculator) const */ void (*const sBowserPuzzlePieceActions[])(void) = {
     bhv_lll_bowser_puzzle_piece_action_0,
     bhv_lll_bowser_puzzle_piece_action_1,
     bhv_lll_bowser_puzzle_piece_idle,

@@ -1,6 +1,6 @@
 // bowling_ball.inc.c
 
-static struct ObjectHitbox sBowlingBallHitbox = {
+/* (calculator) const */ static const struct ObjectHitbox sBowlingBallHitbox = {
     /* interactType:      */ INTERACT_DAMAGE,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 2,
@@ -12,7 +12,7 @@ static struct ObjectHitbox sBowlingBallHitbox = {
     /* hurtboxHeight:     */ 0,
 };
 
-static Trajectory sTHIHugeMetalBallTraj[] = {
+/* (calculator) const */ static const Trajectory sTHIHugeMetalBallTraj[] = {
     TRAJECTORY_POS(0, /*pos*/ -4786,   101, -2166),
     TRAJECTORY_POS(1, /*pos*/ -5000,    81, -2753),
     TRAJECTORY_POS(2, /*pos*/ -5040,    33, -3846),
@@ -26,7 +26,7 @@ static Trajectory sTHIHugeMetalBallTraj[] = {
     TRAJECTORY_END(),
 };
 
-static Trajectory sTHITinyMetalBallTraj[] = {
+/* (calculator) const */ static const Trajectory sTHITinyMetalBallTraj[] = {
     TRAJECTORY_POS(0, /*pos*/ -1476,    29,  -680),
     TRAJECTORY_POS(1, /*pos*/ -1492,    14, -1072),
     TRAJECTORY_POS(2, /*pos*/ -1500,     3, -1331),

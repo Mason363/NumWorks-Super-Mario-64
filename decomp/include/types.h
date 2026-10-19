@@ -233,14 +233,17 @@ struct Surface {
     /*0x0A*/ Vec3Terrain vertex1;
     /*0x10*/ Vec3Terrain vertex2;
     /*0x16*/ Vec3Terrain vertex3;
-    /*0x1C*/ struct {
-        f32 x;
-        f32 y;
-        f32 z;
-    } normal;
-    /*0x28*/ f32 originOffset;
-    /*0x2C*/ struct Object *object;
+    /* (calculator) no normal and origin offset: SURF_NX and the others below work them out from the vertices,
+       as surface_load.c did (a third of the surfaces' room, in flash and in RAM) */
+    struct Object *object;
 };
+f32 port_surface_normal(const struct Surface *surf, s32 i);   /* (src/port/collision.c) */
+void port_surface_changed(void);
+extern f32 port_water_floor_offset;   /* (gWaterSurfacePseudoFloor's origin offset) */
+#define SURF_NX(surf) port_surface_normal((surf), 0)
+#define SURF_NY(surf) port_surface_normal((surf), 1)
+#define SURF_NZ(surf) port_surface_normal((surf), 2)
+#define SURF_OO(surf) port_surface_normal((surf), 3)
 
 struct MarioBodyState {
     /*0x00*/ u32 action;

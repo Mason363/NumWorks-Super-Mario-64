@@ -13,7 +13,7 @@ struct TumblingBridgeData {
     const Collision *collision;
 };
 
-struct TumblingBridgeData sTumblingBridgeData[] = {
+/* (calculator) const */ const struct TumblingBridgeData sTumblingBridgeData[] = {
     /* TUMBLING_BRIDGE_BP_WF    */ { 9, -512, 128, MODEL_WF_TUMBLING_BRIDGE_PART,      wf_seg7_collision_tumbling_bridge },
     /* TUMBLING_BRIDGE_BP_BBH   */ { 9, -412, 103, MODEL_BBH_TUMBLING_PLATFORM_PART,   bbh_seg7_collision_07026B1C       },
     /* TUMBLING_BRIDGE_BP_LLL   */ { 9, -512, 128, MODEL_LLL_FALLING_PLATFORM,         lll_seg7_collision_0701D21C       },
@@ -120,7 +120,7 @@ void tumbling_bridge_act_0(void) {
     }
 }
 
-void (*sTumblingBridgeActions[])(void) = {
+/* (calculator) const */ void (*const sTumblingBridgeActions[])(void) = {
     tumbling_bridge_act_0,
     tumbling_bridge_act_1,
     tumbling_bridge_act_2,

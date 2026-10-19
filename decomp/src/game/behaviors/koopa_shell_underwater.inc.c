@@ -1,6 +1,6 @@
 // koopa_shell_underwater.inc.c
 
-struct ObjectHitbox sKoopaShellUnderwaterHitbox = {
+/* (calculator) const */ const struct ObjectHitbox sKoopaShellUnderwaterHitbox = {
     /* interactType:      */ INTERACT_GRABBABLE,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 0,

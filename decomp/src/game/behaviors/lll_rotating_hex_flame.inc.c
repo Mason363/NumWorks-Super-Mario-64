@@ -60,7 +60,7 @@ void fire_bar_act_3(void) {
     o->oAction = 0;
 }
 
-void (*sRotatingCwFireBarsActions[])(void) = {
+/* (calculator) const */ void (*const sRotatingCwFireBarsActions[])(void) = {
     fire_bar_act_0,
     fire_bar_act_1,
     fire_bar_act_2,

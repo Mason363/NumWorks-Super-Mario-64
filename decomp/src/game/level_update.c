@@ -128,7 +128,7 @@ const char *credits19[] = { "1PRODUCER", "SHIGERU MIYAMOTO" };
 const char *credits20[] = { "1EXECUTIVE PRODUCER", "HIROSHI YAMAUCHI" };
 #endif
 
-struct CreditsEntry sCreditsSequence[] = {
+/* (calculator) const */ const struct CreditsEntry sCreditsSequence[] = {
     { LEVEL_CASTLE_GROUNDS, 1, 1, -128, { 0, 8000, 0 }, NULL },
     { LEVEL_BOB, 1, 1, 117, { 713, 3918, -3889 }, credits01 },
     { LEVEL_WF, 1, 50, 46, { 347, 5376, 326 }, credits02 },

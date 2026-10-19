@@ -114,7 +114,7 @@ void opened_cannon_act_3(void) {
     }
 }
 
-void (*sOpenedCannonActions[])(void) = {
+/* (calculator) const */ void (*const sOpenedCannonActions[])(void) = {
     opened_cannon_act_0,
     opened_cannon_act_1,
     opened_cannon_act_2,

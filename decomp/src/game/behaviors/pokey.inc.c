@@ -10,7 +10,7 @@
 /**
  * Hitbox for a single pokey body part.
  */
-static struct ObjectHitbox sPokeyBodyPartHitbox = {
+/* (calculator) const */ static const struct ObjectHitbox sPokeyBodyPartHitbox = {
     /* interactType:      */ INTERACT_BOUNCE_TOP,
     /* downOffset:        */ 10,
     /* damageOrCoinValue: */ 2,

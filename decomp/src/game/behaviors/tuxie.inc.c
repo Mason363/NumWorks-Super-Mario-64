@@ -147,7 +147,7 @@ void tuxies_mother_act_0(void) {
     }
 }
 
-void (*sTuxiesMotherActions[])(void) = {
+/* (calculator) const */ void (*const sTuxiesMotherActions[])(void) = {
     tuxies_mother_act_0,
     tuxies_mother_act_1,
     tuxies_mother_act_2,
@@ -276,7 +276,7 @@ void small_penguin_act_5(void) {
     small_penguin_dive_with_mario();
 }
 
-void (*sSmallPenguinActions[])(void) = {
+/* (calculator) const */ void (*const sSmallPenguinActions[])(void) = {
     small_penguin_act_0,
     small_penguin_act_1,
     small_penguin_act_2,

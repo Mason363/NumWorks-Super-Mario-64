@@ -422,7 +422,8 @@ static void level_cmd_init_mario(void) {
 }
 
 static void level_cmd_place_object(void) {
-    u8 val7 = 1 << (gCurrActNum - 1);
+    /* (calculator) outside a course (act 0) the N64 shifted by -1, which made 0: the same, without the shift */
+    u8 val7 = gCurrActNum >= 1 ? 1 << (gCurrActNum - 1) : 0;
     u16 model;
     struct SpawnInfo *spawnInfo;
 

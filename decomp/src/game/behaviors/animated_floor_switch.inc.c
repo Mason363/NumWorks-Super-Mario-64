@@ -5,7 +5,7 @@ struct Struct80331A54 {
     s16 model;
 };
 
-struct Struct80331A54 D_80331A54[][5] = {
+/* (calculator) const */ const struct Struct80331A54 D_80331A54[][5] = {
     {
         { bits_seg7_collision_0701B734, MODEL_BITS_STAIRCASE_FRAME4 },
         { bits_seg7_collision_0701B59C, MODEL_BITS_STAIRCASE_FRAME3 },

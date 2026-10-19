@@ -11,7 +11,7 @@
 #include "plat.h"
 
 #define MAX_OBJECTS 240
-#define TRANSFORMS 64
+#define TRANSFORMS 32
 /* a computer's objects are bigger (64-bit pointers): tests have as many as the calculator with the least RAM */
 #ifndef HOST_OBJECTS
 #define HOST_OBJECTS 160

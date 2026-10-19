@@ -1,6 +1,6 @@
 // scuttlebug.inc.c
 
-struct ObjectHitbox sScuttlebugHitbox = {
+/* (calculator) const */ const struct ObjectHitbox sScuttlebugHitbox = {
     /* interactType:      */ INTERACT_BOUNCE_TOP,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 1,

@@ -1,6 +1,6 @@
 // moneybag.inc.c
 
-static struct ObjectHitbox sMoneybagHitbox = {
+/* (calculator) const */ static const struct ObjectHitbox sMoneybagHitbox = {
     /* interactType:      */ INTERACT_BOUNCE_TOP,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 2,
@@ -12,7 +12,7 @@ static struct ObjectHitbox sMoneybagHitbox = {
     /* hurtboxHeight:     */ 50,
 };
 
-static struct ObjectHitbox sMoneybagHiddenHitbox = {
+/* (calculator) const */ static const struct ObjectHitbox sMoneybagHiddenHitbox = {
     /* interactType:      */ INTERACT_DAMAGE,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 2,

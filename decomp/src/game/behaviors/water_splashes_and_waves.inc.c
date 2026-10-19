@@ -1,7 +1,7 @@
 // water_splashes_and_waves.inc.c
 
 // Water droplets from Mario jumping in a pool of water.
-struct WaterDropletParams sWaterSplashDropletParams = {
+/* (calculator) const */ const struct WaterDropletParams sWaterSplashDropletParams = {
     /* Flags */ WATER_DROPLET_FLAG_RAND_ANGLE,
     /* Model */ MODEL_WHITE_PARTICLE_SMALL,
     /* Behavior */ bhvWaterDroplet,
@@ -12,7 +12,7 @@ struct WaterDropletParams sWaterSplashDropletParams = {
 };
 
 // Water droplets from Mario jumping in shallow water.
-struct WaterDropletParams gShallowWaterSplashDropletParams = {
+/* (calculator) const */ const struct WaterDropletParams gShallowWaterSplashDropletParams = {
     /* Flags */ WATER_DROPLET_FLAG_RAND_ANGLE | WATER_DROPLET_FLAG_SET_Y_TO_WATER_LEVEL,
     /* Model */ MODEL_WHITE_PARTICLE_SMALL,
     /* Behavior */ bhvWaterDroplet,
@@ -23,7 +23,7 @@ struct WaterDropletParams gShallowWaterSplashDropletParams = {
 };
 
 // The fish particle easter egg from Mario jumping in shallow water.
-struct WaterDropletParams sWaterDropletFishParams = {
+/* (calculator) const */ const struct WaterDropletParams sWaterDropletFishParams = {
     /* Flags */ WATER_DROPLET_FLAG_RAND_ANGLE | WATER_DROPLET_FLAG_SET_Y_TO_WATER_LEVEL,
     /* Model */ MODEL_FISH,
     /* Behavior */ bhvWaterDroplet,
@@ -34,7 +34,7 @@ struct WaterDropletParams sWaterDropletFishParams = {
 };
 
 // Water droplets from Mario running in shallow water.
-struct WaterDropletParams gShallowWaterWaveDropletParams = {
+/* (calculator) const */ const struct WaterDropletParams gShallowWaterWaveDropletParams = {
     /* Flags */ WATER_DROPLET_FLAG_RAND_ANGLE_INCR_PLUS_8000 | WATER_DROPLET_FLAG_RAND_ANGLE | WATER_DROPLET_FLAG_SET_Y_TO_WATER_LEVEL,
     /* Model */ MODEL_WHITE_PARTICLE_SMALL,
     /* Behavior */ bhvWaterDroplet,

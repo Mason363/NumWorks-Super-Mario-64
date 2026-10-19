@@ -6,7 +6,7 @@
  * of 200, 300, 400, or 0 (stationary).
  */
 
-static struct ObjectHitbox sAmpHitbox = {
+/* (calculator) const */ static const struct ObjectHitbox sAmpHitbox = {
     /* interactType:      */ INTERACT_SHOCK,
     /* downOffset:        */ 40,
     /* damageOrCoinValue: */ 1,

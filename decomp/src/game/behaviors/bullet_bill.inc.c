@@ -78,7 +78,7 @@ void bullet_bill_act_4(void) {
     }
 }
 
-void (*sBulletBillActions[])(void) = {
+/* (calculator) const */ void (*const sBulletBillActions[])(void) = {
     bullet_bill_act_0,
     bullet_bill_act_1,
     bullet_bill_act_2,

@@ -1,6 +1,6 @@
 // haunted_chair.inc.c
 
-struct ObjectHitbox sHauntedChairHitbox = {
+/* (calculator) const */ const struct ObjectHitbox sHauntedChairHitbox = {
     /* interactType:      */ INTERACT_MR_BLIZZARD,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 2,

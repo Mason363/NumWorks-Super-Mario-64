@@ -6,7 +6,7 @@
  * Tweester spawns the sand particles also in this file.
  */
 
-struct ObjectHitbox sTweesterHitbox = {
+/* (calculator) const */ const struct ObjectHitbox sTweesterHitbox = {
     /* interactType:      */ INTERACT_TORNADO,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 0,
@@ -131,7 +131,7 @@ void tweester_act_hide(void) {
 }
 
 // Array of Tweester action functions.
-void (*sTweesterActions[])(void) = {
+/* (calculator) const */ void (*const sTweesterActions[])(void) = {
     tweester_act_idle,
     tweester_act_chase,
     tweester_act_hide,

@@ -573,7 +573,7 @@ Gfx *geo_snufit_scale_body(s32 callContext, struct GraphNode *node, UNUSED Mat4 
 Gfx *geo_scale_bowser_key(s32 run, struct GraphNode *node, UNUSED f32 mtx[4][4]);
 
 // Water splash
-extern struct WaterDropletParams gShallowWaterSplashDropletParams;
-extern struct WaterDropletParams gShallowWaterWaveDropletParams;
+extern const struct WaterDropletParams gShallowWaterSplashDropletParams;
+extern const struct WaterDropletParams gShallowWaterWaveDropletParams;
 
 #endif // BEHAVIOR_ACTIONS_H

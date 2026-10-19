@@ -12,7 +12,7 @@
 /**
  * Hitbox for chain chomp.
  */
-static struct ObjectHitbox sChainChompHitbox = {
+/* (calculator) const */ static const struct ObjectHitbox sChainChompHitbox = {
     /* interactType:      */ INTERACT_MR_BLIZZARD,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 3,

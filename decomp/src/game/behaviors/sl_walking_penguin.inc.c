@@ -8,7 +8,7 @@ struct SLWalkingPenguinStep {
 };
 
 // The penguin follows a preset list of movements while walking forward.
-struct SLWalkingPenguinStep sSLWalkingPenguinErraticSteps[] = {
+/* (calculator) const */ const struct SLWalkingPenguinStep sSLWalkingPenguinErraticSteps[] = {
     { 60, PENGUIN_ANIM_WALK, 6.0f,  1.0f }, // Walk forwards for 2 seconds
     { 30, PENGUIN_ANIM_IDLE, 0.0f,  1.0f }, // Stop for 1 second
     { 30, PENGUIN_ANIM_WALK, 12.0f, 2.0f }, // Walk forwards quickly for 1 second

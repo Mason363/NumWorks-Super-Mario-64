@@ -7,7 +7,7 @@
 #define IDLE     TOX_BOX_ACT_IDLE
 #define END      TOX_BOX_ACT_TABLE_END
 
-s8 sToxBoxActionTable1[] = {
+/* (calculator) const */ const s8 sToxBoxActionTable1[] = {
     FORWARD, FORWARD, RIGHT, RIGHT, BACKWARD, BACKWARD, RIGHT, RIGHT, BACKWARD, IDLE,
 
     FORWARD, FORWARD, FORWARD, IDLE,
@@ -17,7 +17,7 @@ s8 sToxBoxActionTable1[] = {
     FORWARD, END,
 };
 
-s8 sToxBoxActionTable2[] = {
+/* (calculator) const */ const s8 sToxBoxActionTable2[] = {
     FORWARD, FORWARD, LEFT, LEFT, LEFT, IDLE,
 
     RIGHT, RIGHT, RIGHT, BACKWARD, BACKWARD, RIGHT, BACKWARD, BACKWARD, IDLE,
@@ -25,7 +25,7 @@ s8 sToxBoxActionTable2[] = {
     FORWARD, FORWARD, LEFT, END,
 };
 
-s8 sToxBoxActionTable3[] = {
+/* (calculator) const */ const s8 sToxBoxActionTable3[] = {
     FORWARD, FORWARD, FORWARD, FORWARD, FORWARD, IDLE,
 
     BACKWARD, BACKWARD, BACKWARD, BACKWARD, BACKWARD, LEFT, IDLE,
@@ -149,7 +149,7 @@ void tox_box_act_init(void) {
     o->oAction = cur_obj_set_action_table(actionTable);
 }
 
-void (*sToxBoxActions[])(void) = {
+/* (calculator) const */ void (*const sToxBoxActions[])(void) = {
     tox_box_act_init,
     tox_box_act_roll_land,
     tox_box_act_idle,

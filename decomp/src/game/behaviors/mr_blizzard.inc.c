@@ -1,7 +1,7 @@
 // mr_blizzard.inc.c
 
 // Mr. Blizzard hitbox
-struct ObjectHitbox sMrBlizzardHitbox = {
+/* (calculator) const */ const struct ObjectHitbox sMrBlizzardHitbox = {
     /* interactType:      */ INTERACT_MR_BLIZZARD,
     /* downOffset:        */ 24,
     /* damageOrCoinValue: */ 2,
@@ -415,7 +415,7 @@ static void mr_blizzard_snowball_act_1(void) {
 }
 
 // Snowball hitbox.
-struct ObjectHitbox sMrBlizzardSnowballHitbox = {
+/* (calculator) const */ const struct ObjectHitbox sMrBlizzardSnowballHitbox = {
     /* interactType:      */ INTERACT_MR_BLIZZARD,
     /* downOffset:        */ 12,
     /* damageOrCoinValue: */ 1,

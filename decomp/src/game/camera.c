@@ -439,7 +439,7 @@ u8 sCutsceneDialogResponse = DIALOG_RESPONSE_NONE;
 struct PlayerCameraState *sMarioCamState = &gPlayerCameraState[0];
 struct PlayerCameraState *sLuigiCamState = &gPlayerCameraState[1];
 u32 unused8032D008 = 0;
-Vec3f sFixedModeBasePosition    = { 646.0f, 143.0f, -1513.0f };
+/* (calculator) const */ const Vec3f sFixedModeBasePosition = { 646.0f, 143.0f, -1513.0f };
 Vec3f sUnusedModeBasePosition_2 = { 646.0f, 143.0f, -1513.0f };
 Vec3f sUnusedModeBasePosition_3 = { 646.0f, 143.0f, -1513.0f };
 Vec3f sUnusedModeBasePosition_4 = { 646.0f, 143.0f, -1513.0f };
@@ -462,7 +462,7 @@ s32 update_slide_or_0f_camera(struct Camera *c, Vec3f, Vec3f);
 s32 update_spiral_stairs_camera(struct Camera *c, Vec3f, Vec3f);
 
 typedef s32 (*CameraTransition)(struct Camera *c, Vec3f, Vec3f);
-CameraTransition sModeTransitions[] = {
+/* (calculator) const */ const CameraTransition sModeTransitions[] = {
     NULL,
     update_radial_camera,
     update_outward_radial_camera,
@@ -484,8 +484,8 @@ CameraTransition sModeTransitions[] = {
 };
 
 // Move these two tables to another include file?
-extern u8 sDanceCutsceneIndexTable[][4];
-extern u8 sZoomOutAreaMasks[];
+extern const u8 sDanceCutsceneIndexTable[][4];
+extern const u8 sZoomOutAreaMasks[];
 
 /**
  * Starts a camera shake triggered by an interaction
@@ -817,7 +817,7 @@ s16 look_down_slopes(s16 camYaw) {
 
     if (floor != NULL) {
         if (floor->type != SURFACE_WALL_MISC && floorDY > 0) {
-            if (floor->normal.z == 0.f && floorDY < 100.f) {
+            if (SURF_NZ(floor) == 0.f && floorDY < 100.f) {
                 pitch = 0x05B0;
             } else {
                 // Add the slope's angle of declination to the pitch
@@ -1597,10 +1597,10 @@ s32 update_boss_fight_camera(struct Camera *c, Vec3f focus, Vec3f pos) {
     // Find the floor of the arena
     pos[1] = find_floor(c->areaCenX, CELL_HEIGHT_LIMIT, c->areaCenZ, &floor);
     if (floor != NULL) {
-        nx = floor->normal.x;
-        ny = floor->normal.y;
-        nz = floor->normal.z;
-        oo = floor->originOffset;
+        nx = SURF_NX(floor);
+        ny = SURF_NY(floor);
+        nz = SURF_NZ(floor);
+        oo = SURF_OO(floor);
         pos[1] = 300.f - (nx * pos[0] + nz * pos[2] + oo) / ny;
         switch (gCurrLevelArea) {
             case AREA_BOB:
@@ -1664,7 +1664,7 @@ s16 unused8032D0B0[] = { 16, 9, 17, 0 };
  * Only the first 5 entries are used. Perhaps the last 5 were bools used to indicate whether the star
  * type exits the course or not.
  */
-u8 sDanceCutsceneTable[] = {
+/* (calculator) const */ const u8 sDanceCutsceneTable[] = {
     CUTSCENE_DANCE_FLY_AWAY, CUTSCENE_DANCE_ROTATE, CUTSCENE_DANCE_CLOSEUP, CUTSCENE_KEY_DANCE, CUTSCENE_DANCE_DEFAULT,
     FALSE,                   FALSE,                 FALSE,                  FALSE,              TRUE,
 };
@@ -1693,7 +1693,7 @@ struct UnusedDanceInfo unusedDanceInfo2 = {
  * Due to only the X being varied in the table, this only moves along the X axis linearly.
  * Third entry is seemingly unused.
  */
-struct ParallelTrackingPoint sBBHLibraryParTrackPath[] = {
+/* (calculator) const */ const struct ParallelTrackingPoint sBBHLibraryParTrackPath[] = {
     { 1, { -929.0f, 1619.0f, -1490.0f }, 50.0f, 0.0f },
     { 0, { -2118.0f, 1619.0f, -1490.0f }, 50.0f, 0.0f },
     { 0, { 0.0f, 0.0f, 0.0f }, 0.0f, 0.0f },
@@ -3943,10 +3943,10 @@ s32 collide_with_walls(Vec3f pos, f32 offsetY, f32 radius) {
         for (i = 0; i < collisionData.numWalls; i++) {
             wall = collisionData.walls[collisionData.numWalls - 1];
             vec3f_copy(newPos[i], pos);
-            normX = wall->normal.x;
-            normY = wall->normal.y;
-            normZ = wall->normal.z;
-            originOffset = wall->originOffset;
+            normX = SURF_NX(wall);
+            normY = SURF_NY(wall);
+            normZ = SURF_NZ(wall);
+            originOffset = SURF_OO(wall);
             offset = normX * newPos[i][0] + normY * newPos[i][1] + normZ * newPos[i][2] + originOffset;
             offsetAbsolute = ABS2(offset);
             if (offsetAbsolute < radius) {
@@ -6157,7 +6157,7 @@ void surface_type_modes_thi(struct Camera *c) {
  * This behavior is exploitable, since the ranges assume that Mario must pass through the latter on
  * exit. Using hyperspeed, the earlier area can be directly exited from, keeping the changes it applies.
  */
-struct CameraTrigger sCamSL[] = {
+/* (calculator) const */ const struct CameraTrigger sCamSL[] = {
     { 1, cam_sl_snowman_head_8dir, 1119, 3584, 1125, 1177, 358, 358, -0x1D27 },
     // This trigger surrounds the previous one
     { 1, cam_sl_free_roam, 1119, 3584, 1125, 4096, 4096, 4096, -0x1D27 },
@@ -6169,7 +6169,7 @@ struct CameraTrigger sCamSL[] = {
  * The first helps the camera from getting stuck on the starting side, the latter aligns with the
  * tunnel. Both sides achieve their effect by editing the camera yaw.
  */
-struct CameraTrigger sCamTHI[] = {
+/* (calculator) const */ const struct CameraTrigger sCamTHI[] = {
     { 1, cam_thi_move_cam_through_tunnel, -4609, -2969, 6448, 100, 300, 300, 0 },
     { 1, cam_thi_look_through_tunnel,     -4809, -2969, 6448, 100, 300, 300, 0 },
     NULL_TRIGGER
@@ -6179,7 +6179,7 @@ struct CameraTrigger sCamTHI[] = {
  * The HMC triggers are mostly for warping the camera below platforms, but the second trigger is used to
  * start the cutscene for entering the CotMC pool.
  */
-struct CameraTrigger sCamHMC[] = {
+/* (calculator) const */ const struct CameraTrigger sCamHMC[] = {
     { 1, cam_hmc_enter_maze, 1996, 102, 0, 205, 100, 205, 0 },
     { 1, cam_castle_hmc_start_pool_cutscene, 3350, -4689, 4800, 600, 50, 600, 0 },
     { 1, cam_hmc_elevator_black_hole, -3278, 1236, 1379, 358, 200, 358, 0 },
@@ -6194,7 +6194,7 @@ struct CameraTrigger sCamHMC[] = {
  * setting close mode in the middle of the pyramid, and setting the boss fight camera mode to outward
  * radial.
  */
-struct CameraTrigger sCamSSL[] = {
+/* (calculator) const */ const struct CameraTrigger sCamSSL[] = {
     { 1, cam_ssl_enter_pyramid_top, -2048, 1080, -1024, 150, 150, 150, 0 },
     { 2, cam_ssl_pyramid_center, 0, -104, -104, 1248, 1536, 2950, 0 },
     { 2, cam_ssl_pyramid_center, 0, 2500, 256, 515, 5000, 515, 0 },
@@ -6206,7 +6206,7 @@ struct CameraTrigger sCamSSL[] = {
  * The RR triggers are for changing between fixed and 8 direction mode when entering / leaving the building at
  * the end of the ride.
  */
-struct CameraTrigger sCamRR[] = {
+/* (calculator) const */ const struct CameraTrigger sCamRR[] = {
     { 1, cam_rr_exit_building_side, -4197, 3819, -3087, 1769, 1490, 342, 0 },
     { 1, cam_rr_enter_building_side, -4197, 3819, -3771, 769, 490, 342, 0 },
     { 1, cam_rr_enter_building_window, -5603, 4834, -5209, 300, 600, 591, 0 },
@@ -6232,7 +6232,7 @@ struct CameraTrigger sCamBOB[] = {
 /**
  * The CotMC trigger is only used to prevent fix Lakitu in place when Mario exits through the waterfall.
  */
-struct CameraTrigger sCamCotMC[] = {
+/* (calculator) const */ const struct CameraTrigger sCamCotMC[] = {
     { 1, cam_cotmc_exit_waterfall, 0, 1500, 3500, 550, 10000, 1500, 0 },
     NULL_TRIGGER
 };
@@ -6240,7 +6240,7 @@ struct CameraTrigger sCamCotMC[] = {
 /**
  * The CCM triggers are used to set the flag that says when Mario is in the slide shortcut.
  */
-struct CameraTrigger sCamCCM[] = {
+/* (calculator) const */ const struct CameraTrigger sCamCCM[] = {
     { 2, cam_ccm_enter_slide_shortcut, -4846, 2061, 27, 1229, 1342, 396, 0 },
     { 2, cam_ccm_leave_slide_shortcut, -6412, -3917, -6246, 307, 185, 132, 0 },
     NULL_TRIGGER
@@ -6253,7 +6253,7 @@ struct CameraTrigger sCamCCM[] = {
  * There are two triggers for looking up and down straight staircases when Mario is at the start,
  * and one trigger that starts the enter pool cutscene when Mario enters HMC.
  */
-struct CameraTrigger sCamCastle[] = {
+/* (calculator) const */ const struct CameraTrigger sCamCastle[] = {
     { 1, cam_castle_close_mode, -1100, 657, -1346, 300, 150, 300, 0 },
     { 1, cam_castle_enter_lobby, -1099, 657, -803, 300, 150, 300, 0 },
     { 1, cam_castle_close_mode, -2304, -264, -4072, 140, 150, 140, 0 },
@@ -6299,7 +6299,7 @@ struct CameraTrigger sCamCastle[] = {
  *
  * The triggers are also responsible for warping the camera below platforms.
  */
-struct CameraTrigger sCamBBH[] = {
+/* (calculator) const */ const struct CameraTrigger sCamBBH[] = {
     { 1, cam_bbh_enter_front_door, 742, 0, 2369, 200, 200, 200, 0 },
     { 1, cam_bbh_leave_front_door, 741, 0, 1827, 200, 200, 200, 0 },
     { 1, cam_bbh_room_1, 222, 0, 1458, 200, 200, 200, 0 },
@@ -6383,7 +6383,7 @@ struct CameraTrigger *sCameraTriggers[LEVEL_COUNT + 1] = {
 #undef STUB_LEVEL
 #undef DEFINE_LEVEL
 
-struct CutsceneSplinePoint sIntroStartToPipePosition[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sIntroStartToPipePosition[] = {
     { 0, 0, { 2122, 8762, 9114 } },  { 0, 0, { 2122, 8762, 9114 } },  { 1, 0, { 2122, 7916, 9114 } },
     { 1, 0, { 2122, 7916, 9114 } },  { 2, 0, { 957, 5166, 8613 } },   { 3, 0, { 589, 4338, 7727 } },
     { 4, 0, { 690, 3366, 6267 } },   { 5, 0, { -1600, 2151, 4955 } }, { 6, 0, { -1557, 232, 1283 } },
@@ -6394,7 +6394,7 @@ struct CutsceneSplinePoint sIntroStartToPipePosition[] = {
     { 0, 0, { 448, 136, 564 } },     { -1, 0, { 448, 136, 564 } }
 };
 
-struct CutsceneSplinePoint sIntroStartToPipeFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sIntroStartToPipeFocus[] = {
     { 0, 50, { 1753, 29800, 8999 } }, { 0, 50, { 1753, 29800, 8999 } },
     { 1, 50, { 1753, 8580, 8999 } },  { 1, 100, { 1753, 8580, 8999 } },
     { 2, 50, { 520, 5400, 8674 } },   { 3, 50, { 122, 4437, 7875 } },
@@ -6414,7 +6414,7 @@ struct CutsceneSplinePoint sIntroStartToPipeFocus[] = {
  * Mario jumps out of the pipe when the first dialog opens.  This table specifically updates the
  * camera's position.
  */
-struct CutsceneSplinePoint sIntroPipeToDialogPosition[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sIntroPipeToDialogPosition[] = {
     { 0, 0, { -785, 625, 4527 } },  { 1, 0, { -785, 625, 4527 } },  { 2, 0, { -1286, 644, 4376 } },
     { 3, 0, { -1286, 623, 4387 } }, { 4, 0, { -1286, 388, 3963 } }, { 5, 0, { -1286, 358, 4093 } },
     { 6, 0, { -1386, 354, 4159 } }, { 7, 0, { -1477, 306, 4223 } }, { 8, 0, { -1540, 299, 4378 } },
@@ -6443,21 +6443,21 @@ struct CutsceneSplinePoint sIntroPipeToDialogFocus[] = {
 };
 #endif
 
-struct CutsceneSplinePoint sEndingFlyToWindowPos[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sEndingFlyToWindowPos[] = {
     { 0, 0, { -86, 876, 640 } },   { 1, 0, { -86, 876, 610 } },   { 2, 0, { -66, 945, 393 } },
     { 3, 0, { -80, 976, 272 } },   { 4, 0, { -66, 1306, -36 } },  { 5, 0, { -70, 1869, -149 } },
     { 6, 0, { -10, 2093, -146 } }, { 7, 0, { -10, 2530, -248 } }, { 8, 0, { -10, 2530, -263 } },
     { 9, 0, { -10, 2530, -273 } }
 };
 
-struct CutsceneSplinePoint sEndingFlyToWindowFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sEndingFlyToWindowFocus[] = {
     { 0, 50, { -33, 889, -7 } },    { 1, 35, { -33, 889, -7 } },    { 2, 31, { -17, 1070, -193 } },
     { 3, 25, { -65, 1182, -272 } }, { 4, 20, { -64, 1559, -542 } }, { 5, 25, { -68, 2029, -677 } },
     { 6, 25, { -9, 2204, -673 } },  { 7, 25, { -8, 2529, -772 } },  { 8, 0, { -8, 2529, -772 } },
     { 9, 0, { -8, 2529, -772 } },   { -1, 0, { -8, 2529, -772 } }
 };
 
-struct CutsceneSplinePoint sEndingPeachDescentCamPos[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sEndingPeachDescentCamPos[] = {
     { 0, 50, { 1, 120, -1150 } },    { 1, 50, { 1, 120, -1150 } },    { 2, 40, { 118, 121, -1199 } },
     { 3, 40, { 147, 74, -1306 } },   { 4, 40, { 162, 95, -1416 } },   { 5, 40, { 25, 111, -1555 } },
     { 6, 40, { -188, 154, -1439 } }, { 7, 40, { -203, 181, -1242 } }, { 8, 40, { 7, 191, -1057 } },
@@ -6467,25 +6467,25 @@ struct CutsceneSplinePoint sEndingPeachDescentCamPos[] = {
     { 8, 0, { -6, 72, 574 } },       { -1, 0, { -6, 72, 574 } }
 };
 
-struct CutsceneSplinePoint sEndingMarioToPeachPos[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sEndingMarioToPeachPos[] = {
     { 0, 0, { -130, 1111, -1815 } }, { 1, 0, { -131, 1052, -1820 } }, { 2, 0, { -271, 1008, -1651 } },
     { 3, 0, { -439, 1043, -1398 } }, { 4, 0, { -433, 1040, -1120 } }, { 5, 0, { -417, 1040, -1076 } },
     { 6, 0, { -417, 1040, -1076 } }, { 7, 0, { -417, 1040, -1076 } }, { -1, 0, { -417, 1040, -1076 } }
 };
 
-struct CutsceneSplinePoint sEndingMarioToPeachFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sEndingMarioToPeachFocus[] = {
     { 0, 50, { -37, 1020, -1332 } }, { 1, 20, { -36, 1012, -1330 } }, { 2, 20, { -24, 1006, -1215 } },
     { 3, 20, { 28, 1002, -1224 } },  { 4, 24, { 45, 1013, -1262 } },  { 5, 35, { 34, 1000, -1287 } },
     { 6, 0, { 34, 1000, -1287 } },   { 7, 0, { 34, 1000, -1287 } },   { -1, 0, { 34, 1000, -1287 } }
 };
 
-struct CutsceneSplinePoint sEndingLookUpAtCastle[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sEndingLookUpAtCastle[] = {
     { 0, 50, { 200, 1066, -1414 } }, { 0, 50, { 200, 1066, -1414 } }, { 0, 30, { 198, 1078, -1412 } },
     { 0, 33, { 15, 1231, -1474 } },  { 0, 39, { -94, 1381, -1368 } }, { 0, 0, { -92, 1374, -1379 } },
     { 0, 0, { -92, 1374, -1379 } },  { -1, 0, { -92, 1374, -1379 } }
 };
 
-struct CutsceneSplinePoint sEndingLookAtSkyFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sEndingLookAtSkyFocus[] = {
 #ifdef VERSION_EU
     { 0, 50, { 484, 1368, -868 } }, { 0, 72, { 479, 1372, -872 } }, { 0, 50, { 351, 1817, -918 } },
 #else
@@ -6783,7 +6783,7 @@ s32 rotate_camera_around_walls(struct Camera *c, Vec3f cPos, s16 *avoidYaw, s16 
                     status = 1;
                     wall = colData.walls[colData.numWalls - 1];
                     // wallYaw is parallel to the wall, not perpendicular
-                    wallYaw = atan2s(wall->normal.z, wall->normal.x) + DEGREES(90);
+                    wallYaw = atan2s(SURF_NZ(wall), SURF_NX(wall)) + DEGREES(90);
                     // Calculate the avoid direction. The function returns the opposite direction so add 180
                     // degrees.
                     *avoidYaw = calc_avoid_yaw(yawFromMario, wallYaw) + DEGREES(180);
@@ -6799,7 +6799,7 @@ s32 rotate_camera_around_walls(struct Camera *c, Vec3f cPos, s16 *avoidYaw, s16 
 
             if (find_wall_collisions(&colData) != 0) {
                 wall = colData.walls[colData.numWalls - 1];
-                horWallNorm = atan2s(wall->normal.z, wall->normal.x);
+                horWallNorm = atan2s(SURF_NZ(wall), SURF_NX(wall));
                 wallYaw = horWallNorm + DEGREES(90);
                 // If Mario would be blocked by the surface, then avoid it
                 if ((is_range_behind_surface(sMarioCamState->pos, cPos, wall, yawRange, SURFACE_WALL_MISC) == 0)
@@ -9681,7 +9681,7 @@ BAD_RETURN(s32) cutscene_end_waving_start(UNUSED struct Camera *c) {
 }
 
 // 3rd part of data
-struct CutsceneSplinePoint gIntroLakituStartToPipeFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint gIntroLakituStartToPipeFocus[] = {
     { 0, 32, { 58, -250, 346 } },    { 1, 50, { -159, -382, 224 } }, { 2, 37, { 0, -277, 237 } },
     { 3, 15, { 1, -44, 245 } },      { 4, 35, { 0, -89, 228 } },     { 5, 15, { 28, 3, 259 } },
     { 6, 25, { -38, -201, 371 } },   { 7, 20, { -642, 118, 652 } },  { 8, 25, { 103, -90, 861 } },
@@ -9696,7 +9696,7 @@ struct CutsceneSplinePoint gIntroLakituStartToPipeFocus[] = {
     { 0, 15, { -227, 511, 1550 } },  { -1, 15, { -227, 511, 1600 } }
 };
 
-struct CutsceneSplinePoint gIntroLakituStartToPipeOffsetFromCamera[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint gIntroLakituStartToPipeOffsetFromCamera[] = {
     { 0, 0, { -46, 87, -15 } },   { 1, 0, { -38, 91, -11 } },  { 2, 0, { -31, 93, -13 } },
     { 3, 0, { -50, 84, -16 } },   { 4, 0, { -52, 83, -17 } },  { 5, 0, { -10, 99, 3 } },
     { 6, 0, { -54, 83, -10 } },   { 7, 0, { -31, 85, -40 } },  { 8, 0, { -34, 91, 19 } },
@@ -9711,13 +9711,13 @@ struct CutsceneSplinePoint gIntroLakituStartToPipeOffsetFromCamera[] = {
     { 33, 0, { 51, -11, 84 } },   { -1, 0, { 51, -11, 84 } }
 };
 
-struct CutsceneSplinePoint gEndWavingPos[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint gEndWavingPos[] = {
     { 0, 0, { -5, 975, -917 } },    { 0, 0, { -5, 975, -917 } },    { 0, 0, { -5, 975, -917 } },
     { 0, 0, { -76, 1067, 742 } },   { 0, 0, { -105, 1576, 3240 } }, { 0, 0, { -177, 1709, 5586 } },
     { 0, 0, { -177, 1709, 5586 } }, { 0, 0, { -177, 1709, 5586 } }, { 0, 0, { -177, 1709, 5586 } }
 };
 
-struct CutsceneSplinePoint gEndWavingFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint gEndWavingFocus[] = {
     { 0, 50, { 18, 1013, -1415 } }, { 0, 100, { 17, 1037, -1412 } }, { 0, 100, { 16, 1061, -1408 } },
     { 0, 100, { -54, 1053, 243 } }, { 0, 100, { -84, 1575, 2740 } }, { 0, 50, { -156, 1718, 5086 } },
     { 0, 0, { -156, 1718, 5086 } }, { 0, 0, { -156, 1718, 5086 } },  { 0, 0, { -156, 1718, 5086 } }
@@ -9737,46 +9737,46 @@ BAD_RETURN(s32) cutscene_credits_reset_spline(UNUSED struct Camera *c) {
     cutscene_reset_spline();
 }
 
-extern struct CutsceneSplinePoint sBoBCreditsSplinePositions[];
-extern struct CutsceneSplinePoint sBoBCreditsSplineFocus[];
-extern struct CutsceneSplinePoint sWFCreditsSplinePositions[];
-extern struct CutsceneSplinePoint sWFCreditsSplineFocus[];
-extern struct CutsceneSplinePoint sJRBCreditsSplinePositions[];
-extern struct CutsceneSplinePoint sJRBCreditsSplineFocus[];
-extern struct CutsceneSplinePoint sCCMSlideCreditsSplinePositions[];
-extern struct CutsceneSplinePoint sCCMSlideCreditsSplineFocus[];
-extern struct CutsceneSplinePoint sBBHCreditsSplinePositions[];
-extern struct CutsceneSplinePoint sBBHCreditsSplineFocus[];
-extern struct CutsceneSplinePoint sHMCCreditsSplinePositions[];
-extern struct CutsceneSplinePoint sHMCCreditsSplineFocus[];
-extern struct CutsceneSplinePoint sTHIWigglerCreditsSplinePositions[];
-extern struct CutsceneSplinePoint sTHIWigglerCreditsSplineFocus[];
-extern struct CutsceneSplinePoint sVolcanoCreditsSplinePositions[];
-extern struct CutsceneSplinePoint sVolcanoCreditsSplineFocus[];
-extern struct CutsceneSplinePoint sSSLCreditsSplinePositions[];
-extern struct CutsceneSplinePoint sSSLCreditsSplineFocus[];
-extern struct CutsceneSplinePoint sDDDCreditsSplinePositions[];
-extern struct CutsceneSplinePoint sDDDCreditsSplineFocus[];
-extern struct CutsceneSplinePoint sSLCreditsSplinePositions[];
-extern struct CutsceneSplinePoint sSLCreditsSplineFocus[];
-extern struct CutsceneSplinePoint sWDWCreditsSplinePositions[];
-extern struct CutsceneSplinePoint sWDWCreditsSplineFocus[];
-extern struct CutsceneSplinePoint sTTMCreditsSplinePositions[];
-extern struct CutsceneSplinePoint sTTMCreditsSplineFocus[];
-extern struct CutsceneSplinePoint sTHIHugeCreditsSplinePositions[];
-extern struct CutsceneSplinePoint sTHIHugeCreditsSplineFocus[];
-extern struct CutsceneSplinePoint sTTCCreditsSplinePositions[];
-extern struct CutsceneSplinePoint sTTCCreditsSplineFocus[];
-extern struct CutsceneSplinePoint sRRCreditsSplinePositions[];
-extern struct CutsceneSplinePoint sRRCreditsSplineFocus[];
-extern struct CutsceneSplinePoint sSACreditsSplinePositions[];
-extern struct CutsceneSplinePoint sSACreditsSplineFocus[];
-extern struct CutsceneSplinePoint sCotMCCreditsSplinePositions[];
-extern struct CutsceneSplinePoint sCotMCCreditsSplineFocus[];
-extern struct CutsceneSplinePoint sDDDSubCreditsSplinePositions[];
-extern struct CutsceneSplinePoint sDDDSubCreditsSplineFocus[];
-extern struct CutsceneSplinePoint sCCMOutsideCreditsSplinePositions[];
-extern struct CutsceneSplinePoint sCCMOutsideCreditsSplineFocus[];
+extern const struct CutsceneSplinePoint sBoBCreditsSplinePositions[];
+extern const struct CutsceneSplinePoint sBoBCreditsSplineFocus[];
+extern const struct CutsceneSplinePoint sWFCreditsSplinePositions[];
+extern const struct CutsceneSplinePoint sWFCreditsSplineFocus[];
+extern const struct CutsceneSplinePoint sJRBCreditsSplinePositions[];
+extern const struct CutsceneSplinePoint sJRBCreditsSplineFocus[];
+extern const struct CutsceneSplinePoint sCCMSlideCreditsSplinePositions[];
+extern const struct CutsceneSplinePoint sCCMSlideCreditsSplineFocus[];
+extern const struct CutsceneSplinePoint sBBHCreditsSplinePositions[];
+extern const struct CutsceneSplinePoint sBBHCreditsSplineFocus[];
+extern const struct CutsceneSplinePoint sHMCCreditsSplinePositions[];
+extern const struct CutsceneSplinePoint sHMCCreditsSplineFocus[];
+extern const struct CutsceneSplinePoint sTHIWigglerCreditsSplinePositions[];
+extern const struct CutsceneSplinePoint sTHIWigglerCreditsSplineFocus[];
+extern const struct CutsceneSplinePoint sVolcanoCreditsSplinePositions[];
+extern const struct CutsceneSplinePoint sVolcanoCreditsSplineFocus[];
+extern const struct CutsceneSplinePoint sSSLCreditsSplinePositions[];
+extern const struct CutsceneSplinePoint sSSLCreditsSplineFocus[];
+extern const struct CutsceneSplinePoint sDDDCreditsSplinePositions[];
+extern const struct CutsceneSplinePoint sDDDCreditsSplineFocus[];
+extern const struct CutsceneSplinePoint sSLCreditsSplinePositions[];
+extern const struct CutsceneSplinePoint sSLCreditsSplineFocus[];
+extern const struct CutsceneSplinePoint sWDWCreditsSplinePositions[];
+extern const struct CutsceneSplinePoint sWDWCreditsSplineFocus[];
+extern const struct CutsceneSplinePoint sTTMCreditsSplinePositions[];
+extern const struct CutsceneSplinePoint sTTMCreditsSplineFocus[];
+extern const struct CutsceneSplinePoint sTHIHugeCreditsSplinePositions[];
+extern const struct CutsceneSplinePoint sTHIHugeCreditsSplineFocus[];
+extern const struct CutsceneSplinePoint sTTCCreditsSplinePositions[];
+extern const struct CutsceneSplinePoint sTTCCreditsSplineFocus[];
+extern const struct CutsceneSplinePoint sRRCreditsSplinePositions[];
+extern const struct CutsceneSplinePoint sRRCreditsSplineFocus[];
+extern const struct CutsceneSplinePoint sSACreditsSplinePositions[];
+extern const struct CutsceneSplinePoint sSACreditsSplineFocus[];
+extern const struct CutsceneSplinePoint sCotMCCreditsSplinePositions[];
+extern const struct CutsceneSplinePoint sCotMCCreditsSplineFocus[];
+extern const struct CutsceneSplinePoint sDDDSubCreditsSplinePositions[];
+extern const struct CutsceneSplinePoint sDDDSubCreditsSplineFocus[];
+extern const struct CutsceneSplinePoint sCCMOutsideCreditsSplinePositions[];
+extern const struct CutsceneSplinePoint sCCMOutsideCreditsSplineFocus[];
 
 /**
  * Follow splines through the courses of the game.
@@ -10367,7 +10367,7 @@ BAD_RETURN(s32) cutscene_door_mode(struct Camera *c) {
 /**
  * Cutscene that plays when Mario beats the game.
  */
-struct Cutscene sCutsceneEnding[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneEnding[] = {
     { cutscene_ending_mario_fall, 170 },
     { cutscene_ending_mario_land, 70 },
 #ifdef VERSION_EU
@@ -10405,12 +10405,12 @@ struct Cutscene sCutsceneEnding[] = {
 /**
  * Cutscene that plays when Mario collects the grand star from bowser.
  */
-struct Cutscene sCutsceneGrandStar[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneGrandStar[] = {
     { cutscene_grand_star, 360 },
     { cutscene_grand_star_fly, CUTSCENE_LOOP }
 };
 
-struct Cutscene sCutsceneUnused[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneUnused[] = {
     { cutscene_unused_start, 1 },
     { cutscene_unused_loop, CUTSCENE_LOOP }
 };
@@ -10418,7 +10418,7 @@ struct Cutscene sCutsceneUnused[] = {
 /**
  * Cutscene that plays when Mario enters a door that warps to another area.
  */
-struct Cutscene sCutsceneDoorWarp[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneDoorWarp[] = {
     { cutscene_door_start, 1 },
     { cutscene_door_loop, CUTSCENE_LOOP }
 };
@@ -10426,21 +10426,21 @@ struct Cutscene sCutsceneDoorWarp[] = {
 /**
  * Cutscene that plays after the credits, when Lakitu is flying away from the castle.
  */
-struct Cutscene sCutsceneEndWaving[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneEndWaving[] = {
     { cutscene_end_waving, CUTSCENE_LOOP }
 };
 
 /**
  * The game's credits.
  */
-struct Cutscene sCutsceneCredits[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneCredits[] = {
     { cutscene_credits, CUTSCENE_LOOP }
 };
 
 /**
  * Cutscene that plays when Mario pulls open a door.
  */
-struct Cutscene sCutsceneDoorPull[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneDoorPull[] = {
     { cutscene_door_start, 1 },
     { cutscene_door_fix_cam, 30 },
     { cutscene_door_move_behind_mario, 1 },
@@ -10451,7 +10451,7 @@ struct Cutscene sCutsceneDoorPull[] = {
 /**
  * Cutscene that plays when Mario pushes open a door.
  */
-struct Cutscene sCutsceneDoorPush[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneDoorPush[] = {
     { cutscene_door_start, 1 },
     { cutscene_door_fix_cam, 20 },
     { cutscene_door_move_behind_mario, 1 },
@@ -10463,7 +10463,7 @@ struct Cutscene sCutsceneDoorPush[] = {
  * Cutscene that plays when Mario pulls open a door that has some special mode requirement on the other
  * side.
  */
-struct Cutscene sCutsceneDoorPullMode[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneDoorPullMode[] = {
     { cutscene_door_start, 1 },
     { cutscene_door_fix_cam, 30 },
     { cutscene_door_mode, CUTSCENE_LOOP }
@@ -10473,7 +10473,7 @@ struct Cutscene sCutsceneDoorPullMode[] = {
  * Cutscene that plays when Mario pushes open a door that has some special mode requirement on the other
  * side.
  */
-struct Cutscene sCutsceneDoorPushMode[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneDoorPushMode[] = {
     { cutscene_door_start, 1 },
     { cutscene_door_fix_cam, 20 },
     { cutscene_door_mode, CUTSCENE_LOOP }
@@ -10482,7 +10482,7 @@ struct Cutscene sCutsceneDoorPushMode[] = {
 /**
  * Cutscene that plays when Mario enters the cannon and it rises out of the hole.
  */
-struct Cutscene sCutsceneEnterCannon[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneEnterCannon[] = {
     { cutscene_enter_cannon_start, 1 },
     { cutscene_enter_cannon_raise, 121 },
     { cutscene_enter_cannon_end, 0 }
@@ -10491,7 +10491,7 @@ struct Cutscene sCutsceneEnterCannon[] = {
 /**
  * Cutscene that plays when a star spawns from ie a box or after a boss fight.
  */
-struct Cutscene sCutsceneStarSpawn[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneStarSpawn[] = {
     { cutscene_star_spawn, CUTSCENE_LOOP },
     { cutscene_star_spawn_back, 15 },
     { cutscene_star_spawn_end, 0 }
@@ -10501,7 +10501,7 @@ struct Cutscene sCutsceneStarSpawn[] = {
  * Cutscene for the red coin star spawning. Compared to a regular star, this cutscene can warp long
  * distances.
  */
-struct Cutscene sCutsceneRedCoinStarSpawn[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneRedCoinStarSpawn[] = {
     { cutscene_red_coin_star, CUTSCENE_LOOP },
     { cutscene_red_coin_star_end, 0 }
 };
@@ -10509,14 +10509,14 @@ struct Cutscene sCutsceneRedCoinStarSpawn[] = {
 /**
  * Cutscene that plays when Mario enters a course painting.
  */
-struct Cutscene sCutsceneEnterPainting[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneEnterPainting[] = {
     { cutscene_enter_painting, CUTSCENE_LOOP }
 };
 
 /**
  * Cutscene that plays when Mario dies and warps back to the castle.
  */
-struct Cutscene sCutsceneDeathExit[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneDeathExit[] = {
     { cutscene_exit_painting, 118 },
     { cutscene_exit_painting_end, 0 }
 };
@@ -10524,12 +10524,12 @@ struct Cutscene sCutsceneDeathExit[] = {
 /**
  * Cutscene that plays when Mario warps to the castle after collecting a star.
  */
-struct Cutscene sCutsceneExitPaintingSuccess[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneExitPaintingSuccess[] = {
     { cutscene_exit_painting, 180 },
     { cutscene_exit_painting_end, 0 }
 };
 
-struct Cutscene sCutsceneUnusedExit[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneUnusedExit[] = {
     { cutscene_unused_exit_start, 1 },
     { cutscene_unused_exit_focus_mario, 60 },
     { cutscene_exit_painting_end, 0 }
@@ -10538,7 +10538,7 @@ struct Cutscene sCutsceneUnusedExit[] = {
 /**
  * The intro of the game. Peach reads her letter and Lakitu flies down to Mario's warp pipe.
  */
-struct Cutscene sCutsceneIntroPeach[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneIntroPeach[] = {
     { cutscene_intro_peach_letter, CUTSCENE_LOOP },
     { cutscene_intro_peach_reset_fov, 35 },
 #ifdef VERSION_EU
@@ -10553,7 +10553,7 @@ struct Cutscene sCutsceneIntroPeach[] = {
 /**
  * Cutscene that plays when a cannon door is opened.
  */
-struct Cutscene sCutscenePrepareCannon[] = {
+/* (calculator) const */ const struct Cutscene sCutscenePrepareCannon[] = {
     { cutscene_prepare_cannon, 170 },
     { cutscene_prepare_cannon_end, 0 }
 };
@@ -10561,7 +10561,7 @@ struct Cutscene sCutscenePrepareCannon[] = {
 /**
  * Cutscene that plays when Mario enters the castle grounds after leaving CotMC through the waterfall.
  */
-struct Cutscene sCutsceneExitWaterfall[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneExitWaterfall[] = {
     { cutscene_exit_waterfall, 52 },
     { cutscene_exit_to_castle_grounds_end, 0 }
 };
@@ -10569,7 +10569,7 @@ struct Cutscene sCutsceneExitWaterfall[] = {
 /**
  * Cutscene that plays when Mario falls from WMotR.
  */
-struct Cutscene sCutsceneFallToCastleGrounds[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneFallToCastleGrounds[] = {
     { cutscene_exit_fall_to_castle_grounds, 73 },
     { cutscene_exit_to_castle_grounds_end, 0 }
 };
@@ -10577,7 +10577,7 @@ struct Cutscene sCutsceneFallToCastleGrounds[] = {
 /**
  * Cutscene that plays when Mario enters the pyramid through the hole at the top.
  */
-struct Cutscene sCutsceneEnterPyramidTop[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneEnterPyramidTop[] = {
     { cutscene_enter_pyramid_top, 90 },
     { cutscene_exit_to_castle_grounds_end, 0 }
 };
@@ -10585,7 +10585,7 @@ struct Cutscene sCutsceneEnterPyramidTop[] = {
 /**
  * Unused cutscene for when the pyramid explodes.
  */
-struct Cutscene sCutscenePyramidTopExplode[] = {
+/* (calculator) const */ const struct Cutscene sCutscenePyramidTopExplode[] = {
     { cutscene_mario_dialog, CUTSCENE_LOOP },
     { cutscene_pyramid_top_explode, 150 },
     { cutscene_pyramid_top_explode_end, 0 }
@@ -10594,14 +10594,14 @@ struct Cutscene sCutscenePyramidTopExplode[] = {
 /**
  * Cutscene that plays when Mario dies while standing, or from electrocution.
  */
-struct Cutscene sCutsceneStandingDeath[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneStandingDeath[] = {
     { cutscene_death_standing, CUTSCENE_LOOP }
 };
 
 /**
  * Cutscene that plays when Mario enters HMC or CotMC.
  */
-struct Cutscene sCutsceneEnterPool[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneEnterPool[] = {
     { cutscene_enter_pool, 100 },
     { cutscene_exit_to_castle_grounds_end, 0 }
 };
@@ -10609,21 +10609,21 @@ struct Cutscene sCutsceneEnterPool[] = {
 /**
  * Cutscene that plays when Mario dies on his stomach.
  */
-struct Cutscene sCutsceneDeathStomach[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneDeathStomach[] = {
     { cutscene_death_stomach, CUTSCENE_LOOP }
 };
 
 /**
  * Cutscene that plays when Mario dies on his back.
  */
-struct Cutscene sCutsceneDeathOnBack[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneDeathOnBack[] = {
     { cutscene_bbh_death, CUTSCENE_LOOP }
 };
 
 /**
  * Cutscene that plays when Mario dies in quicksand.
  */
-struct Cutscene sCutsceneQuicksandDeath[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneQuicksandDeath[] = {
     { cutscene_quicksand_death, CUTSCENE_LOOP },
 };
 
@@ -10637,14 +10637,14 @@ struct Cutscene sCutsceneWaterDeath[] = {
 /**
  * Cutscene that plays when Mario suffocates.
  */
-struct Cutscene sCutsceneSuffocation[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneSuffocation[] = {
     { cutscene_suffocation, CUTSCENE_LOOP }
 };
 
 /**
  * Cutscene that plays when entering bowser's arenas.
  */
-struct Cutscene sCutsceneEnterBowserArena[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneEnterBowserArena[] = {
     { cutscene_bowser_arena, 180 },
     { cutscene_bowser_arena_dialog, CUTSCENE_LOOP },
     { cutscene_bowser_arena_end, 0 }
@@ -10657,7 +10657,7 @@ struct Cutscene sCutsceneEnterBowserArena[] = {
  * For the default dance, the camera moves closer to Mario, then stays in place.
  * For the rotate dance, the camera moves closer and rotates clockwise around Mario.
  */
-struct Cutscene sCutsceneDanceDefaultRotate[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneDanceDefaultRotate[] = {
     { cutscene_dance_default_rotate, CUTSCENE_LOOP }
 };
 
@@ -10665,7 +10665,7 @@ struct Cutscene sCutsceneDanceDefaultRotate[] = {
  * Star dance cutscene.
  * The camera moves closer and rotates clockwise around Mario.
  */
-struct Cutscene sCutsceneDanceFlyAway[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneDanceFlyAway[] = {
     { cutscene_dance_fly_away, CUTSCENE_LOOP }
 };
 
@@ -10673,7 +10673,7 @@ struct Cutscene sCutsceneDanceFlyAway[] = {
  * Star dance cutscene.
  * The camera moves in for a closeup on Mario. Used in tight spaces and underwater.
  */
-struct Cutscene sCutsceneDanceCloseup[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneDanceCloseup[] = {
     { cutscene_dance_closeup, CUTSCENE_LOOP }
 };
 
@@ -10681,21 +10681,21 @@ struct Cutscene sCutsceneDanceCloseup[] = {
  * Star dance cutscene.
  * The camera moves closer and rotates clockwise around Mario.
  */
-struct Cutscene sCutsceneKeyDance[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneKeyDance[] = {
     { cutscene_key_dance, CUTSCENE_LOOP }
 };
 
 /**
  * Cutscene that plays when Mario presses a cap switch.
  */
-struct Cutscene sCutsceneCapSwitchPress[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneCapSwitchPress[] = {
     { cutscene_cap_switch_press, CUTSCENE_LOOP }
 };
 
 /**
  * Cutscene that plays when Mario opens a sliding star door.
  */
-struct Cutscene sCutsceneSlidingDoorsOpen[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneSlidingDoorsOpen[] = {
     { cutscene_sliding_doors_open, 50 },
     { cutscene_double_doors_end, 0 }
 };
@@ -10703,7 +10703,7 @@ struct Cutscene sCutsceneSlidingDoorsOpen[] = {
 /**
  * Cutscene that plays when Mario unlocks the basement or upstairs key door.
  */
-struct Cutscene sCutsceneUnlockKeyDoor[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneUnlockKeyDoor[] = {
     { cutscene_unlock_key_door, 200 },
     { cutscene_double_doors_end, 0 }
 };
@@ -10711,7 +10711,7 @@ struct Cutscene sCutsceneUnlockKeyDoor[] = {
 /**
  * Cutscene that plays when Mario exits bowser's arena after getting the key.
  */
-struct Cutscene sCutsceneExitBowserSuccess[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneExitBowserSuccess[] = {
     { cutscene_exit_bowser_succ, 190 },
     { cutscene_non_painting_end, 0 }
 };
@@ -10719,7 +10719,7 @@ struct Cutscene sCutsceneExitBowserSuccess[] = {
 /**
  * Unused cutscene for when Mario dies in bowser's arena. Instead, Mario just respawns at the warp pipe.
  */
-struct Cutscene sCutsceneExitBowserDeath[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneExitBowserDeath[] = {
     { cutscene_exit_bowser_death, 120 },
     { cutscene_non_painting_end, 0 }
 };
@@ -10727,7 +10727,7 @@ struct Cutscene sCutsceneExitBowserDeath[] = {
 /**
  * Cutscene that plays when Mario exits a non-painting course, like HMC.
  */
-struct Cutscene sCutsceneExitSpecialSuccess[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneExitSpecialSuccess[] = {
     { cutscene_exit_non_painting_succ, 163 },
     { cutscene_non_painting_end, 0 }
 };
@@ -10735,7 +10735,7 @@ struct Cutscene sCutsceneExitSpecialSuccess[] = {
 /**
  * Cutscene that plays when Mario exits from dying in a non-painting course, like HMC.
  */
-struct Cutscene sCutsceneNonPaintingDeath[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneNonPaintingDeath[] = {
     { cutscene_non_painting_death, 120 },
     { cutscene_non_painting_end, 0 }
 };
@@ -10743,7 +10743,7 @@ struct Cutscene sCutsceneNonPaintingDeath[] = {
 /**
  * Cutscene that plays when Mario talks to a creature.
  */
-struct Cutscene sCutsceneDialog[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneDialog[] = {
     { cutscene_dialog, CUTSCENE_LOOP },
     { cutscene_dialog_set_flag, 12 },
     { cutscene_dialog_end, 0 }
@@ -10752,7 +10752,7 @@ struct Cutscene sCutsceneDialog[] = {
 /**
  * Cutscene that plays when Mario reads a sign or message.
  */
-struct Cutscene sCutsceneReadMessage[] = {
+/* (calculator) const */ const struct Cutscene sCutsceneReadMessage[] = {
     { cutscene_read_message, CUTSCENE_LOOP },
     { cutscene_read_message_set_flag, 15 },
     { cutscene_read_message_end, 0 }
@@ -10785,7 +10785,7 @@ struct Cutscene sCutsceneReadMessage[] = {
  * 3: Bowser keys and the grand star
  * 4: Default, used for 100 coin stars, 8 red coin stars in bowser levels, and secret stars
  */
-u8 sDanceCutsceneIndexTable[][4] = {
+/* (calculator) const */ const u8 sDanceCutsceneIndexTable[][4] = {
     #include "levels/course_defines.h"
     { 0x44, 0x44, 0x44, 0x04 }, // (26) Why go to all this trouble to save bytes and do this?!
 };
@@ -10806,7 +10806,7 @@ u8 sDanceCutsceneIndexTable[][4] = {
  * Then the value of (1 << shift) is &'d with the level's mask,
  * and if the result is non-zero, the camera will zoom out.
  */
-u8 sZoomOutAreaMasks[] = {
+/* (calculator) const */ const u8 sZoomOutAreaMasks[] = {
     ZOOMOUT_AREA_MASK(0,0,0,0, 0,0,0,0), // Unused         | Unused
     ZOOMOUT_AREA_MASK(0,0,0,0, 0,0,0,0), // Unused         | Unused
     ZOOMOUT_AREA_MASK(0,0,0,0, 1,0,0,0), // BBH            | CCM
@@ -10836,7 +10836,7 @@ STATIC_ASSERT(ARRAY_COUNT(sZoomOutAreaMasks) - 1 == LEVEL_MAX / 2, "Make sure yo
  * TODO: Separate these into their own file(s)
  */
 
-struct CutsceneSplinePoint sBoBCreditsSplinePositions[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sBoBCreditsSplinePositions[] = {
     { 1, 0, { 5984, 3255, 4975 } },
     { 2, 0, { 4423, 3315, 1888 } },
     { 3, 0, { 776, 2740, -1825 } },
@@ -10844,7 +10844,7 @@ struct CutsceneSplinePoint sBoBCreditsSplinePositions[] = {
     { -1, 0, { 741, 4387, -5474 } }
 };
 
-struct CutsceneSplinePoint sBoBCreditsSplineFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sBoBCreditsSplineFocus[] = {
     { 0, 30, { 5817, 3306, 4507 } },
     { 0, 40, { 4025, 3378, 1593 } },
     { 0, 50, { 1088, 2652, -2205 } },
@@ -10852,7 +10852,7 @@ struct CutsceneSplinePoint sBoBCreditsSplineFocus[] = {
     { -1, 60, { 1231, 4400, -5649 } }
 };
 
-struct CutsceneSplinePoint sWFCreditsSplinePositions[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sWFCreditsSplinePositions[] = {
     { 0, 0, { -301, 1399, 2643 } },
     { 0, 0, { -182, 2374, 4572 } },
     { 0, 0, { 4696, 3864, 413 } },
@@ -10860,7 +10860,7 @@ struct CutsceneSplinePoint sWFCreditsSplinePositions[] = {
     { -1, 0, { 1783, 4891, -1516 } }
 };
 
-struct CutsceneSplinePoint sWFCreditsSplineFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sWFCreditsSplineFocus[] = {
     { 1, 30, { -249, 1484, 2153 } },
     { 2, 40, { -200, 2470, 4082 } },
     { 3, 40, { 4200, 3916, 370 } },
@@ -10868,7 +10868,7 @@ struct CutsceneSplinePoint sWFCreditsSplineFocus[] = {
     { -1, 40, { 1523, 4976, -1072 } }
 };
 
-struct CutsceneSplinePoint sJRBCreditsSplinePositions[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sJRBCreditsSplinePositions[] = {
     { 0, 0, { 5538, -4272, 2376 } },
     { 0, 0, { 5997, -3303, 2261 } },
     { 0, 0, { 6345, -3255, 2179 } },
@@ -10876,7 +10876,7 @@ struct CutsceneSplinePoint sJRBCreditsSplinePositions[] = {
     { -1, 0, { 6694, -3203, 2116 } }
 };
 
-struct CutsceneSplinePoint sJRBCreditsSplineFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sJRBCreditsSplineFocus[] = {
     { 0, 50, { 5261, -4683, 2443 } },
     { 0, 50, { 5726, -3675, 2456 } },
     { 0, 50, { 6268, -2817, 2409 } },
@@ -10884,7 +10884,7 @@ struct CutsceneSplinePoint sJRBCreditsSplineFocus[] = {
     { -1, 50, { 7186, -3153, 2041 } }
 };
 
-struct CutsceneSplinePoint sCCMSlideCreditsSplinePositions[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sCCMSlideCreditsSplinePositions[] = {
     { 0, 0, { -6324, 6745, -5626 } },
     { 1, 0, { -6324, 6745, -5626 } },
     { 2, 0, { -6108, 6762, -5770 } },
@@ -10892,7 +10892,7 @@ struct CutsceneSplinePoint sCCMSlideCreditsSplinePositions[] = {
     { -1, 0, { -5672, 6790, -5979 } }
 };
 
-struct CutsceneSplinePoint sCCMSlideCreditsSplineFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sCCMSlideCreditsSplineFocus[] = {
     { 0, 50, { -5911, 6758, -5908 } },
     { 1, 50, { -5911, 6758, -5908 } },
     { 2, 50, { -5652, 6814, -5968 } },
@@ -10900,21 +10900,21 @@ struct CutsceneSplinePoint sCCMSlideCreditsSplineFocus[] = {
     { -1, 50, { -5179, 6804, -6060 } }
 };
 
-struct CutsceneSplinePoint sBBHCreditsSplinePositions[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sBBHCreditsSplinePositions[] = {
     { 1, 0, { 1088, 341, 2447 } },
     { 2, 0, { 1338, 610, 2808 } },
     { 3, 0, { 2267, 1612, 2966 } },
     { -1, 0, { 2296, 1913, 2990 } }
 };
 
-struct CutsceneSplinePoint sBBHCreditsSplineFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sBBHCreditsSplineFocus[] = {
     { 1, 50, { 1160, 263, 1958 } },
     { 2, 50, { 1034, 472, 2436 } },
     { 3, 50, { 1915, 1833, 2688 } },
     { -1, 50, { 2134, 2316, 2742 } }
 };
 
-struct CutsceneSplinePoint sHMCCreditsSplinePositions[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sHMCCreditsSplinePositions[] = {
     { 1, 0, { -5952, 1807, -5882 } },
     { 2, 0, { -5623, 1749, -4863 } },
     { 3, 0, { -5472, 1955, -2520 } },
@@ -10922,7 +10922,7 @@ struct CutsceneSplinePoint sHMCCreditsSplinePositions[] = {
     { -1, 0, { -5547, 391, -721 } }
 };
 
-struct CutsceneSplinePoint sHMCCreditsSplineFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sHMCCreditsSplineFocus[] = {
     { 1, 210, { -5952, 1884, -6376 } },
     { 2, 58, { -5891, 1711, -5283 } },
     { 3, 30, { -5595, 1699, -2108 } },
@@ -10930,19 +10930,19 @@ struct CutsceneSplinePoint sHMCCreditsSplineFocus[] = {
     { -1, 31, { -5548, -85, -572 } }
 };
 
-struct CutsceneSplinePoint sTHIWigglerCreditsSplinePositions[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sTHIWigglerCreditsSplinePositions[] = {
     { 1, 0, { -1411, 2474, -1276 } },
     { 2, 0, { -1606, 2479, -434 } },
     { -1, 0, { -1170, 2122, 1337 } }
 };
 
-struct CutsceneSplinePoint sTHIWigglerCreditsSplineFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sTHIWigglerCreditsSplineFocus[] = {
     { 1, 50, { -1053, 2512, -928 } },
     { 2, 50, { -1234, 2377, -114 } },
     { -1, 50, { -758, 2147, 1054 } }
 };
 
-struct CutsceneSplinePoint sVolcanoCreditsSplinePositions[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sVolcanoCreditsSplinePositions[] = {
     { 0, 0, { -1445, 1094, 1617 } },
     { 0, 0, { -1509, 649, 871 } },
     { 0, 0, { -1133, 420, -248 } },
@@ -10951,7 +10951,7 @@ struct CutsceneSplinePoint sVolcanoCreditsSplinePositions[] = {
     { -1, 0, { 1274, 473, -275 } }
 };
 
-struct CutsceneSplinePoint sVolcanoCreditsSplineFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sVolcanoCreditsSplineFocus[] = {
     { 0, 50, { -1500, 757, 1251 } },
     { 0, 50, { -1401, 439, 431 } },
     { 0, 50, { -749, 270, -532 } },
@@ -10960,7 +10960,7 @@ struct CutsceneSplinePoint sVolcanoCreditsSplineFocus[] = {
     { -1, 50, { 1002, 460, -694 } }
 };
 
-struct CutsceneSplinePoint sSSLCreditsSplinePositions[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sSSLCreditsSplinePositions[] = {
     { 0, 0, { -4262, 4658, -5015 } },
     { 0, 0, { -3274, 2963, -4661 } },
     { 0, 0, { -2568, 812, -6528 } },
@@ -10969,7 +10969,7 @@ struct CutsceneSplinePoint sSSLCreditsSplinePositions[] = {
     { -1, 0, { 2724, 660, -6298 } }
 };
 
-struct CutsceneSplinePoint sSSLCreditsSplineFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sSSLCreditsSplineFocus[] = {
     { 0, 50, { -4083, 4277, -4745 } },
     { 0, 50, { -2975, 2574, -4759 } },
     { 0, 50, { -2343, 736, -6088 } },
@@ -10978,7 +10978,7 @@ struct CutsceneSplinePoint sSSLCreditsSplineFocus[] = {
     { -1, 50, { 2448, 612, -5884 } }
 };
 
-struct CutsceneSplinePoint sDDDCreditsSplinePositions[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sDDDCreditsSplinePositions[] = {
     { 0, 0, { -874, -4933, 366 } },
     { 0, 0, { -1463, -4782, 963 } },
     { 0, 0, { -1893, -4684, 1303 } },
@@ -10988,7 +10988,7 @@ struct CutsceneSplinePoint sDDDCreditsSplinePositions[] = {
     { -1, 0, { -4681, -1084, -623 } }
 };
 
-struct CutsceneSplinePoint sDDDCreditsSplineFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sDDDCreditsSplineFocus[] = {
     { 0, 50, { -1276, -4683, 622 } },
     { 0, 50, { -1858, -4407, 1097 } },
     { 0, 50, { -2324, -4332, 1318 } },
@@ -10998,35 +10998,35 @@ struct CutsceneSplinePoint sDDDCreditsSplineFocus[] = {
     { -1, 50, { -4665, -664, -1007 } }
 };
 
-struct CutsceneSplinePoint sSLCreditsSplinePositions[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sSLCreditsSplinePositions[] = {
     { 0, 0, { 939, 6654, 6196 } },
     { 0, 0, { 1873, 5160, 3714 } },
     { 0, 0, { 3120, 3564, 1314 } },
     { -1, 0, { 2881, 4231, 573 } }
 };
 
-struct CutsceneSplinePoint sSLCreditsSplineFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sSLCreditsSplineFocus[] = {
     { 0, 50, { 875, 6411, 5763 } },
     { 0, 50, { 1659, 4951, 3313 } },
     { 0, 50, { 2630, 3565, 1215 } },
     { -1, 50, { 2417, 4056, 639 } }
 };
 
-struct CutsceneSplinePoint sWDWCreditsSplinePositions[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sWDWCreditsSplinePositions[] = {
     { 0, 0, { 3927, 2573, 3685 } },
     { 0, 0, { 2389, 2054, 1210 } },
     { 0, 0, { 2309, 2069, 22 } },
     { -1, 0, { 2122, 2271, -979 } }
 };
 
-struct CutsceneSplinePoint sWDWCreditsSplineFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sWDWCreditsSplineFocus[] = {
     { 0, 50, { 3637, 2460, 3294 } },
     { 0, 50, { 1984, 2067, 918 } },
     { 0, 50, { 1941, 2255, -261 } },
     { -1, 50, { 1779, 2587, -1158 } }
 };
 
-struct CutsceneSplinePoint sTTMCreditsSplinePositions[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sTTMCreditsSplinePositions[] = {
     { 0, 0, { 386, 2535, 644 } },
     { 0, 0, { 1105, 2576, 918 } },
     { 0, 0, { 3565, 2261, 2098 } },
@@ -11035,7 +11035,7 @@ struct CutsceneSplinePoint sTTMCreditsSplinePositions[] = {
     { -1, 0, { 3917, -3130, 3656 } }
 };
 
-struct CutsceneSplinePoint sTTMCreditsSplineFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sTTMCreditsSplineFocus[] = {
     { 1, 50, { 751, 2434, 318 } },
     { 2, 50, { 768, 2382, 603 } },
     { 3, 60, { 3115, 2086, 1969 } },
@@ -11044,7 +11044,7 @@ struct CutsceneSplinePoint sTTMCreditsSplineFocus[] = {
     { -1, 50, { 4172, -3385, 4001 } }
 };
 
-struct CutsceneSplinePoint sTHIHugeCreditsSplinePositions[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sTHIHugeCreditsSplinePositions[] = {
     { 0, 0, { 6990, -1000, -4858 } },
     { 0, 0, { 7886, -1055, 2878 } },
     { 0, 0, { 1952, -1481, 10920 } },
@@ -11054,7 +11054,7 @@ struct CutsceneSplinePoint sTHIHugeCreditsSplinePositions[] = {
     { -1, 0, { -3246, 416, 3286 } }
 };
 
-struct CutsceneSplinePoint sTHIHugeCreditsSplineFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sTHIHugeCreditsSplineFocus[] = {
     { 1, 70, { 7022, -965, -5356 } },
     { 2, 40, { 7799, -915, 2405 } },
     { 3, 60, { 1878, -1137, 10568 } },
@@ -11064,35 +11064,35 @@ struct CutsceneSplinePoint sTHIHugeCreditsSplineFocus[] = {
     { -1, 50, { -2875, 182, 3045 } }
 };
 
-struct CutsceneSplinePoint sTTCCreditsSplinePositions[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sTTCCreditsSplinePositions[] = {
     { 1, 0, { -1724, 277, -994 } },
     { 2, 0, { -1720, 456, -995 } },
     { 3, 0, { -1655, 810, -1014 } },
     { -1, 0, { -1753, 883, -1009 } }
 };
 
-struct CutsceneSplinePoint sTTCCreditsSplineFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sTTCCreditsSplineFocus[] = {
     { 1, 50, { -1554, 742, -1063 } },
     { 2, 50, { -1245, 571, -1102 } },
     { 3, 50, { -1220, 603, -1151 } },
     { -1, 50, { -1412, 520, -1053 } }
 };
 
-struct CutsceneSplinePoint sRRCreditsSplinePositions[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sRRCreditsSplinePositions[] = {
     { 0, 0, { -1818, 4036, 97 } },
     { 0, 0, { -575, 3460, -505 } },
     { 0, 0, { 1191, 3611, -1134 } },
     { -1, 0, { 2701, 3777, -3686 } }
 };
 
-struct CutsceneSplinePoint sRRCreditsSplineFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sRRCreditsSplineFocus[] = {
     { 0, 50, { -1376, 3885, -81 } },
     { 0, 50, { -146, 3343, -734 } },
     { 0, 50, { 1570, 3446, -1415 } },
     { -1, 50, { 2794, 3627, -3218 } }
 };
 
-struct CutsceneSplinePoint sSACreditsSplinePositions[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sSACreditsSplinePositions[] = {
     { 0, 0, { -295, -396, -585 } },
     { 1, 0, { -295, -396, -585 } },
     { 2, 0, { -292, -856, -573 } },
@@ -11100,7 +11100,7 @@ struct CutsceneSplinePoint sSACreditsSplinePositions[] = {
     { -1, 0, { 175, -856, -654 } }
 };
 
-struct CutsceneSplinePoint sSACreditsSplineFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sSACreditsSplineFocus[] = {
     { 0, 50, { -175, -594, -142 } },
     { 1, 50, { -175, -594, -142 } },
     { 2, 50, { -195, -956, -92 } },
@@ -11108,7 +11108,7 @@ struct CutsceneSplinePoint sSACreditsSplineFocus[] = {
     { -1, 50, { -307, -956, -537 } }
 };
 
-struct CutsceneSplinePoint sCotMCCreditsSplinePositions[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sCotMCCreditsSplinePositions[] = {
     { 0, 0, { -296, 495, 1607 } },
     { 0, 0, { -430, 541, 654 } },
     { 0, 0, { -466, 601, -359 } },
@@ -11116,7 +11116,7 @@ struct CutsceneSplinePoint sCotMCCreditsSplinePositions[] = {
     { -1, 0, { -95, 366, -2922 } }
 };
 
-struct CutsceneSplinePoint sCotMCCreditsSplineFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sCotMCCreditsSplineFocus[] = {
     { 0, 50, { -176, 483, 2092 } },
     { 0, 50, { -122, 392, 1019 } },
     { 0, 50, { -268, 450, -792 } },
@@ -11124,7 +11124,7 @@ struct CutsceneSplinePoint sCotMCCreditsSplineFocus[] = {
     { -1, 50, { -51, 355, -3420 } }
 };
 
-struct CutsceneSplinePoint sDDDSubCreditsSplinePositions[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sDDDSubCreditsSplinePositions[] = {
     { 0, 0, { 4656, 2171, 5028 } },
     { 0, 0, { 4548, 1182, 4596 } },
     { 0, 0, { 5007, 813, 3257 } },
@@ -11132,7 +11132,7 @@ struct CutsceneSplinePoint sDDDSubCreditsSplinePositions[] = {
     { -1, 0, { 4644, 774, 113 } }
 };
 
-struct CutsceneSplinePoint sDDDSubCreditsSplineFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sDDDSubCreditsSplineFocus[] = {
     { 0, 50, { 4512, 2183, 4549 } },
     { 0, 50, { 4327, 838, 4308 } },
     { 0, 50, { 4774, 749, 2819 } },
@@ -11140,14 +11140,14 @@ struct CutsceneSplinePoint sDDDSubCreditsSplineFocus[] = {
     { -1, 50, { 4194, 885, -75 } }
 };
 
-struct CutsceneSplinePoint sCCMOutsideCreditsSplinePositions[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sCCMOutsideCreditsSplinePositions[] = {
     { 1, 0, { 1427, -1387, 5409 } },
     { 2, 0, { -1646, -1536, 4526 } },
     { 3, 0, { -3852, -1448, 3913 } },
     { -1, 0, { -5199, -1366, 1886 } }
 };
 
-struct CutsceneSplinePoint sCCMOutsideCreditsSplineFocus[] = {
+/* (calculator) const */ const struct CutsceneSplinePoint sCCMOutsideCreditsSplineFocus[] = {
     { 1, 50, { 958, -1481, 5262 } },
     { 2, 50, { -2123, -1600, 4391 } },
     { 3, 50, { -3957, -1401, 3426 } },

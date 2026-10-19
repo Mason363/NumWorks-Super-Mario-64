@@ -1,6 +1,6 @@
 // spawn_star.inc.c
 
-static struct ObjectHitbox sCollectStarHitbox = {
+/* (calculator) const */ static const struct ObjectHitbox sCollectStarHitbox = {
     /* interactType:      */ INTERACT_STAR_OR_KEY,
     /* downOffset:        */ 0,
     /* damageOrCoinValue: */ 0,
