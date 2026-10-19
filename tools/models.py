@@ -81,8 +81,15 @@ class ModelBuilder:
             return len(nodes) - 1
 
         def walk(n, parent):
+            # (a model drawn in less detail far away, Mario's: only its nearest detail is kept, at all distances)
+            ranges = [c for c in n.children if c.kind == "GEO_RENDER_RANGE"]
+            near = min(ranges, key=lambda c: decomp.cval(c.args[0])) if len(ranges) > 1 else None
             for case, c in enumerate(n.children):
                 a, k = c.args, c.kind
+                if near is not None and k == "GEO_RENDER_RANGE":
+                    if c is not near:
+                        continue
+                    a = [a[0], "32767"]
                 L = lambda i: decomp.layer_of(a[i])
                 V = lambda i, j: [decomp.cval(x) for x in a[i:j]]
                 if k == "GEO_DISPLAY_LIST":
