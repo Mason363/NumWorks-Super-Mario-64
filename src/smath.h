@@ -11,28 +11,17 @@ typedef struct { float m[4][3]; } Mtx43;
 
 #define M_PI_F 3.14159265f
 /* the game's sine and cosine: its table had 4096 steps a turn */
-static inline float sins(int32_t a) { return sinf((float)((uint16_t)a >> 4) * (M_PI_F / 2048.0f)); }
-static inline float coss(int32_t a) { return cosf((float)((uint16_t)a >> 4) * (M_PI_F / 2048.0f)); }
-int16_t atan2s(float y, float x);   /* the game's: atan2s(y, x) is the angle of (x, y) */
-float atan2f_game(float y, float x);
+static inline float sm_sins(int32_t a) { return sinf((float)((uint16_t)a >> 4) * (M_PI_F / 2048.0f)); }
+static inline float sm_coss(int32_t a) { return cosf((float)((uint16_t)a >> 4) * (M_PI_F / 2048.0f)); }
+int16_t sm_atan2s(float y, float x);   /* the game's: sm_atan2s(y, x) is the angle of (x, y) */
+float sm_atan2f(float y, float x);
 
-static inline float sqr(float x) { return x * x; }
-static inline float approach_f(float cur, float target, float inc, float dec) {
-  if (cur < target) { cur += inc; if (cur > target) cur = target; }
-  else { cur -= dec; if (cur < target) cur = target; }
-  return cur;
-}
-static inline int32_t approach_i(int32_t cur, int32_t target, int32_t inc, int32_t dec) {
-  if (cur < target) { cur += inc; if (cur > target) cur = target; }
-  else { cur -= dec; if (cur < target) cur = target; }
-  return cur;
-}
 
-void vec3f_set(Vec3f v, float x, float y, float z);
-void vec3f_copy(Vec3f d, const Vec3f s);
-float vec3f_len(const Vec3f v);
-void vec3f_normalize(Vec3f v);
-void vec3f_cross(Vec3f d, const Vec3f a, const Vec3f b);
+void v3_set(Vec3f v, float x, float y, float z);
+void v3_copy(Vec3f d, const Vec3f s);
+float v3_len(const Vec3f v);
+void v3_normalize(Vec3f v);
+void v3_cross(Vec3f d, const Vec3f a, const Vec3f b);
 
 void mtx_identity(Mtx43 *m);
 /* rotation by (pitch x, yaw y, roll z) in the game's order (z, then x, then y), then translation t */

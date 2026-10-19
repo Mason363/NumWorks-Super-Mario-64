@@ -1,6 +1,6 @@
-/* The game's data (src/data.bin, made by tools/pack.py): meshes, textures, models and their animations,
- * collision, objects and texts of the levels. It stays in flash and is read in place; every table is found
- * through the header at its start. */
+/* The calculator's own data for the game (src/data.bin, made by tools/pack.py): the meshes and textures of the
+ * levels and of the models. It stays in flash and is read in place; every table is found through the header
+ * at its start. (Collision, objects and animations are the decompilation's own C data: src/port.) */
 #ifndef SM_DATA_H
 #define SM_DATA_H
 #include <stdint.h>
@@ -52,61 +52,35 @@ typedef struct {
   uint8_t wl, hl, fmt, pad;   /* log2 of the size */
 } Tex;
 
-/* a model: a tree of parts (the N64's animated parts and their display lists) */
+/* a model: the game's geo layout as a list of nodes, each with its parent: the animated parts (which take an
+ * animation's rotations, in order), the switches (which choose one child) and the meshes */
+enum { N_PART, N_TRANSLATE, N_ROTATE, N_SCALE, N_SWITCH, N_BILLBOARD, N_SHADOW, N_HELD, N_MESH, N_GROUP, N_RANGE,
+       N_ASM };
 typedef struct {
-  int8_t parent;      /* -1: the root */
-  uint8_t anim;       /* takes the animation's rotation (1) or not (0) */
-  uint8_t sw, swcase; /* drawn only when switch sw (0: none) is on case swcase */
-  int16_t t[3];       /* translation from its parent */
-  int16_t r[3];       /* fixed rotation (angles, 0x10000 a turn) */
-  uint16_t mesh;      /* 0xFFFF: none */
-  uint16_t scale;     /* x 1/256 */
-} Part;
+  uint8_t kind, parent;       /* parent: 0xFF for the root */
+  uint8_t sw, arg;            /* switches and callbacks: which function (tools/models.py); meshes: their layer */
+  uint8_t cse, pad;           /* the node's place among its parent's children (a switch draws one of them) */
+  uint16_t mesh;              /* meshes (and nodes with one): 0xFFFF none */
+  int16_t t[3];               /* translation (render ranges: from, to) */
+  int16_t r[3];               /* rotation */
+  uint32_t scale;             /* x 1/65536 (scale nodes) */
+} MNode;
 typedef struct {
-  uint32_t parts;
-  uint8_t nparts, nanimated, shadow, pad;
-  uint16_t scale;     /* x 1/256 */
-  int16_t radius;
-} Model;
-
-/* an animation, as the game keeps them: per animated value an index (frames, start) into the values */
-typedef struct {
-  int16_t flags, ydiv, start, loop_start, loop_end, nparts;
-  uint32_t values, index;   /* offsets: int16_t[], uint16_t[] (pairs: frames, start) */
-} Anim;
-
-/* collision: the game's surfaces, with what find_floor needs precomputed, sorted into cells */
-typedef struct {
-  int16_t type, force;
-  int16_t v[3][3];
-  int16_t lo_y, hi_y;
-  float nx, ny, nz, off;
-  uint8_t flags, room;
-  int16_t pad;
-} Surf;
-typedef struct {
-  uint32_t surfs, cells, list;   /* Surf[]; per cell (16 x 16) and kind (floor, ceiling, wall) a range in list */
-  uint16_t nsurfs, ncells;
-} Collision;
-
-/* an object placed in a level */
-typedef struct {
-  uint16_t kind;    /* OBJ_* */
-  uint16_t model;
-  int16_t x, y, z, ry;
-  uint32_t param;
-  uint8_t acts, area, pad[2];
-} Placed;
+  uint32_t nodes;
+  uint16_t nnodes;
+  uint8_t shadow_type, pad;
+  int16_t shadow_size, shadow_alpha;
+  int16_t lo[3], hi[3];       /* a box around it, for culling */
+} MModel;
 
 typedef struct {
   uint32_t magic, size;
-  uint32_t tex, mesh, model, anim, level, text;   /* offsets of the tables */
-  uint16_t ntex, nmesh, nmodel, nanim, nlevel, ntext;
+  uint32_t tex, mesh, model, pad1, pad2, pad3;   /* offsets of the tables */
+  uint16_t ntex, nmesh, nmodel, pad4, pad5, pad6;
 } DataHeader;
 
 #define HDR DAT(DataHeader, 0)
 #define TEX(i) (DAT(Tex, HDR->tex) + (i))
 #define MESH(i) (DAT(Mesh, HDR->mesh) + (i))
-#define MODEL(i) (DAT(Model, HDR->model) + (i))
-#define ANIM(i) (DAT(Anim, HDR->anim) + (i))
+#define MODEL(i) (DAT(MModel, HDR->model) + (i))
 #endif

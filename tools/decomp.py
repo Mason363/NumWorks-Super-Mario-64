@@ -7,6 +7,7 @@ The display lists are run like the N64's RSP would: vertices loaded into a 16-en
 from it, under the current texture, combiner, geometry mode and lights. What comes out is a list of
 triangles, each with its material and three vertices (position, texture coordinates in texels, colour or
 lit colour)."""
+import glob
 import math
 import os
 import re
@@ -21,6 +22,33 @@ CONST = {
 }
 FMT = {0: "rgba", 2: "ci", 3: "ia", 4: "i"}
 SIZ = {0: 4, 1: 8, 2: 16, 3: 32}
+
+
+def load_constants(root):
+    """Every plain #define NAME number and every enum of the decompilation's headers, into CONST."""
+    paths = glob.glob(os.path.join(root, "include", "*.h")) + glob.glob(os.path.join(root, "src", "game", "*.h")) + \
+        glob.glob(os.path.join(root, "src", "engine", "*.h"))
+    for p in paths:
+        txt = strip_comments(open(p, encoding="utf-8", errors="replace").read())
+        for m in re.finditer(r"#define\s+([A-Z_][A-Z0-9_]*)\s+\(?(-?(?:0x[0-9A-Fa-f]+|\d+))\)?\s*$", txt, re.M):
+            CONST.setdefault(m.group(1), int(m.group(2), 0))
+        for m in re.finditer(r"enum\s*\w*\s*\{(.*?)\}", txt, re.S):
+            v = -1
+            for item in m.group(1).split(","):
+                item = item.strip()
+                if not item:
+                    continue
+                if "=" in item:
+                    n, e = item.split("=", 1)
+                    try:
+                        v = cval(e)
+                    except Exception:
+                        continue
+                    n = n.strip()
+                else:
+                    n, v = item, v + 1
+                if re.match(r"^[A-Za-z_]\w*$", n):
+                    CONST.setdefault(n, v)
 
 
 def strip_comments(text):
@@ -214,8 +242,10 @@ def run_dl(src, name, layer, out, light_dir=None, state=None):
             vs = src.vtx[ref][off:off + n]
             for i, v in enumerate(vs):
                 x, y, z, s, t, r, g, b, al = v
-                if state["lit"] and state["light"] is not None:
-                    col = ("n", [c - 256 if c > 127 else c for c in (r, g, b)], al, state["light"])
+                if state["lit"]:
+                    # (lights set by a display list drawn before, on the N64: white, from the front, if none here)
+                    L = state["light"] or ([0x7F] * 3, [0xFF] * 3, [0x28] * 3)
+                    col = ("n", [c - 256 if c > 127 else c for c in (r, g, b)], al, L)
                 else:
                     col = ("c", (r, g, b), al, None)
                 state["vbuf"][v0 + i] = (x, y, z, s * state["scale"][0], t * state["scale"][1], col)
@@ -241,7 +271,10 @@ def run_dl(src, name, layer, out, light_dir=None, state=None):
                 out.append(Tri(mat, vs))
         elif cmd == "gsSPLight":
             ln = a[0].replace("&", "").strip()
-            base, part = ln.rsplit(".", 1)
+            m = re.match(r"^(\w+)\.([la])", ln)
+            if not m:
+                continue   # (a light read from inside another array: kept as it was)
+            base, part = m.group(1), m.group(2)
             L = src.lights.get(base)
             if L:
                 if part == "a":

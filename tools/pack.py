@@ -37,6 +37,7 @@ class Blob:
 class Pack:
     def __init__(self, ref):
         self.src = decomp.Source(ref)
+        decomp.load_constants(ref)
         self.ref = ref
         self.blob = Blob()
         self.tex_index = {}      # (path, w, h, fmt) -> index
@@ -192,13 +193,53 @@ class Pack:
         walk(tree)
         return self.mesh(name, tris, bake)
 
+    # ------------------------------------------------------------------------------------------ areas
+    def area(self, geo):
+        """An area's geo layout: its mesh (the display lists, lit now), and what its camera, frustum, background
+        and fog say."""
+        tree = decomp.geo_tree(self.src, geo)
+        tris, info = [], {"mode": 1, "pos": (0, 0, 0), "focus": (0, 0, 0), "fov": 45, "near": 100, "far": 20000,
+                          "bg": 0, "fog": None}
+
+        def walk(n):
+            for c in n.children:
+                a = c.args
+                if c.kind == "GEO_DISPLAY_LIST":
+                    decomp.run_dl(self.src, a[1].strip(), decomp.layer_of(a[0]), tris)
+                    self.find_fog(a[1].strip(), info)
+                elif c.kind == "GEO_CAMERA":
+                    v = [decomp.cval(x) for x in a[:7]]
+                    info["mode"], info["pos"], info["focus"] = v[0], v[1:4], v[4:7]
+                elif c.kind in ("GEO_CAMERA_FRUSTUM", "GEO_CAMERA_FRUSTUM_WITH_FUNC"):
+                    info["fov"], info["near"], info["far"] = (decomp.cval(x) for x in a[:3])
+                elif c.kind == "GEO_BACKGROUND":
+                    info["bg"] = decomp.cval(a[0], BACKGROUNDS)
+                elif c.kind == "GEO_BACKGROUND_COLOR":
+                    info["bg"] = 0x8000 | (decomp.cval(a[0]) & 0x7FFF)
+                walk(c)
+        walk(tree)
+        info["mesh"] = self.mesh("area_" + geo, tris, bake=True) if tris else 0xFFFF
+        if info["mesh"] is None:
+            info["mesh"] = 0xFFFF
+        return info
+
+    def find_fog(self, dl, info):
+        for cmd, a in self.src.gfx.get(dl, []):
+            if cmd == "gsDPSetFogColor":
+                info.setdefault("fogc", tuple(decomp.cval(x) for x in a[:3]))
+            elif cmd == "gsSPFogPosition":
+                info["fog"] = (decomp.cval(a[0]), decomp.cval(a[1]))
+            elif cmd == "gsSPDisplayList":
+                self.find_fog(a[0].strip(), info)
+
     # ------------------------------------------------------------------------------------------ output
-    def write(self):
+    def write(self, models=None):
         b = self.blob
         tex_off = b.add(b"".join(self.tex_entries))
         mesh_off = b.add(b"".join(self.meshes))
-        hdr = struct.pack("<8I6H", 0x34364D53, 0, tex_off, mesh_off, 0, 0, 0, 0,
-                          len(self.tex_entries), len(self.meshes), 0, 0, 0, 0)
+        model_off = b.add(b"".join(models.models)) if models else 0
+        hdr = struct.pack("<8I6H", 0x34364D53, 0, tex_off, mesh_off, model_off, 0, 0, 0,
+                          len(self.tex_entries), len(self.meshes), len(models.models) if models else 0, 0, 0, 0)
         b.b[0:len(hdr)] = hdr
         struct.pack_into("<I", b.b, 4, len(b.b))
         open(OUT_BIN, "wb").write(bytes(b.b))
@@ -211,13 +252,70 @@ class Pack:
         print(f"data.bin: {len(b.b)} bytes, {len(self.tex_entries)} textures, {len(self.meshes)} meshes")
 
 
+BACKGROUNDS = {"BACKGROUND_OCEAN_SKY": 0, "BACKGROUND_FLAMING_SKY": 1, "BACKGROUND_UNDERWATER_CITY": 2,
+               "BACKGROUND_BELOW_CLOUDS": 3, "BACKGROUND_SNOW_MOUNTAINS": 4, "BACKGROUND_DESERT": 5,
+               "BACKGROUND_HAUNTED": 6, "BACKGROUND_GREEN_SKY": 7, "BACKGROUND_ABOVE_CLOUDS": 8,
+               "BACKGROUND_PURPLE_SKY": 9}
+
+
+def fog_distance(frac, near, far):
+    """The distance where the N64's depth reaches frac (0..1000) of its range, for a frustum near..far."""
+    z = 2 * frac / 1000 - 1
+    d = (far + near) - z * (far - near)
+    return int(2 * far * near / d) if d > 0 else far
+
+
 def main():
+    import models as M
+    import port
     ref = sys.argv[1]
     p = Pack(ref)
     p.read("bin/*.c")
-    p.read("levels/bob/**/*.inc.c")
-    p.geo_mesh("bob_area1", "bob_geo_000488")
-    p.write()
+    p.read("actors/**/*.inc.c")
+    for lv in port.LEVELS:
+        p.read(f"levels/{lv}/**/*.inc.c")
+        p.read(f"levels/{lv}/*.c")
+    mb = M.ModelBuilder(p)
+    lines = []
+    # the scripts the levels run: their own, the common one, and the groups of models they link to
+    bodies = []
+    for lv in port.LEVELS:
+        bodies += list(decomp.arrays(decomp.strip_comments(open(os.path.join(ref, "levels", lv, "script.c")).read()),
+                                     "LevelScript").values())
+    common = decomp.arrays(decomp.strip_comments(open(os.path.join(ref, "levels", "scripts.c")).read()), "LevelScript")
+    used = {"level_main_scripts_entry"}
+    for body in bodies:
+        for cmd, a in decomp.calls(body):
+            if cmd == "JUMP_LINK" and a[0].strip() in common:
+                used.add(a[0].strip())
+    bodies += [common[n] for n in sorted(used)]
+    for body in bodies:
+        for cmd, a in decomp.calls(body):
+            if cmd == "LOAD_MODEL_FROM_GEO":
+                geo = a[1].strip()
+                if geo in p.src.geo:
+                    lines.append(f"geo {geo} {mb.from_geo(geo)}")
+            elif cmd == "LOAD_MODEL_FROM_DL":
+                dl, layer = a[1].strip(), decomp.layer_of(a[2])
+                if dl in p.src.gfx:
+                    lines.append(f"dl {dl} {mb.from_dl(dl, layer)}")
+            elif cmd == "AREA":
+                geo = a[1].strip()
+                if geo in p.src.geo:
+                    info = p.area(geo)
+                    fogc, fn, ff = 0, 0, 0
+                    if info["fog"] and "fogc" in info:
+                        r, g, bb = info["fogc"]
+                        fogc = ((r >> 3) << 11) | ((g >> 2) << 5) | (bb >> 3) or 1
+                        fn = fog_distance(info["fog"][0], info["near"], info["far"])
+                        ff = fog_distance(info["fog"][1], info["near"], info["far"])
+                    lines.append("area {} {} {} {} {} {} {} {} {} {} {} {}".format(
+                        geo, info["mesh"], info["mode"], " ".join(map(str, info["pos"])), " ".join(map(str, info["focus"])),
+                        info["fov"], info["near"], info["far"], info["bg"], fogc, fn, ff))
+    os.makedirs(port.GEN, exist_ok=True)
+    open(os.path.join(port.GEN, "models.txt"), "w").write("\n".join(sorted(set(lines))) + "\n")
+    p.write(mb)
+    print(f"{len(mb.models)} models, {len(mb.dl_mesh)} display lists")
 
 
 if __name__ == "__main__":

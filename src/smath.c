@@ -9,7 +9,7 @@ static uint16_t atan_lookup(float y, float x) {
   return (uint16_t)(atanf((float)i / 1024.0f) * (32768.0f / M_PI_F) + 0.5f);
 }
 
-int16_t atan2s(float y, float x) {
+int16_t sm_atan2s(float y, float x) {
   uint16_t r;
   if (x >= 0) {
     if (y >= 0) r = y >= x ? atan_lookup(x, y) : (uint16_t)(0x4000 - atan_lookup(y, x));
@@ -27,18 +27,18 @@ int16_t atan2s(float y, float x) {
   return (int16_t)r;
 }
 
-float atan2f_game(float y, float x) { return (float)atan2s(y, x) * (M_PI_F / 32768.0f); }
+float sm_atan2f(float y, float x) { return (float)sm_atan2s(y, x) * (M_PI_F / 32768.0f); }
 
-void vec3f_set(Vec3f v, float x, float y, float z) { v[0] = x, v[1] = y, v[2] = z; }
-void vec3f_copy(Vec3f d, const Vec3f s) { d[0] = s[0], d[1] = s[1], d[2] = s[2]; }
-float vec3f_len(const Vec3f v) { return sqrtf(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]); }
-void vec3f_normalize(Vec3f v) {
-  float l = vec3f_len(v);
+void v3_set(Vec3f v, float x, float y, float z) { v[0] = x, v[1] = y, v[2] = z; }
+void v3_copy(Vec3f d, const Vec3f s) { d[0] = s[0], d[1] = s[1], d[2] = s[2]; }
+float v3_len(const Vec3f v) { return sqrtf(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]); }
+void v3_normalize(Vec3f v) {
+  float l = v3_len(v);
   if (l == 0) return;
   l = 1 / l;
   v[0] *= l, v[1] *= l, v[2] *= l;
 }
-void vec3f_cross(Vec3f d, const Vec3f a, const Vec3f b) {
+void v3_cross(Vec3f d, const Vec3f a, const Vec3f b) {
   float x = a[1] * b[2] - b[1] * a[2], y = a[2] * b[0] - b[2] * a[0], z = a[0] * b[1] - b[0] * a[1];
   d[0] = x, d[1] = y, d[2] = z;
 }
@@ -49,7 +49,7 @@ void mtx_identity(Mtx43 *m) {
 }
 
 void mtx_rotate_zxy_translate(Mtx43 *d, const Vec3f t, const Vec3s r) {
-  float sx = sins(r[0]), cx = coss(r[0]), sy = sins(r[1]), cy = coss(r[1]), sz = sins(r[2]), cz = coss(r[2]);
+  float sx = sm_sins(r[0]), cx = sm_coss(r[0]), sy = sm_sins(r[1]), cy = sm_coss(r[1]), sz = sm_sins(r[2]), cz = sm_coss(r[2]);
   d->m[0][0] = cy * cz + sx * sy * sz;
   d->m[1][0] = -cy * sz + sx * sy * cz;
   d->m[2][0] = cx * sy;
@@ -65,7 +65,7 @@ void mtx_rotate_zxy_translate(Mtx43 *d, const Vec3f t, const Vec3s r) {
 }
 
 void mtx_rotate_xyz_translate(Mtx43 *d, const Vec3f t, const Vec3s r) {
-  float sx = sins(r[0]), cx = coss(r[0]), sy = sins(r[1]), cy = coss(r[1]), sz = sins(r[2]), cz = coss(r[2]);
+  float sx = sm_sins(r[0]), cx = sm_coss(r[0]), sy = sm_sins(r[1]), cy = sm_coss(r[1]), sz = sm_sins(r[2]), cz = sm_coss(r[2]);
   d->m[0][0] = cy * cz;
   d->m[0][1] = cy * sz;
   d->m[0][2] = -sy;
@@ -99,12 +99,12 @@ void mtx_apply(const Mtx43 *m, const Vec3f in, Vec3f out) {
 }
 
 void mtx_align_terrain(Mtx43 *m, const Vec3f n, const Vec3f pos, int16_t yaw) {
-  Vec3f lat = {sins(yaw), 0, coss(yaw)}, up, left, fwd;
-  vec3f_copy(up, n);
-  vec3f_normalize(up);
-  vec3f_cross(left, up, lat);
-  vec3f_normalize(left);
-  vec3f_cross(fwd, left, up);
-  vec3f_normalize(fwd);
+  Vec3f lat = {sm_sins(yaw), 0, sm_coss(yaw)}, up, left, fwd;
+  v3_copy(up, n);
+  v3_normalize(up);
+  v3_cross(left, up, lat);
+  v3_normalize(left);
+  v3_cross(fwd, left, up);
+  v3_normalize(fwd);
   for (int j = 0; j < 3; j++) m->m[0][j] = left[j], m->m[1][j] = up[j], m->m[2][j] = fwd[j], m->m[3][j] = pos[j];
 }

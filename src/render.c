@@ -59,14 +59,14 @@ static int noverlays;
 /* ------------------------------------------------------------------------------------------------ the frame */
 void r_frame(const Vec3f eye, const Vec3f at, float roll, float fov_deg, float near, float far) {
   Vec3f f = {at[0] - eye[0], at[1] - eye[1], at[2] - eye[2]};
-  vec3f_normalize(f);
+  v3_normalize(f);
   Vec3f up = {sinf(roll) * f[2], cosf(roll), -sinf(roll) * f[0]};
   Vec3f r;
-  vec3f_cross(r, up, f);   /* (x right, as seen) */
-  if (vec3f_len(r) < 1e-4f) vec3f_set(r, 1, 0, 0);
-  vec3f_normalize(r);
-  vec3f_cross(up, f, r);
-  vec3f_copy(cam_eye, eye), vec3f_copy(cam_right, r), vec3f_copy(cam_up, up), vec3f_copy(cam_fwd, f);
+  v3_cross(r, up, f);   /* (x right, as seen) */
+  if (v3_len(r) < 1e-4f) v3_set(r, 1, 0, 0);
+  v3_normalize(r);
+  v3_cross(up, f, r);
+  v3_copy(cam_eye, eye), v3_copy(cam_right, r), v3_copy(cam_up, up), v3_copy(cam_fwd, f);
   /* view: v_cam = (v - eye) . (r, up, f) */
   for (int j = 0; j < 3; j++) view.m[j][0] = r[j], view.m[j][1] = up[j], view.m[j][2] = f[j];
   for (int j = 0; j < 3; j++) view.m[3][j] = -(eye[0] * view.m[0][j] + eye[1] * view.m[1][j] + eye[2] * view.m[2][j]);
@@ -159,7 +159,7 @@ void r_mesh(const Mesh *m, const Mtx43 *mtx, uint32_t tint, uint8_t alpha) {
     for (int k = 0; k < 3; k++) l += it->mv.m[j][k] * cam_light[k], n2 += it->mv.m[j][k] * it->mv.m[j][k];
     it->light[j] = n2 > 0 ? l / sqrtf(n2) : 0;
   }
-  vec3f_normalize(it->light);
+  v3_normalize(it->light);
   nitems++;
 }
 
