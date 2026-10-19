@@ -93,6 +93,28 @@ def castle_path(w, h):
     return _out(img)
 
 
+def paving(w, h):
+    """The courtyard's paving and the ground at the castle's door: big pale stone slabs."""
+    xs, ys = grid(w, h)
+    n = noise(w, h, 4, 87)
+    img = _rgb(0xD8D0B8)[None, None] * (1 - 0.14 * n[..., None])
+    sz = w / 2
+    edge = ((ys % sz) < 1) | ((xs % sz) < 1)
+    img[edge] = _rgb(0x989078)
+    return _out(img)
+
+
+def lawn(w, h):
+    """The castle's lawns: bright green, darker and lighter blades."""
+    xs, ys = grid(w, h)
+    n = noise(w, h, 8, 89) * 0.6 + noise(w, h, 4, 90) * 0.4
+    img = _rgb(0x40B030)[None, None] * (1.08 - 0.3 * n[..., None])
+    s = np.random.default_rng(91).random((h, w))
+    img[((xs.astype(int) + ys.astype(int) * 2) % 7 == 0) & (s > 0.5)] = _rgb(0x287818)
+    img[((xs.astype(int) * 3 + ys.astype(int)) % 11 == 0) & (s < 0.3)] = _rgb(0x78D850)
+    return _out(img)
+
+
 def castle_trim(w, h):
     """The stone at the foot of the castle's walls: grey blocks."""
     xs, ys = grid(w, h)
@@ -304,6 +326,8 @@ TABLE = {
     OUT + "03800.rgba16.png": castle_bridge,
     OUT + "08000.rgba16.png": castle_path,
     OUT + "03000.rgba16.png": castle_trim,
+    OUT + "0A000.rgba16.png": paving,
+    OUT + "04000.rgba16.png": lawn,
     OUT + "0BC00.ia16.png": tree_shadow,
     "levels/castle_grounds/2.rgba16.png": stained_glass(True),
     "levels/castle_grounds/1.rgba16.png": stained_glass(False),
