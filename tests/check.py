@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Checks of Super Mario 64 on a computer (make test): the host build, with AddressSanitizer and UBSan, through
-the title and the keys, Peach's letter and the castle grounds, every level the calculator has, a star got and
-saved (and its copy in sm64_saves.py), the pause menu's way out, and the ways into levels left out.
+the title and the keys, Peach's letter and the castle grounds, every level the calculator has (at both
+resolutions), a star got and saved (and its copy in sm64_saves.py), saves from before the options, the pause
+menu's options and way out, and the ways into levels left out.
 
     python3 tests/check.py build/play"""
 import base64
@@ -43,14 +44,16 @@ def run(args, saves=None, what=""):
                         r"action ([0-9a-f]+)", p.stdout)
     peaks = re.findall(r"objects \d+ of (\d+) \(most (\d+)\).*?pool free \d+ \(least (\d+)\), display list most (\d+)",
                        p.stdout)
-    if not frames or not peaks:
+    screens = re.findall(r"screen (\d+)x\d+ refresh (\d); file A stars (\d+)", p.stdout)
+    if not frames or not peaks or not screens:
         failures.append(f"{what}: no state printed\n{p.stdout[-500:]}")
         return None
     f = frames[-1]
     return {"frame": int(f[0]), "level": int(f[1]), "area": int(f[2]), "act": int(f[3]),
             "pos": tuple(int(x) for x in f[4:7]), "action": int(f[7], 16), "levels": {int(x[1]) for x in frames},
             "capacity": int(peaks[-1][0]), "objects": int(peaks[-1][1]), "pool": int(peaks[-1][2]),
-            "gfx": int(peaks[-1][3]), "quit": "quit at frame" in p.stdout, "files": files}
+            "gfx": int(peaks[-1][3]), "quit": "quit at frame" in p.stdout, "files": files,
+            "width": int(screens[-1][0]), "refresh": int(screens[-1][1]), "stars": int(screens[-1][2])}
 
 
 def check(cond, what):
@@ -83,6 +86,10 @@ for num, name in LEVELS.items():
     if e:
         check(e["level"] == num and e["frame"] >= 870, f"{name}: played to the end, at {e['pos']}")
         limits(e, name)
+    # (and at half resolution, the N0110's)
+    e = run(["--level", str(num), "--frames", "300", "--half", "--keys", "15:a,60:a,100:a," + walk], what=name + ", half")
+    if e:
+        check(e["level"] == num and e["width"] == 160, f"{name} at half resolution: played, at {e['pos']}")
 
 # a star: Behind Chain Chomp's Gate, got from above; saved, and in sm64_saves.py too
 shutil.rmtree(saves, ignore_errors=True)
@@ -93,21 +100,48 @@ if e:
     sav = e["files"].get("sm64.sav", b"")
     copy = e["files"].get("sm64_saves.py", b"")
     line = copy.split(b"#>sm64.sav:")[1].split(b"\n")[0] if b"#>sm64.sav:" in copy else b""
-    check(e["level"] == 6 and len(sav) == 512 and sav[12] & 0x20,
-          "Bob-omb Battlefield: a star got, back in the castle, saved in sm64.sav")
+    check(e["level"] == 6 and len(sav) == 515 and sav[12] & 0x20 and sav[512:] == b"\x01\x00\x00",
+          "Bob-omb Battlefield: a star got, back in the castle, saved in sm64.sav (and the options after it)")
     check(line and base64.b64decode(line) == sav, "sm64_saves.py holds the same save")
     # installing apps again keeps only the scripts: the save comes back from the copy
     os.remove(os.path.join(saves, "sm64.sav"))
     e2 = run(["--frames", "60"], saves, "the save from its copy")
     if e2:
-        check(e2["files"].get("sm64.sav") == sav, "after a reinstall, sm64.sav comes back from sm64_saves.py")
+        check(e2["files"].get("sm64.sav") == sav and e2["stars"] == 1,
+              "after a reinstall, sm64.sav comes back from sm64_saves.py")
+    # saves from before the options: sm64.sav, or its copy, of the save chip's 512 bytes alone
+    open(os.path.join(saves, "sm64.sav"), "wb").write(sav[:512])
+    e2 = run(["--frames", "60"], saves, "a save from before the options")
+    if e2:
+        check(e2["stars"] == 1 and e2["width"] == 320 and e2["refresh"] == 0,
+              "an sm64.sav from before the options loads, with the model's own options")
+    os.remove(os.path.join(saves, "sm64.sav"))
+    open(os.path.join(saves, "sm64_saves.py"), "wb").write(b"\0# copy\n#>sm64.sav:" + base64.b64encode(sav[:512]) + b"\n\0")
+    e2 = run(["--frames", "60"], saves, "a copy from before the options")
+    if e2:
+        check(e2["stars"] == 1 and e2["files"].get("sm64.sav") == sav[:512],
+              "an sm64_saves.py from before the options brings the save back")
 shutil.rmtree(saves, ignore_errors=True)
 
-# the pause menu's way out: Shift asks, Back stays, then OK quits
-e = run(["--level", "9", "--frames", "400", "--keys", "15:a,40:a,80:a,130:start,200:z,215:b,240:z,260:a"],
-        what="quitting")
+# the pause menu's options: Shift opens them, right makes the resolution half, down and right make the screen
+# refresh from the right, Back closes them (and saves them); a new start keeps them
+saves = tempfile.mkdtemp(prefix="sm64_check_")
+e = run(["--level", "9", "--frames", "300", "--keys", "15:a,40:a,80:a,130:start,200:z,215:right,230:down,245:right,"
+         "260:b,280:start"], saves, "the options")
 if e:
-    check(e["quit"] and e["frame"] < 270, "the pause menu: Shift asks, Back stays, OK quits the game")
+    sav = e["files"].get("sm64.sav", b"")
+    check(e["width"] == 160 and e["refresh"] == 1 and len(sav) == 515 and sav[512:] == b"\x01\x01\x01",
+          "the options: half resolution, the screen refreshed from the right, saved after the save chip's bytes")
+    e2 = run(["--frames", "60"], saves, "the options kept")
+    if e2:
+        check(e2["width"] == 160 and e2["refresh"] == 1, "the options are kept for the next game")
+shutil.rmtree(saves, ignore_errors=True)
+
+# the pause menu's way out: Shift opens the options, Back closes them, then SAVE & QUIT quits
+e = run(["--level", "9", "--frames", "400", "--keys", "15:a,40:a,80:a,130:start,200:z,215:b,240:z,250:down,255:down,"
+         "260:a"], what="quitting")
+if e:
+    check(e["quit"] and e["frame"] < 270, "the pause menu: Shift opens the options, Back closes them, SAVE & QUIT quits")
 
 # the ways into levels the calculator does not have: the Princess's Secret Slide and Bowser's trapdoor do nothing
 e = run(["--level", "6", "--frames", "300", "--at", "120:2013,900,-2014,0", "--keys", "15:a,40:a"],

@@ -57,7 +57,7 @@ static void parse_keys(const char *spec) {
 int main(int argc, char **argv) {
   int frames = 300, every = 0;
   const char *out = "build/shots", *shots = "";
-  bool stats = false;
+  bool stats = false, half = false;
   const char *at = NULL;   /* "frame:x,y,z,yaw": Mario put there at that frame */
   for (int i = 1; i < argc; i++) {
     const char *a = argv[i], *v = i + 1 < argc ? argv[i + 1] : "";
@@ -69,12 +69,13 @@ int main(int argc, char **argv) {
     } else if (!strcmp(a, "--out")) out = v, i++;
     else if (!strcmp(a, "--saves")) host_save_dir(v), i++;
     else if (!strcmp(a, "--level")) port_start_level_num = atoi(v), i++;
-    else if (!strcmp(a, "--half")) r_w = 160, r_h = 120, r_scale = 2;
+    else if (!strcmp(a, "--half")) half = true;
     else if (!strcmp(a, "--stats")) stats = true;
     else if (!strcmp(a, "--at")) at = v, i++;
   }
   mkdir(out, 0755);
   port_game_init();
+  if (half) r_set_half(true);
   for (int f = 0; f < frames; f++) {
     host_keys = 0;
     for (int i = 0; i < nholds; i++)

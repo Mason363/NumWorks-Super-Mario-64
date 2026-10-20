@@ -34,6 +34,10 @@ void port_game_frame(void);
 /* the save chip's 512 bytes (src/port/save.c) */
 void port_eeprom_read(int offset, u8 *buf, int n);
 void port_eeprom_write(int offset, const u8 *buf, int n);
+/* the calculator's settings (the resolution, the screen's refresh: render.h), kept with the save chip's bytes:
+ * load puts them in place, save keeps them if they changed */
+void port_settings_load(void);
+void port_settings_save(void);
 
 /* drawing (src/port/scene.c, src/port/menu.c) */
 void port_draw_area(struct GraphNodeRoot *root);

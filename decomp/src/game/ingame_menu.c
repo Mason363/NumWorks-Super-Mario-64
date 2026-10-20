@@ -3442,7 +3442,7 @@ s16 render_menus_and_dialogs(void) {
                 index = render_pause_screen();
                 break;
             case MENU_MODE_RENDER_PAUSE_SCREEN:
-                /* (calculator) not while the calculator asks whether to quit (src/port/menu.c draws it) */
+                /* (calculator) not while the calculator's options are up (src/port/menu.c draws them) */
                 if (!port_menu_asking()) {
                     index = render_pause_screen();
                 }

@@ -1,7 +1,6 @@
 /* Super Mario 64 on the NumWorks calculator: the decompilation's game (decomp/, src/port) at 30 frames a
  * second, as on the N64, drawn by the calculator's renderer (src/render.c). */
 #include "plat.h"
-#include "render.h"
 
 const char eadk_app_name[] __attribute__((section(".rodata.eadk_app_name"))) = "Super Mario 64";
 const uint32_t eadk_api_level __attribute__((section(".rodata.eadk_api_level"))) = 0;
@@ -17,14 +16,16 @@ uint32_t perf_frames, perf_ticks, perf_max, perf_slow;
 /* 0: this tick is not drawn (src/port/scene.c) */
 extern int port_draw;
 
-/* the game thinks 30 times a second whatever the drawing costs: when a frame took too long, the next ticks
- * are not drawn (up to MAX_SKIP in a row) until the game is on time again */
+/* the game thinks 30 times a second whatever the drawing costs: when frames take too long, the ticks more than
+ * LATE_MS behind time are not drawn (up to MAX_SKIP in a row) until the game is on time again (the frames wait for
+ * the screen's refresh, src/render.c: a few ms behind is no reason to leave one out) */
 #define MAX_SKIP 3
+#define LATE_MS 12
 
 int main(void) {
   plat_begin();
-  /* the N0110 and N0115 draw at half resolution (2.5 times slower than the N0120) */
-  if (plat_slow()) r_w = 160, r_h = 120, r_scale = 2;
+  /* (the game, and the settings saved with it: the resolution is half on the N0110 and N0115 unless chosen,
+     as they are 2.5 times slower than the N0120) */
   port_game_init();
   uint32_t t0 = plat_millis(), ticks = 0;
   int skipped = 0;
@@ -41,8 +42,8 @@ int main(void) {
       /* far behind (a file saved, or frames too slow even when skipped): on time from now */
       t0 = now, ticks = 0, late = 0;
     }
-    /* behind time (more than a few ms: the clock's jitter): this tick is not drawn */
-    port_draw = late <= 4 || skipped >= MAX_SKIP;
+    /* behind time: this tick is not drawn */
+    port_draw = late <= LATE_MS || skipped >= MAX_SKIP;
     skipped = port_draw ? 0 : skipped + 1;
     uint32_t start = plat_millis();
     port_game_frame();

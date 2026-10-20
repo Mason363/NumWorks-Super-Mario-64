@@ -175,6 +175,7 @@ static void port_peaks(void) {
 #include "game/mario.h"
 #include "engine/math_util.h"
 #include "behavior_data.h"
+#include "../render.h"
 extern struct LakituState gLakituState;
 /* the state of the game, for tests (tests/play.c --stats) */
 void port_debug_print(void) {
@@ -189,6 +190,8 @@ void port_debug_print(void) {
   printf("  objects %d of %d (most %d), transforms most %d, surfaces most %d, nodes most %d, pool free %u (least %u), "
          "display list most %d\n", gPrevFrameObjectCount, gObjectPoolCapacity, port_stat_objects, port_transforms_most,
          port_stat_surfaces, port_stat_nodes, (unsigned) main_pool_available(), (unsigned) port_stat_pool, port_stat_gfx);
+  printf("  screen %dx%d refresh %d; file A stars %d\n", r_w, r_h, r_refresh,
+         save_file_get_total_star_count(0, COURSE_MIN - 1, COURSE_MAX - 1));
 }
 
 /* puts Mario somewhere (tests/play.c --at), facing yaw */
@@ -224,6 +227,7 @@ void port_game_init(void) {
   gDisplayListHead = port_gfx_pool;
   gGfxPoolEnd = (u8 *) (port_gfx_pool + GFX_POOL);
   save_file_load_all();
+  port_settings_load();
   sScript = (struct LevelCommand *) port_level_script_entry;
 }
 

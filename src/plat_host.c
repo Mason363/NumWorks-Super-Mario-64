@@ -17,6 +17,7 @@ void plat_push(int x, int y, int w, int h, const uint16_t *px) {
     for (int c = 0; c < w; c++)
       if ((unsigned)(x + c) < SCREEN_W && (unsigned)(y + r) < SCREEN_H) host_fb[(y + r) * SCREEN_W + x + c] = px[r * w + c];
 }
+bool plat_vblank(void) { return false; }
 
 static char save_dir[256] = "build/host-saves";
 void host_save_dir(const char *d) { snprintf(save_dir, sizeof save_dir, "%s", d); }

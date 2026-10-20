@@ -1,7 +1,7 @@
-/* The 3D renderer (render.h): a band of rows at a time, each with its colours and a 15-bit depth buffer (the
+/* The 3D renderer (render.h): a band of columns at a time, each with its colours and a 15-bit depth buffer (the
  * inverse of the distance, so near things are precise). Triangles are clipped against the near plane in camera
- * space, then filled a row at a time: depth, colours and fog step linearly, texture coordinates are corrected
- * for perspective every 8 pixels. -O2: this runs for every pixel. */
+ * space, then filled a column at a time: depth, colours and fog step linearly, texture coordinates are
+ * corrected for perspective every 8 pixels. -O2: this runs for every pixel. */
 #include <stdlib.h>
 #include <string.h>
 #include "plat.h"
@@ -12,11 +12,18 @@
 
 int r_w = 320, r_h = 240, r_scale = 1;
 uint16_t *r_band;
-int r_band_y, r_band_h;
+int r_band_x, r_band_w;
 int r_stat_tris, r_stat_items, r_stat_verts;
 
 static RFrame *F;
-static int nitems, nrows, overlay_used;
+static int nitems, ncols, overlay_used;
+/* the band being drawn: its columns (at the resolution drawn) */
+static int band_x, band_w;
+
+void r_set_half(bool half) {
+  r_scale = half ? 2 : 1;
+  r_w = SCREEN_W / r_scale, r_h = SCREEN_H / r_scale;
+}
 
 /* the camera */
 static float cam_f, cam_cx, cam_cy, cam_near, cam_far, z_k;
@@ -37,7 +44,7 @@ enum { I_MESH, I_SHADOW };
 /* ------------------------------------------------------------------------------------------------ the frame */
 void r_begin(RFrame *f) {
   F = f;
-  nitems = nrows = overlay_used = 0;
+  nitems = ncols = overlay_used = 0;
   r_stat_tris = r_stat_verts = 0;
 }
 
@@ -94,9 +101,9 @@ bool r_project(const Vec3f p, float *sx, float *sy, float *depth) {
   return true;
 }
 
-/* the rows a box (model space, under mv) covers; false when it is out of sight */
-static bool box_rows(const Mtx43 *mv, const int16_t lo[3], const int16_t hi[3], uint8_t *y0, uint8_t *y1, float *depth) {
-  float ymin = 1e9f, ymax = -1e9f, zmin = 1e9f;
+/* the columns a box (model space, under mv) covers, in pairs; false when it is out of sight */
+static bool box_cols(const Mtx43 *mv, const int16_t lo[3], const int16_t hi[3], uint8_t *x0, uint8_t *x1, float *depth) {
+  float xmin = 1e9f, xmax = -1e9f, zmin = 1e9f;
   bool behind = false, left = true, right = true, above = true, below = true, far = true;
   for (int i = 0; i < 8; i++) {
     float px = i & 1 ? hi[0] : lo[0], py = i & 2 ? hi[1] : lo[1], pz = i & 4 ? hi[2] : lo[2];
@@ -115,15 +122,15 @@ static bool box_rows(const Mtx43 *mv, const int16_t lo[3], const int16_t hi[3], 
       behind = true;
       continue;
     }
-    float sy = cam_cy - cam_f * cy / cz;
-    if (sy < ymin) ymin = sy;
-    if (sy > ymax) ymax = sy;
+    float sx = cam_cx + cam_f * cx / cz;
+    if (sx < xmin) xmin = sx;
+    if (sx > xmax) xmax = sx;
   }
   if (far || left || right || above || below) return false;
-  if (behind) ymin = 0, ymax = (float)r_h;
-  if (ymax < 0 || ymin >= r_h) return false;
-  *y0 = (uint8_t)(ymin < 0 ? 0 : ymin);
-  *y1 = (uint8_t)(ymax >= r_h ? r_h : ymax + 1);
+  if (behind) xmin = 0, xmax = (float)r_w;
+  if (xmax < 0 || xmin >= r_w) return false;
+  int a = xmin < 0 ? 0 : (int)xmin, b = xmax >= r_w ? r_w : (int)xmax + 1;
+  *x0 = (uint8_t)(a >> 1), *x1 = (uint8_t)((b + 1) >> 1);
   if (depth) *depth = zmin;
   return true;
 }
@@ -140,26 +147,26 @@ void r_mesh(const Mesh *m, const Mtx43 *mtx, uint32_t tint, uint8_t alpha, int f
     apply_roll(&it->mv);
   } else if (mtx) mtx_mul(&it->mv, mtx, &view);
   else it->mv = view;
-  uint8_t y0, y1;
+  uint8_t x0, x1;
   float depth;
-  if (!box_rows(&it->mv, m->lo, m->hi, &y0, &y1, &depth)) return;
-  if (nrows + m->nbatch > R_MAX_BATCHES) return;
+  if (!box_cols(&it->mv, m->lo, m->hi, &x0, &x1, &depth)) return;
+  if (ncols + m->nbatch > R_MAX_BATCHES) return;
   it->kind = I_MESH, it->mesh = m, it->tint = tint, it->alpha = alpha, it->depth = depth, it->flags = (uint8_t)flags;
-  it->y0 = y0, it->y1 = y1, it->batch0 = (uint16_t)nrows;
+  it->x0 = x0, it->x1 = x1, it->batch0 = (uint16_t)ncols;
   it->layers = 0;
   const Batch *b = DAT(Batch, m->batch);
   for (int i = 0; i < m->nbatch; i++) {
-    uint8_t *r = F->rows[nrows++];
-    if (m->nbatch == 1) r[0] = y0, r[1] = y1;
+    uint8_t *c = F->cols[ncols++];
+    if (m->nbatch == 1) c[0] = x0, c[1] = x1;
     else {
       int16_t blo[3], bhi[3];
       batch_box(m, &b[i], blo, bhi);
-      if (!box_rows(&it->mv, blo, bhi, &r[0], &r[1], NULL)) r[0] = r[1] = 0;
+      if (!box_cols(&it->mv, blo, bhi, &c[0], &c[1], NULL)) c[0] = c[1] = 0;
     }
-    if (r[1] > r[0]) it->layers |= (uint8_t)layer_of(&b[i], alpha);
+    if (c[1] > c[0]) it->layers |= (uint8_t)layer_of(&b[i], alpha);
   }
   if (!it->layers) {
-    nrows -= m->nbatch;
+    ncols -= m->nbatch;
     return;
   }
   nitems++;
@@ -172,10 +179,10 @@ void r_shadow(const Vec3f p, const Vec3f n, float r, uint8_t alpha, bool square)
   mtx_align_terrain(&m, n, p, 0);
   mtx_mul(&it->mv, &m, &view);
   int16_t lo[3] = {(int16_t)-r, 0, (int16_t)-r}, hi[3] = {(int16_t)r, 1, (int16_t)r};
-  uint8_t y0, y1;
+  uint8_t x0, x1;
   float depth;
-  if (!box_rows(&it->mv, lo, hi, &y0, &y1, &depth)) return;
-  it->kind = I_SHADOW, it->mesh = NULL, it->alpha = alpha, it->depth = depth, it->y0 = y0, it->y1 = y1;
+  if (!box_cols(&it->mv, lo, hi, &x0, &x1, &depth)) return;
+  it->kind = I_SHADOW, it->mesh = NULL, it->alpha = alpha, it->depth = depth, it->x0 = x0, it->x1 = x1;
   it->layers = 4, it->flags = 0;
   it->tint = (uint32_t)r | (square ? 0x80000000u : 0);
   nitems++;
@@ -221,19 +228,20 @@ static inline int32_t fix16(float f) {
   return (int32_t)(f * 65536.0f);
 }
 
-/* one row of a triangle, from x0 to x1 (exclusive), the attributes at x0 and their steps per pixel; depth:
+/* one column of a triangle, from y0 to y1 (exclusive), the attributes at y0 and their steps per pixel; depth:
  * the texture's texel size (0: no texture, 1: 4 bits, 2: 8 bits, 3: 16 bits) */
-static inline __attribute__((always_inline)) void span_body(int y, int x0, int x1, const PV *p, const PV *d,
+static inline __attribute__((always_inline)) void span_body(int x, int y0, int y1, const PV *p, const PV *d,
                                                             const int depth) {
-  uint16_t *cb = F->col + (y - r_band_y) * r_w, *zb = F->z + (y - r_band_y) * r_w;
+  uint16_t *cb = F->col + (x - band_x), *zb = F->z + (x - band_x) * r_h;
+  const int cs = band_w;
   float iz = p->iz, uz = p->uz, vz = p->vz;
-  /* (the depth at both ends of the row, kept in range: past the triangle's corners it can run away) */
-  float zs = iz * z_k, ze = zs + d->iz * z_k * (float)(x1 - x0);
+  /* (the depth at both ends of the column, kept in range: past the triangle's corners it can run away) */
+  float zs = iz * z_k, ze = zs + d->iz * z_k * (float)(y1 - y0);
   if (zs > 30000.0f) zs = 30000.0f;
   if (zs < 0) zs = 0;
   if (ze > 30000.0f) ze = 30000.0f;
   if (ze < 0) ze = 0;
-  int32_t z = (int32_t)(zs * 65536.0f), dz = (int32_t)((ze - zs) * 65536.0f / (float)(x1 - x0));
+  int32_t z = (int32_t)(zs * 65536.0f), dz = (int32_t)((ze - zs) * 65536.0f / (float)(y1 - y0));
   int32_t r = fix16(p->r), g = fix16(p->g), b = fix16(p->b), dr = fix16(d->r), dg = fix16(d->g), db = fix16(d->b);
   int32_t a = fix16(p->a), da = fix16(d->a), f = fix16(p->fog), df = fix16(d->fog);
   const uint8_t mode = d_mode;
@@ -244,8 +252,8 @@ static inline __attribute__((always_inline)) void span_body(int y, int x0, int x
   const int bias = (mode & M_DECAL) ? DECAL_BIAS : 0;
   const uint8_t *texels = tx_texels;
   const uint16_t *pal = tx_pal;
-  for (int x = x0; x < x1;) {
-    int n = x1 - x > 8 ? 8 : x1 - x;
+  for (int y = y0; y < y1;) {
+    int n = y1 - y > 8 ? 8 : y1 - y;
     int32_t u = 0, v = 0, du = 0, dv = 0;
     if (depth) {
       float izc = iz > 1e-7f ? iz : 1e-7f;
@@ -257,9 +265,9 @@ static inline __attribute__((always_inline)) void span_body(int y, int x0, int x
       du = (fix16(u1) - u) / n, dv = (fix16(v1) - v) / n;
     }
     iz += d->iz * n, uz += d->uz * n, vz += d->vz * n;
-    for (int k = 0; k < n; k++, x++, z += dz, r += dr, g += dg, b += db, a += da, f += df, u += du, v += dv) {
+    for (int k = 0; k < n; k++, y++, z += dz, r += dr, g += dg, b += db, a += da, f += df, u += du, v += dv) {
       int zz = z >> 16;
-      if (zz + bias < zb[x]) continue;
+      if (zz + bias < zb[y]) continue;
       int cr = r >> 16, cg = g >> 16, cbl = b >> 16, ca = d_alpha;
       uint16_t out;
       if (depth) {
@@ -292,36 +300,37 @@ static inline __attribute__((always_inline)) void span_body(int y, int x0, int x
       if (mode & M_XLU) {
         ca = ca * ((a >> 16) + 1) >> 8;
         if (ca <= 0) continue;
-        out = blend565(out, cb[x], ca >= 255 ? 256 : ca);
-      } else zb[x] = (uint16_t)zz;
-      cb[x] = out;
+        out = blend565(out, cb[y * cs], ca >= 255 ? 256 : ca);
+      } else zb[y] = (uint16_t)zz;
+      cb[y * cs] = out;
     }
   }
 }
 
-static void span_flat(int y, int x0, int x1, const PV *p, const PV *d) { span_body(y, x0, x1, p, d, 0); }
-static void span_t4(int y, int x0, int x1, const PV *p, const PV *d) { span_body(y, x0, x1, p, d, 1); }
-static void span_t8(int y, int x0, int x1, const PV *p, const PV *d) { span_body(y, x0, x1, p, d, 2); }
-static void span_t16(int y, int x0, int x1, const PV *p, const PV *d) { span_body(y, x0, x1, p, d, 3); }
+static void span_flat(int x, int y0, int y1, const PV *p, const PV *d) { span_body(x, y0, y1, p, d, 0); }
+static void span_t4(int x, int y0, int y1, const PV *p, const PV *d) { span_body(x, y0, y1, p, d, 1); }
+static void span_t8(int x, int y0, int y1, const PV *p, const PV *d) { span_body(x, y0, y1, p, d, 2); }
+static void span_t16(int x, int y0, int y1, const PV *p, const PV *d) { span_body(x, y0, y1, p, d, 3); }
 static void (*span)(int, int, int, const PV *, const PV *) = span_flat;
 
 /* the common case, made apart (most of the frame's pixels): an opaque texture that wraps, maybe times the
  * vertex colours, maybe fogged, not a decal. The texel coordinates are right every 8 pixels, on a line between
  * (persp), or on a line all along (a triangle whose depth varies little: p and d's uz and vz are then the texel
  * coordinates themselves); the colour and fog are the 8 pixels' middle's; s and t go together in a word (8.8
- * each: the textures are 64 texels at most) */
+ * each: the textures are 64 texels at most). The pixels go down a column of the band, x */
 #define SPREAD(c) (((uint32_t)(c) | (uint32_t)(c) << 16) & 0x07E0F81Fu)   /* (r, g, b apart in a word) */
-static inline __attribute__((always_inline)) void span_fast_body(int y, int x0, int x1, const PV *p, const PV *d,
+static inline __attribute__((always_inline)) void span_fast_body(int x, int y0, int y1, const PV *p, const PV *d,
                                                                  const int depth, const bool shade, const bool fog,
                                                                  const bool persp) {
-  uint16_t *cb = F->col + (y - r_band_y) * r_w + x0, *zb = F->z + (y - r_band_y) * r_w + x0;
+  const int cs = band_w;
+  uint16_t *cb = F->col + y0 * cs + (x - band_x), *zb = F->z + (x - band_x) * r_h + y0;
   float iz = p->iz, uz = p->uz, vz = p->vz;
-  float zs = iz * z_k, ze = zs + d->iz * z_k * (float)(x1 - x0);
+  float zs = iz * z_k, ze = zs + d->iz * z_k * (float)(y1 - y0);
   if (zs > 30000.0f) zs = 30000.0f;
   if (zs < 0) zs = 0;
   if (ze > 30000.0f) ze = 30000.0f;
   if (ze < 0) ze = 0;
-  int32_t z = (int32_t)(zs * 65536.0f), dz = (int32_t)((ze - zs) * 65536.0f / (float)(x1 - x0));
+  int32_t z = (int32_t)(zs * 65536.0f), dz = (int32_t)((ze - zs) * 65536.0f / (float)(y1 - y0));
   const uint32_t ush = 24 + (uint32_t)tx_shift, wm = (uint32_t)tx_wm;
   const uint32_t vsh = 8 + (uint32_t)tx_shift - (uint32_t)tx_wl, vmask = (uint32_t)(tx_hm << tx_wl);
   const uint8_t *texels = tx_texels;
@@ -339,15 +348,15 @@ static inline __attribute__((always_inline)) void span_fast_body(int y, int x0, 
   }
   float cr = p->r, cg = p->g, cbl = p->b, cf = p->fog;
   /* (the texel a little off by the pixel's place, s and t in 8.8 together: the N64's filtering, approached) */
-  const int32_t *o0 = dither[(y & 1) << 1], *o1 = dither[(y & 1) << 1 | 1];
+  const int32_t *o0 = dither[x & 1], *o1 = dither[2 | (x & 1)];
   uint32_t e0 = ((uint32_t)(o0[0] >> 8) << 16) + (uint32_t)(o0[1] >> 8), e1 = ((uint32_t)(o1[0] >> 8) << 16) + (uint32_t)(o1[1] >> 8);
   e0 <<= tx_shift, e1 <<= tx_shift;
-  uint32_t od = (x0 & 1) ? e1 : e0, oswap = e0 ^ e1;
+  uint32_t od = (y0 & 1) ? e1 : e0, oswap = e0 ^ e1;
 #define TEXEL()                                                                                               \
   (depth == 1 ? pal[texels[i >> 1] >> ((i & 1) << 2) & 15]                                                    \
    : depth == 2 ? pal[texels[i]] : ((const uint16_t *)(const void *)texels)[i])
 #define PIXELS(OUT)                                                                                           \
-  for (const uint16_t *end = cb + n; cb < end; cb++, zb++, z += dz, uv += duv, od ^= oswap) {                 \
+  for (const uint16_t *end = zb + n; zb < end; cb += cs, zb++, z += dz, uv += duv, od ^= oswap) {          \
     int zz = z >> 16;                                                                                         \
     if (zz < *zb) continue;                                                                                   \
     uint32_t uvd = uv + od;                                                                                   \
@@ -356,8 +365,8 @@ static inline __attribute__((always_inline)) void span_fast_body(int y, int x0, 
     *zb = (uint16_t)zz;                                                                                       \
     *cb = (uint16_t)(OUT);                                                                                    \
   }
-  for (int x = x0; x < x1;) {
-    int n = x1 - x > 8 ? 8 : x1 - x;
+  for (int y = y0; y < y1;) {
+    int n = y1 - y > 8 ? 8 : y1 - y;
     int32_t u1 = 0, v1 = 0;
     if (persp) {
       iz += d->iz * n, uz += d->uz * n, vz += d->vz * n;
@@ -379,7 +388,7 @@ static inline __attribute__((always_inline)) void span_fast_body(int y, int x0, 
       ff = ff < 0 ? 0 : ff > 255 ? 256 : ff;
       cf += d->fog * n;
     }
-    x += n;
+    y += n;
     if (!shade && (!fog || ff == 0)) {
       PIXELS(t)
     } else if (mr - mg < 6 && mg - mr < 6 && mg - mb < 6 && mb - mg < 6) {
@@ -404,11 +413,11 @@ static inline __attribute__((always_inline)) void span_fast_body(int y, int x0, 
 }
 
 #define FAST(dep, sh, fo)                                                                                   \
-  static void span_fast_##dep##sh##fo(int y, int x0, int x1, const PV *p, const PV *d) {                   \
-    span_fast_body(y, x0, x1, p, d, dep, sh, fo, true);                                                   \
+  static void span_fast_##dep##sh##fo(int x, int y0, int y1, const PV *p, const PV *d) {                   \
+    span_fast_body(x, y0, y1, p, d, dep, sh, fo, true);                                                   \
   }                                                                                                         \
-  static void span_aff_##dep##sh##fo(int y, int x0, int x1, const PV *p, const PV *d) {                    \
-    span_fast_body(y, x0, x1, p, d, dep, sh, fo, false);                                                  \
+  static void span_aff_##dep##sh##fo(int x, int y0, int y1, const PV *p, const PV *d) {                    \
+    span_fast_body(x, y0, y1, p, d, dep, sh, fo, false);                                                  \
   }
 FAST(1, 0, 0) FAST(1, 1, 0) FAST(1, 0, 1) FAST(1, 1, 1)
 #undef FAST
@@ -423,18 +432,18 @@ static void (*span_aff)(int, int, int, const PV *, const PV *);
 /* what the batch's spans take besides the depth and texel coordinates: the colours, alpha, fog */
 static bool need_rgb, need_a, need_fog;
 
-/* fills a triangle of projected vertices, the rows of the band only */
+/* fills a triangle of projected vertices, a column at a time, the band's columns only */
 static void fill_tri(const PV *a, const PV *b, const PV *c) {
-  /* sorted by row */
-  if (b->sy < a->sy) { const PV *t = a; a = b; b = t; }
-  if (c->sy < a->sy) { const PV *t = a; a = c; c = t; }
-  if (c->sy < b->sy) { const PV *t = b; b = c; c = t; }
-  float y0f = a->sy, y2f = c->sy;
-  if (y2f - y0f < 1e-4f) return;
-  int ys = (int)ceilf(y0f - 0.5f), ye = (int)ceilf(y2f - 0.5f);
-  if (ys < r_band_y) ys = r_band_y;
-  if (ye > r_band_y + r_band_h) ye = r_band_y + r_band_h;
-  if (ys >= ye) return;
+  /* sorted by column */
+  if (b->sx < a->sx) { const PV *t = a; a = b; b = t; }
+  if (c->sx < a->sx) { const PV *t = a; a = c; c = t; }
+  if (c->sx < b->sx) { const PV *t = b; b = c; c = t; }
+  float x0f = a->sx, x2f = c->sx;
+  if (x2f - x0f < 1e-4f) return;
+  int xs = (int)ceilf(x0f - 0.5f), xe = (int)ceilf(x2f - 0.5f);
+  if (xs < band_x) xs = band_x;
+  if (xe > band_x + band_w) xe = band_x + band_w;
+  if (xs >= xe) return;
   void (*fn)(int, int, int, const PV *, const PV *) = span;
   PV ta, tb, tc;
   if (span_aff) {
@@ -461,24 +470,24 @@ static void fill_tri(const PV *a, const PV *b, const PV *c) {
   if (need_fog) dx.fog = GX(fog), dy.fog = GY(fog);
 #undef GX
 #undef GY
-  float inv_ac = 1 / (c->sy - a->sy);
-  float inv_ab = b->sy - a->sy > 1e-6f ? 1 / (b->sy - a->sy) : 0;
-  float inv_bc = c->sy - b->sy > 1e-6f ? 1 / (c->sy - b->sy) : 0;
-  for (int y = ys; y < ye; y++) {
-    float yc = y + 0.5f;
+  float inv_ac = 1 / (c->sx - a->sx);
+  float inv_ab = b->sx - a->sx > 1e-6f ? 1 / (b->sx - a->sx) : 0;
+  float inv_bc = c->sx - b->sx > 1e-6f ? 1 / (c->sx - b->sx) : 0;
+  for (int x = xs; x < xe; x++) {
+    float xc = x + 0.5f;
     /* the long edge a-c, and a-b or b-c */
-    float xl = a->sx + (c->sx - a->sx) * (yc - a->sy) * inv_ac;
-    float xs = yc < b->sy ? a->sx + (b->sx - a->sx) * (yc - a->sy) * inv_ab
-                          : b->sx + (c->sx - b->sx) * (yc - b->sy) * inv_bc;
-    float xa = xl < xs ? xl : xs, xb = xl < xs ? xs : xl;
-    if (xa < -1.0f) xa = -1.0f;
-    if (xb > r_w + 1.0f) xb = r_w + 1.0f;
-    int x0 = (int)ceilf(xa - 0.5f), x1 = (int)ceilf(xb - 0.5f);
-    if (x0 < 0) x0 = 0;
-    if (x1 > r_w) x1 = r_w;
-    if (x0 >= x1) continue;
-    /* the attributes at (x0 + 0.5, yc), from vertex a */
-    float ox = x0 + 0.5f - a->sx, oy = yc - a->sy;
+    float yl = a->sy + (c->sy - a->sy) * (xc - a->sx) * inv_ac;
+    float ys = xc < b->sx ? a->sy + (b->sy - a->sy) * (xc - a->sx) * inv_ab
+                          : b->sy + (c->sy - b->sy) * (xc - b->sx) * inv_bc;
+    float ya = yl < ys ? yl : ys, yb = yl < ys ? ys : yl;
+    if (ya < -1.0f) ya = -1.0f;
+    if (yb > r_h + 1.0f) yb = r_h + 1.0f;
+    int y0 = (int)ceilf(ya - 0.5f), y1 = (int)ceilf(yb - 0.5f);
+    if (y0 < 0) y0 = 0;
+    if (y1 > r_h) y1 = r_h;
+    if (y0 >= y1) continue;
+    /* the attributes at (xc, y0 + 0.5), from vertex a */
+    float ox = xc - a->sx, oy = y0 + 0.5f - a->sy;
     PV p;
 #define AT(f) (a->f + dx.f * ox + dy.f * oy)
     p.iz = AT(iz), p.uz = AT(uz), p.vz = AT(vz), p.r = a->r, p.g = a->g, p.b = a->b, p.a = a->a, p.fog = a->fog;
@@ -486,7 +495,7 @@ static void fill_tri(const PV *a, const PV *b, const PV *c) {
     if (need_a) p.a = AT(a);
     if (need_fog) p.fog = AT(fog);
 #undef AT
-    fn(y, x0, x1, &p, &dx);
+    fn(x, y0, y1, &p, &dy);
   }
 }
 
@@ -521,8 +530,8 @@ static void draw_tri(const RVert *v0, const RVert *v1, const RVert *v2, bool cul
   if (!behind) {
     /* (in front: the N64's back faces turn clockwise on its screen, here the other way: y goes down) */
     if (cull && (v1->sx - v0->sx) * (v2->sy - v0->sy) - (v2->sx - v0->sx) * (v1->sy - v0->sy) >= 0) return;
-    float lo = fminf(v0->sy, fminf(v1->sy, v2->sy)), hi = fmaxf(v0->sy, fmaxf(v1->sy, v2->sy));
-    if (hi < r_band_y - 1 || lo > r_band_y + r_band_h + 1) return;
+    float lo = fminf(v0->sx, fminf(v1->sx, v2->sx)), hi = fmaxf(v0->sx, fmaxf(v1->sx, v2->sx));
+    if (hi < band_x - 1 || lo > band_x + band_w + 1) return;
     PV p[3];
     rv_pv(v0, &p[0]), rv_pv(v1, &p[1]), rv_pv(v2, &p[2]);
     fill_tri(&p[0], &p[1], &p[2]);
@@ -691,8 +700,8 @@ static void draw_item(const RItem *it, int layer) {
   if (it->kind == I_MESH) {
     const Batch *b = DAT(Batch, it->mesh->batch);
     for (int i = 0; i < it->mesh->nbatch; i++) {
-      const uint8_t *rows = F->rows[it->batch0 + i];
-      if (rows[1] <= r_band_y || rows[0] >= r_band_y + r_band_h) continue;
+      const uint8_t *cols = F->cols[it->batch0 + i];
+      if (cols[1] * 2 <= band_x || cols[0] * 2 >= band_x + band_w) continue;
       if (layer_of(&b[i], it->alpha) != layer) continue;
       draw_batch(it, &b[i]);
     }
@@ -717,69 +726,72 @@ static inline void sky_texel(const Sky *k, const uint8_t *tx, const uint16_t *pa
   rgb[0] = (c >> 11) << 3, rgb[1] = ((c >> 5) & 63) << 2, rgb[2] = (c & 31) << 3;
 }
 
+/* the sky behind what the band's opaque things left uncovered (where the depth is still 0) */
 static void draw_sky(void) {
   const Sky *k = sky_kind & 0x8000 ? NULL : sky_of(sky_kind);
-  if (k == NULL) {
-    /* a plain colour (RGB 555), or black */
-    int c5 = sky_kind & 0x8000 ? sky_kind & 0x7FFF : 0;
-    uint16_t c = rgb565((c5 >> 10 & 31) << 3, (c5 >> 5 & 31) << 3, (c5 & 31) << 3);
-    for (int i = 0; i < r_w * r_band_h; i++) F->col[i] = c;
-    return;
-  }
-  const uint16_t *pal = DAT(uint16_t, k->pal);
-  const uint8_t *tx = DAT(uint8_t, k->texels);
-  if (sky_kind == R_SKY_TITLE) {
-    /* a picture repeated over the screen, a texel a pixel */
-    for (int y = r_band_y; y < r_band_y + r_band_h; y++) {
-      uint16_t *row = F->col + (y - r_band_y) * r_w;
-      int ty = y * r_scale % k->h, c[3];
-      for (int x = 0; x < r_w; x++) {
-        sky_texel(k, tx, pal, x * r_scale % k->w, ty, c);
-        row[x] = rgb565(c[0], c[1], c[2]);
-      }
-    }
-    return;
-  }
-  /* skybox.c: the camera's yaw and pitch place the screen in the picture (its fov taken as 90 degrees) */
+  const int cs = band_w, h = r_h;
+  const uint16_t *pal = k ? DAT(uint16_t, k->pal) : NULL;
+  const uint8_t *tx = k ? DAT(uint8_t, k->texels) : NULL;
+  /* skybox.c: the camera's yaw and pitch place the screen in the picture (its fov taken as 90 degrees); texels a
+   * screen pixel (16.16), and where the screen starts */
   int scaled_x = 1280 - (int)((uint16_t)sky_yaw * 1280.0f / 65536.0f + 0.5f);
   int scaled_y = (int)(sky_pitch * (57.29578f * 4.0f) + (sky_pitch < 0 ? -0.5f : 0.5f)) + 600;
   if (scaled_y > 960) scaled_y = 960;
   if (scaled_y < 240) scaled_y = 240;
-  /* texels a screen pixel (16.16), and where the screen starts */
-  int step = r_scale;
-  int32_t du = (int32_t)((int64_t)k->w * 65536 * step / 1280), dv = (int32_t)((int64_t)k->h * 65536 * step / 960);
-  int32_t u0 = (int32_t)((int64_t)scaled_x * k->w * 65536 / 1280) - 32768;
-  int32_t v0 = (int32_t)((int64_t)(960 - scaled_y) * k->h * 65536 / 960) - 32768;
-  int tr = sky_tr, tg = sky_tg, tb = sky_tb;
-  int wmod = k->w << 16;
-  for (int y = r_band_y; y < r_band_y + r_band_h; y++) {
-    int32_t v = v0 + y * dv;
-    if (v < 0) v = 0;
-    int ty = v >> 16, fy = (v >> 8) & 255;
-    int ty1 = ty + 1 < k->h ? ty + 1 : ty;
-    if (ty >= k->h) ty = ty1 = k->h - 1;
-    uint16_t *row = F->col + (y - r_band_y) * r_w;
-    int32_t u = u0 % wmod;
+  int32_t du = 0, dv = 0, u0 = 0, v0 = 0, wmod = 1;
+  if (k) {
+    du = (int32_t)((int64_t)k->w * 65536 * r_scale / 1280), dv = (int32_t)((int64_t)k->h * 65536 * r_scale / 960);
+    u0 = (int32_t)((int64_t)scaled_x * k->w * 65536 / 1280) - 32768;
+    v0 = (int32_t)((int64_t)(960 - scaled_y) * k->h * 65536 / 960) - 32768;
+    wmod = k->w << 16;
+  }
+  const int tint[3] = {sky_tr, sky_tg, sky_tb};
+  /* (a plain colour, RGB 555, or black) */
+  int c5 = sky_kind & 0x8000 ? sky_kind & 0x7FFF : 0;
+  uint16_t plain = rgb565((c5 >> 10 & 31) << 3, (c5 >> 5 & 31) << 3, (c5 & 31) << 3);
+  for (int x = band_x; x < band_x + band_w; x++) {
+    uint16_t *col = F->col + (x - band_x);
+    const uint16_t *zb = F->z + (x - band_x) * h;
+    if (k == NULL) {
+      for (int y = 0; y < h; y++)
+        if (!zb[y]) col[y * cs] = plain;
+      continue;
+    }
+    if (sky_kind == R_SKY_TITLE) {
+      /* a picture repeated over the screen, a texel a pixel */
+      int tcol = x * r_scale % k->w, c[3];
+      for (int y = 0; y < h; y++)
+        if (!zb[y]) {
+          sky_texel(k, tx, pal, tcol, y * r_scale % k->h, c);
+          col[y * cs] = rgb565(c[0], c[1], c[2]);
+        }
+      continue;
+    }
+    int32_t u = (u0 + x * du) % wmod;
     if (u < 0) u += wmod;
-    int col = -1;
-    uint32_t a = 0, b = 0;   /* (the two columns' colours, blended between their rows, apart in a word) */
-    for (int x = 0; x < r_w; x++, u += du) {
-      if (u >= wmod) u -= wmod;
-      int tx0 = u >> 16;
-      if (tx0 != col) {
-        col = tx0;
-        int tx1 = tx0 + 1 < k->w ? tx0 + 1 : 0, p[3], q[3], c0[3], c1[3];
+    int tx0 = u >> 16, tx1 = tx0 + 1 < k->w ? tx0 + 1 : 0, fx = (u >> 8) & 255;
+    int row = -1;
+    uint32_t a = 0, b = 0;   /* (the two rows' colours, blended between their columns, apart in a word) */
+    for (int y = 0; y < h; y++) {
+      if (zb[y]) continue;
+      int32_t v = v0 + y * dv;
+      if (v < 0) v = 0;
+      int ty = v >> 16;
+      if (ty != row) {
+        row = ty;
+        int ty1 = ty + 1 < k->h ? ty + 1 : ty, p[3], q[3], c0[3], c1[3];
+        if (ty >= k->h) ty = ty1 = k->h - 1;
         sky_texel(k, tx, pal, tx0, ty, p);
-        sky_texel(k, tx, pal, tx0, ty1, q);
-        for (int c = 0; c < 3; c++) c0[c] = (p[c] + ((q[c] - p[c]) * fy >> 8)) * (c == 0 ? tr : c == 1 ? tg : tb) >> 8;
-        sky_texel(k, tx, pal, tx1, ty, p);
+        sky_texel(k, tx, pal, tx1, ty, q);
+        for (int c = 0; c < 3; c++) c0[c] = (p[c] + ((q[c] - p[c]) * fx >> 8)) * tint[c] >> 8;
+        sky_texel(k, tx, pal, tx0, ty1, p);
         sky_texel(k, tx, pal, tx1, ty1, q);
-        for (int c = 0; c < 3; c++) c1[c] = (p[c] + ((q[c] - p[c]) * fy >> 8)) * (c == 0 ? tr : c == 1 ? tg : tb) >> 8;
+        for (int c = 0; c < 3; c++) c1[c] = (p[c] + ((q[c] - p[c]) * fx >> 8)) * tint[c] >> 8;
         a = SPREAD(rgb565(c0[0], c0[1], c0[2])), b = SPREAD(rgb565(c1[0], c1[1], c1[2]));
       }
-      /* (between the two columns, the three channels at once, to 1/32) */
-      uint32_t f = (uint32_t)(u >> 11) & 31, w = ((a * (32 - f) + b * f) >> 5) & 0x07E0F81Fu;
-      row[x] = (uint16_t)(w | w >> 16);
+      /* (between the two rows, the three channels at once, to 1/32) */
+      uint32_t f = (uint32_t)(v >> 11) & 31, w = ((a * (32 - f) + b * f) >> 5) & 0x07E0F81Fu;
+      col[y * cs] = (uint16_t)(w | w >> 16);
     }
   }
 }
@@ -798,30 +810,180 @@ void *r_overlay_alloc(r_overlay_fn fn, int n) {
 }
 
 void r_hline(int x0, int x1, int y, uint16_t c, uint8_t alpha) {
-  if (y < r_band_y || y >= r_band_y + r_band_h) return;
-  if (x0 < 0) x0 = 0;
-  if (x1 > 320) x1 = 320;
-  uint16_t *row = r_row(y);
-  for (int x = x0; x < x1; x++) row[x] = alpha == 255 ? c : blend565(c, row[x], alpha + 1);
+  if (y < 0 || y >= SCREEN_H) return;
+  r_touch(x0, x1);
+  if (x0 < r_band_x) x0 = r_band_x;
+  if (x1 > r_band_x + r_band_w) x1 = r_band_x + r_band_w;
+  if (x0 >= x1) return;
+  uint16_t *px = r_px(x0, y);
+  for (int x = x0; x < x1; x++, px++) *px = alpha == 255 ? c : blend565(c, *px, alpha + 1);
 }
 
 typedef struct { int16_t x, y, w, h; uint16_t c; uint8_t a; } RectCmd;
 static void rect_fn(const void *cmd) {
   const RectCmd *r = cmd;
-  int y0 = r->y > r_band_y ? r->y : r_band_y, y1 = r->y + r->h < r_band_y + r_band_h ? r->y + r->h : r_band_y + r_band_h;
-  for (int y = y0; y < y1; y++) r_hline(r->x, r->x + r->w, y, r->c, r->a);
+  for (int y = r->y; y < r->y + r->h; y++) r_hline(r->x, r->x + r->w, y, r->c, r->a);
 }
 void r_rect(int x, int y, int w, int h, uint16_t color, uint8_t alpha) {
   RectCmd *r = r_overlay_alloc(rect_fn, sizeof(RectCmd));
   if (r) *r = (RectCmd){(int16_t)x, (int16_t)y, (int16_t)w, (int16_t)h, color, alpha};
 }
 
-static void run_overlays(uint16_t *buf, int y, int h) {
-  r_band = buf, r_band_y = y, r_band_h = h;
+/* Where the overlays draw next: the first of the screen's columns after those they last ran over (in the order
+ * the bands go) that something they draw covers. The overlays are the same for every band of a frame, so the
+ * bands before it skip them. */
+static int ov_next;
+
+/* (a column's place in the order the bands go) */
+static int in_order(int x) { return r_refresh == 1 ? SCREEN_W - x : x; }
+
+void r_touch(int x0, int x1) {
+  if (r_refresh == 1) {
+    int t = x0;
+    x0 = SCREEN_W - x1, x1 = SCREEN_W - t;
+  }
+  int end = r_refresh == 1 ? SCREEN_W - r_band_x : r_band_x + r_band_w;
+  if (x1 > end && x0 < ov_next) ov_next = x0 > end ? x0 : end;
+}
+
+/* the overlays over the screen's columns x to x + w (buf: their rows) */
+static void run_overlays(uint16_t *buf, int x, int w) {
+  r_band = buf, r_band_x = x, r_band_w = w;
+  if (in_order(r_refresh == 1 ? x : x + w) <= ov_next) return;
+  ov_next = SCREEN_W;
   for (int off = 0; off < overlay_used;) {
     const OvHead *hd = (const OvHead *)(const void *)(F->overlay + off);
     hd->fn(hd + 1);
     off += hd->size;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------ the refresh */
+/* The panel refreshes itself from its own memory, a column at a time across the screen (from the left, or from
+ * the right on some: r_refresh), about 40 times a second. Columns sent while the refresh goes over them would
+ * show the new frame beside the old one, and a refresh that goes over columns of two frames would show both: the
+ * frame tears. So the bands go in the order the refresh takes them, each one once the refresh has gone past it
+ * and before the next refresh comes to it: every refresh shows one whole frame (as NumPlay's Doom does). The
+ * refresh's period and phase are measured with plat_vblank, which waits for a refresh to start.
+ *
+ * Times are in 1/256 ms, from the start of a refresh (sync_t0). The screen's columns p0 to p1 (counted in the
+ * refresh's order) go under the refresh starting at r once it is past them (after r + p1 / 320 of the period)
+ * and before the next one comes to them (before r + the period + p0 / 320 of it), with a margin each side for
+ * the clock (1 ms steps) and the panel's blanking time. */
+int r_refresh;
+#define SYNC_MARGIN (2 * 256)
+#define MAX_PUSHES 32
+static uint32_t sync_t0;       /* (ms * 256) */
+static int32_t sync_period;    /* 0: no refresh to see (a computer, the emulator) */
+static uint32_t sync_when;     /* when it was last measured (ms; 0: never) */
+static uint32_t sync_first;    /* a refresh measured, and the refreshes since (for the period) */
+static int32_t sync_count;
+static int32_t sync_r;         /* the refresh this frame keeps to (its start) */
+/* the last frame's pushes: where each ends in the refresh's order, how long the frame took to make them since its
+ * first (the most it took lately, waits left out); how long a push takes, when the last one was done, how long
+ * this frame took so far */
+static int16_t push_end[MAX_PUSHES];
+static int32_t push_made[MAX_PUSHES], push_time, push_done, frame_work;
+static int npush, npush_last;
+
+static int32_t sync_now(void) { return (int32_t)(plat_millis() * 256u + 128u - sync_t0); }
+/* (the time waited, in ms, for the calculator's emulator to read) */
+uint32_t perf_wait;
+static void sync_wait(int32_t t) {
+  uint32_t t0 = plat_millis();
+  while (sync_now() < t) {
+  }
+  perf_wait += plat_millis() - t0;
+}
+
+/* the time a refresh starts (waiting for it), and the period: from 24 refreshes the first time (or after ten
+ * minutes not measured), then from all those since the first one measured (to a few thousandths of a ms) */
+static void sync_measure(void) {
+  uint32_t last = sync_when;
+  sync_when = plat_millis() | 1;
+  if (!plat_vblank()) {
+    sync_period = 0;
+    return;
+  }
+  uint32_t a = plat_millis();
+  if (!sync_period || a - last > 600000) {
+    for (int i = 0; i < 24; i++) plat_vblank();
+    uint32_t b = plat_millis();
+    sync_period = (int32_t)((b - a) * 256 / 24);
+    a = b;
+    sync_first = a * 256u + 128u, sync_count = 0;
+  } else {
+    int32_t d = (int32_t)(a * 256u + 128u - sync_t0);
+    sync_count += (d + sync_period / 2) / sync_period;
+    if (sync_count > 0) sync_period = (int32_t)((a * 256u + 128u - sync_first) / (uint32_t)sync_count);
+    /* (from this one on after half an hour: the clock in 1/256 ms goes round in four) */
+    if (sync_count > 70000) sync_first = a * 256u + 128u, sync_count = 0;
+  }
+  sync_t0 = a * 256u + 128u, sync_when = a | 1;
+  /* (none faster than 100 times a second or slower than 20: there are no refreshes to see) */
+  if (sync_period < 10 * 256 || sync_period > 50 * 256) sync_period = 0;
+}
+
+/* the start of the last refresh at or before t */
+static int32_t refresh_before(int32_t t) {
+  int32_t k = t >= 0 ? t / sync_period : -((-t + sync_period - 1) / sync_period);
+  return k * sync_period;
+}
+
+static int32_t window_open(int32_t r, int p1) { return r + sync_period * p1 / SCREEN_W + SYNC_MARGIN; }
+static int32_t window_close(int32_t r, int p0) {
+  return r + sync_period + sync_period * p0 / SCREEN_W - SYNC_MARGIN - push_time;
+}
+
+/* whether the frame's pushes, the first ready at t, can all go under the refresh starting at r (as long as each
+ * takes as long as lately) */
+static bool sync_fits(int32_t r, int32_t t) {
+  if (t < window_open(r, push_end[0])) t = window_open(r, push_end[0]);
+  for (int k = 1, made = 0; k < npush_last; k++) {
+    if (push_made[k] > made) t += push_made[k] - made, made = push_made[k];
+    t += push_time;
+    if (t < window_open(r, push_end[k])) t = window_open(r, push_end[k]);
+  }
+  return t <= window_close(r, npush_last > 1 ? push_end[npush_last - 2] : 0);
+}
+
+static void sync_frame(void) {
+  npush_last = npush < MAX_PUSHES ? npush : MAX_PUSHES, npush = 0;
+  if (r_refresh != 2 && (!sync_when || plat_millis() - sync_when > 4000)) sync_measure();
+}
+
+/* the screen's columns x to x + w are drawn: when to send them */
+static void sync_push(int x, int w) {
+  int p0 = r_refresh == 1 ? SCREEN_W - x - w : x, p1 = p0 + w, k = npush++;
+  int32_t now = sync_now();
+  frame_work = k ? frame_work + now - push_done : 0;
+  if (k < MAX_PUSHES) {
+    int32_t *e = &push_made[k];
+    push_end[k] = (int16_t)p1;
+    *e = frame_work > *e ? frame_work : *e - (*e - frame_work) / 16;
+  }
+  if (r_refresh == 2 || !sync_period) return;
+  int32_t period = sync_period;
+  if (k == 0) {
+    /* the first refresh whose window for these columns is open now or later, or the one after it if the frame
+     * would be late for its last columns (and in time with that one) */
+    int32_t r = refresh_before(now) - period;
+    while (window_close(r, p0) < now) r += period;
+    if (!sync_fits(r, now) && sync_fits(r + period, now)) r += period;
+    sync_r = r;
+    /* (waiting for that refresh to start anyway: its time measured again, now and then) */
+    if (r - now > 2 * 256 && plat_millis() - sync_when > 1000) {
+      sync_measure();
+      sync_r = 0, now = sync_now();
+      if (!sync_period) return;
+    }
+  }
+  if (now < window_open(sync_r, p1)) sync_wait(window_open(sync_r, p1));
+  else if (now > window_close(sync_r, p0)) {
+    /* late: at least not while the refresh goes over them */
+    int32_t r = refresh_before(now);
+    int32_t busy0 = r + period * p0 / SCREEN_W - SYNC_MARGIN - push_time, busy1 = r + period * p1 / SCREEN_W + SYNC_MARGIN;
+    if (now > busy0 && now < busy1) sync_wait(busy1);
   }
 }
 
@@ -831,49 +993,65 @@ static int by_depth(const void *a, const void *b) {
   return da < db ? 1 : da > db ? -1 : 0;
 }
 
+/* the band's columns c to c + n doubled into the depth buffer's room (free now), as the screen's rows (half
+ * resolution) */
+static void double_cols(int c0, int n) {
+  const uint16_t *src = F->col + c0;
+  uint32_t *d = (uint32_t *)(void *)F->z;
+  for (int y = 0; y < r_h; y++, src += band_w, d += 2 * n) {
+    for (int c = 0; c < n; c++) d[c] = src[c] * 0x10001u;
+    memcpy(d + n, d, (size_t)n * 4);
+  }
+}
+
+/* the screen's columns x to x + w (their rows in buf): the overlays, then to the screen in time */
+static void send(uint16_t *buf, int x, int w) {
+  run_overlays(buf, x, w);
+  sync_push(x, w);
+  int32_t t = sync_now();
+  plat_push(x, 0, w, SCREEN_H, buf);
+  push_done = sync_now();
+  push_time += (push_done - t - push_time) / 4;
+}
+
 void r_draw(void) {
   if (!F) return;
   int nxlu = 0;
   for (int i = 0; i < nitems; i++)
     if (F->items[i].layers & 4) F->order[nxlu++] = (uint8_t)i;
   qsort(F->order, (size_t)nxlu, 1, by_depth);
-  int band_rows = R_BAND_PIXELS / r_w;
   r_stat_items = nitems;
-  for (int band_y = 0; band_y < r_h; band_y += band_rows) {
-    r_band = F->col;
-    r_band_y = band_y;
-    r_band_h = r_h - band_y < band_rows ? r_h - band_y : band_rows;
-    int bh = r_band_h;
-    memset(F->z, 0, (size_t)r_w * bh * 2);
-    draw_sky();
+  ov_next = 0;
+  sync_frame();
+  /* the bands: 13 columns at full resolution, 26 at half, those sent to the screen doubled 6 at a time (what
+   * the depth buffer's room holds) */
+  int bw = R_BAND_PIXELS / r_h, nb = (r_w + bw - 1) / bw, piece = R_BAND_PIXELS / (SCREEN_H * 2);
+  for (int i = 0; i < nb; i++) {
+    int b = r_refresh == 1 ? nb - 1 - i : i;
+    band_x = b * bw, band_w = r_w - band_x < bw ? r_w - band_x : bw;
+    memset(F->z, 0, (size_t)band_w * r_h * 2);
     for (int layer = 1; layer <= 2; layer++)
-      for (int i = 0; i < nitems; i++) {
-        const RItem *it = &F->items[i];
-        if (!(it->layers & layer) || it->y1 <= band_y || it->y0 >= band_y + bh) continue;
+      for (int k = 0; k < nitems; k++) {
+        const RItem *it = &F->items[k];
+        if (!(it->layers & layer) || it->x1 * 2 <= band_x || it->x0 * 2 >= band_x + band_w) continue;
         draw_item(it, layer);
       }
+    /* (the sky where they left room, then the see-through things over both) */
+    draw_sky();
     for (int k = 0; k < nxlu; k++) {
       const RItem *it = &F->items[F->order[k]];
-      if (it->y1 <= band_y || it->y0 >= band_y + bh) continue;
+      if (it->x1 * 2 <= band_x || it->x0 * 2 >= band_x + band_w) continue;
       draw_item(it, 4);
     }
     if (r_scale == 1) {
-      run_overlays(F->col, band_y, bh);
-      plat_push(0, band_y, r_w, bh, F->col);
-    } else {
-      /* half resolution: rows doubled into the depth buffer's room (free now), then the overlays */
-      int chunk = R_BAND_PIXELS / (320 * 2);
-      for (int y = 0; y < bh; y += chunk) {
-        int n = bh - y < chunk ? bh - y : chunk;
-        for (int k = 0; k < n; k++) {
-          const uint16_t *src = F->col + (y + k) * r_w;
-          uint16_t *d = F->z + k * 2 * 320;
-          for (int x = 0; x < r_w; x++) d[2 * x] = d[2 * x + 1] = src[x];
-          memcpy(d + 320, d, 640);
-        }
-        run_overlays(F->z, (band_y + y) * 2, n * 2);
-        plat_push(0, (band_y + y) * 2, 320, n * 2, F->z);
-      }
+      send(F->col, band_x, band_w);
+      continue;
+    }
+    int np = (band_w + piece - 1) / piece;
+    for (int j = 0; j < np; j++) {
+      int c = (r_refresh == 1 ? np - 1 - j : j) * piece, n = band_w - c < piece ? band_w - c : piece;
+      double_cols(c, n);
+      send(F->z, (band_x + c) * 2, n * 2);
     }
   }
   F = NULL;

@@ -55,6 +55,6 @@ static inline int port_gfx_join_step(Gfx *prev, float x) {
   return 0;
 }
 
-/* plays the frame's display list (gfx.c) over the rows being drawn (render.h's r_band) */
+/* plays the frame's display list (gfx.c) over the columns being drawn (render.h's r_band) */
 void port_gfx_run(const Gfx *dl);
 #endif

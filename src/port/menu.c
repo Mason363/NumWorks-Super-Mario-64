@@ -411,70 +411,101 @@ static void draw_act_select(void) {
   gSPDisplayList(gDisplayListHead++, dl_menu_ia8_text_end);
 }
 
-/* ------------------------------------------------------------------------------------------------ quitting */
-/* The game's pause menu, with the calculator's way out: Shift asks, in the game's own look (the box of its
- * castle pause menu, its font, its arrow, the choices of its save menu): SAVE & QUIT saves the file (the stars
- * are already saved as Mario gets them, as on the N64) and quits, CONTINUE (or Back) goes back to the pause
- * menu. */
-static s8 sAskQuit, sQuitLine;
-int port_menu_asking(void) { return sAskQuit; }
+/* ------------------------------------------------------------------------------------------------ options */
+/* The game's pause menu, with the calculator's options and way out: Shift opens a box in the game's own look (the
+ * box of its castle pause menu, its font, its arrow): the resolution (full, or half: faster), the way the screen
+ * refreshes (render.h: left to right on most calculators; off sends the picture as soon as it is drawn, and it
+ * tears), SAVE & QUIT, which saves the file (the stars are already saved as Mario gets them, as on the N64) and
+ * quits, and CONTINUE. Up and down choose, left and right or OK change, OK chooses, Back goes back to the pause
+ * menu. The options are saved with the save files (src/port/save.c). */
+enum { OPT_RES = 1, OPT_REFRESH, OPT_QUIT, OPT_CONTINUE };
+static s8 sOptions, sOptLine, sOptHeld;
+int port_menu_asking(void) { return sOptions; }
+
+static void close_options(void) {
+  sOptions = 0;
+  port_settings_save();
+}
+
 void port_menu_input(void) {
   if (gMenuMode != MENU_MODE_RENDER_PAUSE_SCREEN) {
-    sAskQuit = 0;
+    if (sOptions) close_options();
     return;
   }
   u16 pressed = gPlayer1Controller->buttonPressed;
-  if (!sAskQuit) {
+  if (!sOptions) {
     if (!(pressed & Z_TRIG)) return;
-    sAskQuit = 1, sQuitLine = 1;
-  } else if (pressed & (A_BUTTON | START_BUTTON)) {
-    if (sQuitLine == 1) {
-      port_save_and_quit();
-    } else sAskQuit = 0;
-  } else if (pressed & B_BUTTON) sAskQuit = 0;
-  /* (the game's menu does not see the keys while the question is up) */
+    sOptions = 1, sOptLine = OPT_RES, sOptHeld = 1;
+  } else {
+    /* (left and right: a step each time pressed) */
+    s8 x = gPlayer1Controller->rawStickX;
+    s32 step = 0;
+    if (x > 60 || x < -60) {
+      if (!sOptHeld) step = x > 0 ? 1 : -1;
+      sOptHeld = 1;
+    } else sOptHeld = 0;
+    if (pressed & (A_BUTTON | START_BUTTON)) {
+      if (sOptLine == OPT_QUIT) port_save_and_quit();
+      else if (sOptLine == OPT_CONTINUE) close_options();
+      else step = 1;
+    } else if (pressed & B_BUTTON) close_options();
+    if (step && sOptLine == OPT_RES) r_set_half(r_scale == 1);
+    if (step && sOptLine == OPT_REFRESH) r_refresh = (r_refresh + (step > 0 ? 1 : 2)) % 3;
+  }
+  /* (the game's menu does not see the keys while the box is up) */
   gPlayer1Controller->buttonPressed = gPlayer3Controller->buttonPressed = 0;
 }
 
-/* the file saved if anything changed (save_file.c's flags: a door opened, a cannon), then the app ends */
+/* the file saved if anything changed (save_file.c's flags: a door opened, a cannon), and the options, then the
+ * app ends */
 void port_save_and_quit(void) {
+  port_settings_save();
   if (gCurrSaveFileNum >= 1 && save_file_exists(gCurrSaveFileNum - 1)) save_file_do_save(gCurrSaveFileNum - 1);
   port_quit = 1;
 }
 
-static void draw_quit(void) {
+static void draw_options(void) {
+  static const char *const res[] = {"FULL", "HALF, FASTER"};
+  static const char *const refresh[] = {"LEFT TO RIGHT", "RIGHT TO LEFT", "OFF"};
   u8 textSaveAndQuit[] = {TEXT_SAVE_AND_QUIT};
   u8 textContinue[] = {TEXT_CONTINUE};
-  if (!sAskQuit) {
+  if (!sOptions) {
     gSPDisplayList(gDisplayListHead++, dl_ia_text_begin);
     gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, gMenuTextAlpha);
-    print_text_at(-1, 12, "Shift: quit");
+    print_text_at(-1, 12, "Shift: options and quit");
     gSPDisplayList(gDisplayListHead++, dl_ia_text_end);
     return;
   }
   /* the screen darkened and the box (render_pause_screen's shade_screen, render_pause_castle_menu_box's box) */
   shade_screen();
-  create_dl_translation_matrix(MENU_MTX_PUSH, 160 - 78, 120 + 32, 0);
-  create_dl_scale_matrix(MENU_MTX_NOPUSH, 1.2f, 0.8f, 1.0f);
+  create_dl_translation_matrix(MENU_MTX_PUSH, 36, 176, 0);
+  create_dl_scale_matrix(MENU_MTX_NOPUSH, 1.92f, 1.3f, 1.0f);
   gDPSetEnvColor(gDisplayListHead++, 0, 0, 0, 105);
   gSPDisplayList(gDisplayListHead++, dl_draw_text_bg_box);
   gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
-  /* the choices and the arrow (render_save_confirmation's) */
-  handle_menu_scrolling(MENU_SCROLL_VERTICAL, &sQuitLine, 1, 2);
-  s16 x = 160 - 46, y = 126;
+  /* the lines and the arrow (render_save_confirmation's) */
+  handle_menu_scrolling(MENU_SCROLL_VERTICAL, &sOptLine, OPT_RES, OPT_CONTINUE);
+  s16 x = 50, y = 150;
   gSPDisplayList(gDisplayListHead++, dl_ia_text_begin);
   gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, 255);
-  print_generic_string(x + 12, y, textSaveAndQuit);
-  print_generic_string(x + 12, y - 20, textContinue);
+  print_text_at(x + 12, y, "RESOLUTION");
+  print_text_at(x + 130, y, res[r_scale == 2]);
+  print_text_at(x + 12, y - 20, "SCREEN REFRESH");
+  print_text_at(x + 130, y - 20, refresh[r_refresh]);
+  print_generic_string(x + 12, y - 40, textSaveAndQuit);
+  print_generic_string(x + 12, y - 60, textContinue);
+  /* (under the box: what the option does) */
+  if (sOptLine == OPT_RES) print_text_at(-1, 56, "Half: smoother, less sharp.");
+  if (sOptLine == OPT_REFRESH) print_text_at(-1, 56, "If the picture tears, try the other way.");
   gSPDisplayList(gDisplayListHead++, dl_ia_text_end);
-  create_dl_translation_matrix(MENU_MTX_PUSH, x, y - (sQuitLine - 1) * 20, 0);
+  create_dl_translation_matrix(MENU_MTX_PUSH, x, y - (sOptLine - 1) * 20, 0);
   gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, 255);
   gSPDisplayList(gDisplayListHead++, dl_draw_triangle);
   gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
 }
 
 void port_menu_draw(void) {
-  if (gMenuMode == MENU_MODE_RENDER_PAUSE_SCREEN) draw_quit();
+  if (gMenuMode == MENU_MODE_RENDER_PAUSE_SCREEN) draw_options();
   if (port_menu_active == SCREEN_LOGO) draw_logo();
   if (port_menu_active == SCREEN_HEAD) draw_head();
   if (port_menu_active == SCREEN_FILES) draw_files();

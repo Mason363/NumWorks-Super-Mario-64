@@ -1,6 +1,6 @@
 /* The screens' display lists, played on the calculator: the decompilation's HUD, dialog boxes, menus, text and
  * screen transitions build the N64 display lists the game always built (orthographic triangles and texture
- * rectangles, with the RDP's colour combiner and alpha); this plays one over the rows being drawn (render.h's
+ * rectangles, with the RDP's colour combiner and alpha); this plays one over the columns being drawn (render.h's
  * r_band), once for each band. Their textures are the calculator's (PORT_TEX_STUB: an index in src/data.bin). */
 #include <math.h>
 #include <string.h>
@@ -193,13 +193,14 @@ static void fill_rect(int x0, int y0, int x1, int y1) {
     memset(sSrc, 0, SRC_PRIM);
     combine(c);
   }
-  if (y0 < r_band_y) y0 = r_band_y;
-  if (y1 > r_band_y + r_band_h) y1 = r_band_y + r_band_h;
-  if (x0 < 0) x0 = 0;
-  if (x1 > 320) x1 = 320;
+  if (y0 < 0) y0 = 0;
+  if (y1 > 240) y1 = 240;
+  if (y0 < y1) r_touch(x0, x1);
+  if (x0 < r_band_x) x0 = r_band_x;
+  if (x1 > r_band_x + r_band_w) x1 = r_band_x + r_band_w;
   for (int y = y0; y < y1; y++) {
-    uint16_t *row = r_row(y);
-    for (int x = x0; x < x1; x++) put(row + x, c);
+    uint16_t *px = r_px(x0, y);
+    for (int x = x0; x < x1; x++) put(px++, c);
   }
 }
 
@@ -209,26 +210,27 @@ static void tex_rect(int xl, int yl, int xh, int yh, int s0, int t0, int dsdx, i
   float x0 = xl / 4.0f, y0 = yl / 4.0f, x1 = xh / 4.0f + (copy ? 1 : 0), y1 = yh / 4.0f + (copy ? 1 : 0);
   float ds = dsdx / 1024.0f / (copy ? 4 : 1), dt = dtdy / 1024.0f;
   int ya = (int) ceilf(y0 - 0.5f), yb = (int) ceilf(y1 - 0.5f), xa = (int) ceilf(x0 - 0.5f), xb = (int) ceilf(x1 - 0.5f);
-  if (ya < r_band_y) ya = r_band_y;
-  if (yb > r_band_y + r_band_h) yb = r_band_y + r_band_h;
-  if (xa < 0) xa = 0;
-  if (xb > 320) xb = 320;
+  if (ya < 0) ya = 0;
+  if (yb > 240) yb = 240;
+  if (sTex != NULL && ya < yb) r_touch(xa, xb);
+  if (xa < r_band_x) xa = r_band_x;
+  if (xb > r_band_x + r_band_w) xb = r_band_x + r_band_w;
   if (sTex == NULL || ya >= yb || xa >= xb) return;
   memset(sSrc + SRC_SHADE, 255, 4);
   /* (along a row: s, or t when flipped) */
   float da = flip ? dt : ds;
   for (int y = ya; y < yb; y++) {
-    uint16_t *row = r_row(y);
+    uint16_t *px = r_px(xa, y);
     float along = (flip ? t0 : s0) / 32.0f + (xa + 0.5f - x0) * da;
     int across = (int) floorf((flip ? s0 : t0) / 32.0f + (y + 0.5f - y0) * (flip ? ds : dt));
-    for (int x = xa; x < xb; x++, along += da) {
+    for (int x = xa; x < xb; x++, along += da, px++) {
       int a = (int) floorf(along);
       u8 c[4];
       texel(flip ? across : a, flip ? a : across, sSrc + SRC_TEX);
-      if (copy || (sSrc[SRC_TEX + 3] == 0 && sCCTexAlpha)) put(row + x, sSrc + SRC_TEX);   /* (copy: no combiner) */
+      if (copy || (sSrc[SRC_TEX + 3] == 0 && sCCTexAlpha)) put(px, sSrc + SRC_TEX);   /* (copy: no combiner) */
       else {
         combine(c);
-        put(row + x, c);
+        put(px, c);
       }
     }
   }
@@ -240,10 +242,13 @@ static void tri(const GVtx *a, const GVtx *b, const GVtx *c) {
   float area = e1x * e2y - e2x * e1y;
   if (fabsf(area) < 1e-3f) return;
   float ymin = fminf(a->y, fminf(b->y, c->y)), ymax = fmaxf(a->y, fmaxf(b->y, c->y));
+  float xmin = fminf(a->x, fminf(b->x, c->x)), xmax = fmaxf(a->x, fmaxf(b->x, c->x));
   int ya = (int) ceilf(ymin - 0.5f), yb = (int) ceilf(ymax - 0.5f);
-  if (ya < r_band_y) ya = r_band_y;
-  if (yb > r_band_y + r_band_h) yb = r_band_y + r_band_h;
+  if (ya < 0) ya = 0;
+  if (yb > 240) yb = 240;
   if (ya >= yb) return;
+  r_touch((int) xmin - 1, (int) xmax + 2);
+  if (xmax < r_band_x - 1 || xmin > r_band_x + r_band_w + 1) return;
   bool tex = sTexOn && sTex != NULL && sCCTex, shade = sCCShade;
   if (shade && memcmp(a->c, b->c, 4) == 0 && memcmp(a->c, c->c, 4) == 0) {
     memcpy(sSrc + SRC_SHADE, a->c, 4);   /* (one shade all over: the screen's fades) */
@@ -272,17 +277,17 @@ static void tri(const GVtx *a, const GVtx *b, const GVtx *c) {
       }
     }
     int xa = (int) ceilf(xl - 0.5f), xb = (int) ceilf(xr - 0.5f);
-    if (xa < 0) xa = 0;
-    if (xb > 320) xb = 320;
+    if (xa < r_band_x) xa = r_band_x;
+    if (xb > r_band_x + r_band_w) xb = r_band_x + r_band_w;
     if (xa >= xb) continue;
-    uint16_t *row = r_row(y);
+    uint16_t *px = r_px(xa, y);
     if (!tex && !shade) {
-      for (int x = xa; x < xb; x++) put(row + x, col);
+      for (int x = xa; x < xb; x++) put(px++, col);
       continue;
     }
     float ox = xa + 0.5f - a->x, oy = py - a->y, f[6];
     for (int i = 0; i < 6; i++) f[i] = at[i] + dx[i] * ox + dy[i] * oy;
-    for (int x = xa; x < xb; x++) {
+    for (int x = xa; x < xb; x++, px++) {
       if (tex) {
         texel((int) floorf(f[0]), (int) floorf(f[1]), sSrc + SRC_TEX);
         if (sSrc[SRC_TEX + 3] == 0 && sCCTexAlpha) goto next;   /* (clear) */
@@ -293,15 +298,15 @@ static void tri(const GVtx *a, const GVtx *b, const GVtx *c) {
           sSrc[SRC_SHADE + k] = (u8) (s < 0 ? 0 : s > 255 ? 255 : s);
         }
       combine(col);
-      put(row + x, col);
+      put(px, col);
     next:
       for (int i = 0; i < 6; i++) f[i] += dx[i];
     }
   }
 }
 
+static M4 mvp;   /* (the model and projection matrices together) */
 static void load_vertices(const Vtx *v, int n, int v0) {
-  static M4 mvp;
   if (sMvpDirty) m4_mul(mvp, sModel[sModelTop], sProj), sMvpDirty = false;
   for (int i = 0; i < n && v0 + i < 16; i++) {
     const Vtx_t *s = &v[i].v;
@@ -320,12 +325,12 @@ static void load_vertices(const Vtx *v, int n, int v0) {
 }
 
 /* ------------------------------------------------------------------------------------------------ the list */
+/* (a translation times a matrix: its last row moves) */
 static void model_translate(float x, float y) {
-  M4 t;
-  m4_ident(t);
-  t[3][0] = x, t[3][1] = y;
-  m4_mul(sModel[sModelTop], t, sModel[sModelTop]);
-  sMvpDirty = true;
+  for (int j = 0; j < 4; j++) {
+    sModel[sModelTop][3][j] += x * sModel[sModelTop][0][j] + y * sModel[sModelTop][1][j];
+    mvp[3][j] += x * mvp[0][j] + y * mvp[1][j];
+  }
 }
 
 void port_gfx_run(const Gfx *dl) {

@@ -95,7 +95,7 @@ int port_level_exists(int level);
 /* draws the frame (src/port/scene.c): what level_script_execute did after the script, render_game */
 void port_render(void);
 
-/* the pause menu asks whether to quit (src/port/menu.c): ingame_menu.c doesn't draw its own meanwhile */
+/* the pause menu's options are up (src/port/menu.c): ingame_menu.c doesn't draw its own meanwhile */
 int port_menu_asking(void);
 
 /* no sound on the calculator */
