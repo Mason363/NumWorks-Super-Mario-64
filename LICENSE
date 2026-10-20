@@ -19,9 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-This license covers the port's own code: src/, tools/, tests/, common/ and the
-build files. The code and data in decomp/ come from the n64decomp/sm64
-decompilation (CC0, see decomp/LICENSE.md), and Super Mario 64's models,
-levels, animations, text and textures packed into src/data.bin and
-src/port/gen/ are Nintendo's: no license is given for them here.
