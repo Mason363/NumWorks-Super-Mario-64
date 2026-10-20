@@ -89,9 +89,10 @@ int port_model_of(const void *p) {
   if (!n) return 0xFFFF;
   if (n->type == PORT_NODE_MODEL) return ((const struct PortNode *) n)->model;
   if (n->type == GRAPH_NODE_TYPE_DISPLAY_LIST || n->type == GRAPH_NODE_TYPE_SCALE) {
-    const u32 *dl = n->type == GRAPH_NODE_TYPE_SCALE ? ((const struct GraphNodeScale *) n)->displayList
+    /* (a display list stub: its words, whatever their size on a computer) */
+    const Gfx *dl = n->type == GRAPH_NODE_TYPE_SCALE ? ((const struct GraphNodeScale *) n)->displayList
                                                      : ((const struct GraphNodeDisplayList *) n)->displayList;
-    if (dl && dl[0] == PORT_MODEL_TAG) return (int) dl[1];
+    if (dl && (u32) dl->words.w0 == PORT_MODEL_TAG) return (int) dl->words.w1;
   }
   return 0xFFFF;
 }
@@ -201,8 +202,12 @@ void port_debug_place(f32 x, f32 y, f32 z, s16 yaw) {
 }
 #endif
 
-/* the level a new game starts in (tests start elsewhere) */
-int port_start_level_num = LEVEL_CASTLE_GROUNDS;
+/* the level a new game starts in (tests start elsewhere; a build for the calculator's emulator may too:
+ * make EXTRA=-DPORT_START_LEVEL=9 BUILD_DIR=output_bob) */
+#ifndef PORT_START_LEVEL
+#define PORT_START_LEVEL LEVEL_CASTLE_GROUNDS
+#endif
+int port_start_level_num = PORT_START_LEVEL;
 s32 port_start_level(void) { return port_start_level_num; }
 
 /* ------------------------------------------------------------------------------------------------ the frame */

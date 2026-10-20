@@ -211,6 +211,10 @@ static inline uint16_t mod565(uint16_t t, int r, int g, int b) {   /* r, g, b: 1
   return (uint16_t)(tr << 11 | tg << 5 | tb);
 }
 
+/* the offsets (16.16 texels) a pixel takes its texel at, by its place in a 2 x 2 block: on the N64 a texel's
+ * colour slides into the next one's (bilinear filtering), here the pixels nearer the next one take it */
+static const int32_t dither[4][2] = {{0x4000, 0x0000}, {0x8000, 0xC000}, {0xC000, 0x8000}, {0x0000, 0x4000}};
+
 static inline int32_t fix16(float f) {
   if (f > 32000.0f) f = 32000.0f;
   if (f < -32000.0f) f = -32000.0f;
@@ -259,7 +263,10 @@ static inline __attribute__((always_inline)) void span_body(int y, int x0, int x
       int cr = r >> 16, cg = g >> 16, cbl = b >> 16, ca = d_alpha;
       uint16_t out;
       if (depth) {
-        int i = wrap_coord(v >> 16 >> shift, hm, wt) << wl | wrap_coord(u >> 16 >> shift, wm, ws);
+        /* (the texel a little off by the pixel's place: the N64's filtering, approached) */
+        const int32_t *o = dither[(y & 1) << 1 | (x & 1)];
+        int32_t uu = u + (o[0] << shift), vv = v + (o[1] << shift);
+        int i = wrap_coord(vv >> 16 >> shift, hm, wt) << wl | wrap_coord(uu >> 16 >> shift, wm, ws);
         uint16_t t = depth == 1 ? pal[texels[i >> 1] >> ((i & 1) << 2) & 15]
                    : depth == 2 ? pal[texels[i]] : ((const uint16_t *)(const void *)texels)[i];
         if (ia) {
@@ -331,14 +338,20 @@ static inline __attribute__((always_inline)) void span_fast_body(int y, int x0, 
     duv = ((uint32_t)(fix16(d->uz) >> 8) << 16) + (uint32_t)(fix16(d->vz) >> 8);
   }
   float cr = p->r, cg = p->g, cbl = p->b, cf = p->fog;
+  /* (the texel a little off by the pixel's place, s and t in 8.8 together: the N64's filtering, approached) */
+  const int32_t *o0 = dither[(y & 1) << 1], *o1 = dither[(y & 1) << 1 | 1];
+  uint32_t e0 = ((uint32_t)(o0[0] >> 8) << 16) + (uint32_t)(o0[1] >> 8), e1 = ((uint32_t)(o1[0] >> 8) << 16) + (uint32_t)(o1[1] >> 8);
+  e0 <<= tx_shift, e1 <<= tx_shift;
+  uint32_t od = (x0 & 1) ? e1 : e0, oswap = e0 ^ e1;
 #define TEXEL()                                                                                               \
   (depth == 1 ? pal[texels[i >> 1] >> ((i & 1) << 2) & 15]                                                    \
    : depth == 2 ? pal[texels[i]] : ((const uint16_t *)(const void *)texels)[i])
 #define PIXELS(OUT)                                                                                           \
-  for (const uint16_t *end = cb + n; cb < end; cb++, zb++, z += dz, uv += duv) {                              \
+  for (const uint16_t *end = cb + n; cb < end; cb++, zb++, z += dz, uv += duv, od ^= oswap) {                 \
     int zz = z >> 16;                                                                                         \
     if (zz < *zb) continue;                                                                                   \
-    uint32_t i = ((uv >> ush) & wm) | ((uv >> vsh) & vmask);                                                  \
+    uint32_t uvd = uv + od;                                                                                   \
+    uint32_t i = ((uvd >> ush) & wm) | ((uvd >> vsh) & vmask);                                                \
     uint32_t t = TEXEL();                                                                                     \
     *zb = (uint16_t)zz;                                                                                       \
     *cb = (uint16_t)(OUT);                                                                                    \
@@ -748,25 +761,25 @@ static void draw_sky(void) {
     uint16_t *row = F->col + (y - r_band_y) * r_w;
     int32_t u = u0 % wmod;
     if (u < 0) u += wmod;
-    int col = -1, a[3] = {0}, b[3] = {0};
+    int col = -1;
+    uint32_t a = 0, b = 0;   /* (the two columns' colours, blended between their rows, apart in a word) */
     for (int x = 0; x < r_w; x++, u += du) {
       if (u >= wmod) u -= wmod;
       int tx0 = u >> 16;
       if (tx0 != col) {
-        /* this column and the next, each blended between its two rows */
         col = tx0;
-        int tx1 = tx0 + 1 < k->w ? tx0 + 1 : 0, p[3], q[3];
+        int tx1 = tx0 + 1 < k->w ? tx0 + 1 : 0, p[3], q[3], c0[3], c1[3];
         sky_texel(k, tx, pal, tx0, ty, p);
         sky_texel(k, tx, pal, tx0, ty1, q);
-        for (int c = 0; c < 3; c++) a[c] = p[c] + ((q[c] - p[c]) * fy >> 8);
+        for (int c = 0; c < 3; c++) c0[c] = (p[c] + ((q[c] - p[c]) * fy >> 8)) * (c == 0 ? tr : c == 1 ? tg : tb) >> 8;
         sky_texel(k, tx, pal, tx1, ty, p);
         sky_texel(k, tx, pal, tx1, ty1, q);
-        for (int c = 0; c < 3; c++) b[c] = p[c] + ((q[c] - p[c]) * fy >> 8);
+        for (int c = 0; c < 3; c++) c1[c] = (p[c] + ((q[c] - p[c]) * fy >> 8)) * (c == 0 ? tr : c == 1 ? tg : tb) >> 8;
+        a = SPREAD(rgb565(c0[0], c0[1], c0[2])), b = SPREAD(rgb565(c1[0], c1[1], c1[2]));
       }
-      int fx = (u >> 8) & 255;
-      int r = a[0] + ((b[0] - a[0]) * fx >> 8), g = a[1] + ((b[1] - a[1]) * fx >> 8);
-      int bl = a[2] + ((b[2] - a[2]) * fx >> 8);
-      row[x] = rgb565(r * tr >> 8, g * tg >> 8, bl * tb >> 8);
+      /* (between the two columns, the three channels at once, to 1/32) */
+      uint32_t f = (uint32_t)(u >> 11) & 31, w = ((a * (32 - f) + b * f) >> 5) & 0x07E0F81Fu;
+      row[x] = (uint16_t)(w | w >> 16);
     }
   }
 }
