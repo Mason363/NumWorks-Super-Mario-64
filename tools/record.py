@@ -54,9 +54,9 @@ def global_palette(images, colors=255):
     return q
 
 
-def save_gif(frames, path, scale, fps):
+def save_gif(frames, path, scale, fps, colors=255):
     ims = [im.resize((320 * scale, 240 * scale), Image.NEAREST) if scale != 1 else im for _, im in frames]
-    pal = global_palette(ims)
+    pal = global_palette(ims, colors)
     ims = [im.quantize(palette=pal, dither=Image.Dither.NONE) for im in ims]
     # keep the timing of the recording
     durations = []
@@ -73,7 +73,9 @@ def save_gif(frames, path, scale, fps):
         for i, (im, ms) in enumerate(zip(ims, durations)):
             f = os.path.join(d, f"{i:05d}.gif")
             im.save(f)
-            args += ["-d", str(max(2, round(ms / 10))), f]
+            # (in hundredths of a second, rounded where each frame starts: 30 frames a second take 3, 3, 4...)
+            t = frames[i][0]
+            args += ["-d", str(max(2, round((t + ms) / 10) - round(t / 10))), f]
         args += ["-o", path]
         subprocess.run(args, check=True)
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Super Mario 64's pictures and animations, from the computer build (which draws exactly what the calculator does):
-docs/*.png, docs/media/sm64.gif (640 x 480), docs/media/gallery.gif (320 x 240) and docs/media/thumb_sm64.png
-(160 x 120).
+docs/*.png, docs/media/sm64.gif (320 x 240, every frame of the game's 30 a second), docs/media/gallery.gif (320 x
+240, 15 a second) and docs/media/thumb_sm64.png (160 x 120).
 
     make host && python3 tools/media.py build/play"""
 import os
@@ -50,8 +50,8 @@ docs = os.path.join(GAME, "docs")
 media = os.path.join(ROOT, "docs", "media")
 os.makedirs(docs, exist_ok=True)
 
-# (the GIF's frames: every 5th of the game's 30 a second)
-STEP = 5
+# (the GIF's frames: every one of the game's 30 a second)
+STEP = 1
 
 # a new game: the title, Mario's head, the file select, the keys, Peach's letter, then Mario runs up to the castle
 RUN = list(range(1940, 2120, STEP))
@@ -84,9 +84,12 @@ save_png(pics[250], os.path.join(docs, "painting.png"))
 pics = play(["--level", "9", "--keys", COURSE + ",130:start,200:z"], [215], 220)
 save_png(pics[215], os.path.join(docs, "quit.png"))
 
-save_gif([(i * 1000 * STEP // 30, im) for i, im in enumerate(anim)], os.path.join(media, "sm64.gif"), 2, 6)
+# (112 colours: the GIF stays under 9 MB, and looks the same)
+save_gif([(i * 1000 * STEP // 30, im) for i, im in enumerate(anim)], os.path.join(media, "sm64.gif"), 1, 30, 112)
 print("sm64.gif", os.path.getsize(os.path.join(media, "sm64.gif")) // 1024, "KB")
-save_gif([(i * 2000 * STEP // 30, im) for i, im in enumerate(anim[::2])], os.path.join(media, "gallery.gif"), 1, 3)
+# the small one: Mario's first 4 seconds of running up to the castle, 15 frames a second
+save_gif([(i * 2000 * STEP // 30, im) for i, im in enumerate(anim[:120:2])], os.path.join(media, "gallery.gif"), 1, 15,
+         128)
 print("gallery.gif", os.path.getsize(os.path.join(media, "gallery.gif")) // 1024, "KB")
 thumb = Image.open(os.path.join(docs, "grounds.png")).convert("RGB").resize((160, 120), Image.LANCZOS)
 save_png(thumb, os.path.join(media, "thumb_sm64.png"))

@@ -29,7 +29,9 @@
 * **Peach's castle:** her letter, Lakitu's flight over the grounds and the warp pipe; the grounds with the moat, the bridge and the trees; the courtyard and its Boos; the castle's first floor with its lobby, its star doors (1, 3 and 8 stars), its paintings and the doors that open with stars.
 * **Five courses and their stars:** Bob-omb Battlefield, Whomp's Fortress, Jolly Roger Bay, Cool, Cool Mountain and Big Boo's Haunt: their six missions each and the 100-coin stars, 33 of their 35 stars to get (Mario Wings to the Sky and Eye to Eye in the Secret Room need the Wing Cap and the Vanish Cap, whose switches are in levels left out), with the act select, King Bob-omb, Koopa the Quick, the Whomp King, the sunken ship and its eel, the penguins and their race, the Big Boo and the mad piano.
 * **In 3D, as on the N64:** the levels, models and animations are the game's, drawn by NumPlay's 3D renderer with perspective-correct textures smoothed as the N64 filters them, the game's skyboxes, fog, lights and shadows. The game thinks 30 times a second, as on the N64, so Mario moves at his own speed: when a picture takes too long to draw, the next ones are skipped, not the game slowed.
-* **Saved like on the cartridge:** four files, as on the N64. Collect a star and it's saved, as the N64's save chip did. Your stars are also copied into `sm64_saves.py`, so installing the app again doesn't erase them.
+* **A steady picture:** the calculator's screen refreshes itself a column at a time, about 40 times a second. The game draws its picture in columns too, and sends each one just after the refresh has passed it, so the screen shows whole pictures, never parts of two.
+* **Full or half resolution:** 320 x 240, or 160 x 120 with each pixel doubled, which is faster and smoother. Each calculator starts with its own (full on the N0120, half on the N0110 and N0115), and the pause menu's options change it.
+* **Saved like on the cartridge:** four files, as on the N64. Collect a star and it's saved, as the N64's save chip did. Your stars are also copied into `sm64_saves.py`, so installing the app again doesn't erase them. The options are kept with them.
 
 <table>
   <tr>
@@ -58,7 +60,7 @@
   </tr>
   <tr>
     <td align="center"><img src="docs/star.png" width="390" alt="Back in the castle with a star"><br><sub>A star got</sub></td>
-    <td align="center"><img src="docs/quit.png" width="390" alt="The pause menu, quitting"><br><sub>Quitting from the pause menu</sub></td>
+    <td align="center"><img src="docs/quit.png" width="390" alt="The pause menu's options: resolution, screen refresh, save and quit"><br><sub>The options and the way out, in the pause menu</sub></td>
   </tr>
 </table>
 
@@ -72,7 +74,11 @@ It runs on the N0110, N0115 and N0120 with Epsilon 23.2 or newer.
 
 ## How to play
 
-Press OK (or Start, ⌫) on the title and on Mario's head, then choose a file with the arrows and OK. A new file shows the keys first, then Peach's letter. Get into the castle and jump into a painting to enter its course, choose a star to go for, and get it. Stars open the castle's star doors. Lakitu films you: turn him around with 4 and 6, and bring him closer or further with 8 and 2. ⌫ pauses: in a course, the pause menu can take you back to the castle, and Shift asks whether to quit (SAVE & QUIT or CONTINUE).
+Press OK (or Start, ⌫) on the title and on Mario's head, then choose a file with the arrows and OK. A new file shows the keys first, then Peach's letter. Get into the castle and jump into a painting to enter its course, choose a star to go for, and get it. Stars open the castle's star doors. Lakitu films you: turn him around with 4 and 6, and bring him closer or further with 8 and 2. ⌫ pauses: in a course, the pause menu can take you back to the castle. In the pause menu, Shift opens the options and the way out. Up and down choose a line, left, right or OK change it:
+
+* **RESOLUTION:** FULL (320 x 240) or HALF, FASTER (160 x 120, each pixel doubled: smoother, less sharp).
+* **SCREEN REFRESH:** LEFT TO RIGHT, the way the calculator's screen refreshes itself. If the picture tears on yours, try RIGHT TO LEFT. OFF sends the picture as soon as it is drawn, without waiting for the screen.
+* **SAVE & QUIT** saves and quits, **CONTINUE** (or Back) goes back to the pause menu.
 
 ## Controls
 
@@ -97,7 +103,8 @@ Shift shows these keys on Mario's head and on the file select, and a new game st
 * **Four save files, as on the N64:** collecting a star saves, as in the game, and Home or SAVE & QUIT saves the file and quits (the coins of a course not finished are lost, as when you switched an N64 off). Copying and erasing files is not there.
 * **No sound:** the calculator has no speaker.
 * **Fewer things at once:** the N64 kept up to 240 objects moving; the calculator's RAM has room for about 147. In the busiest places, a bubble or a sparkle may not appear.
-* **On the N0110 and N0115** (216 MHz, the N0120 has 550), the game draws at half the resolution to keep its pace.
+* **On the N0110 and N0115** (216 MHz, the N0120 has 550), the game draws at half the resolution to keep its pace, unless you choose full in the options.
+* **Waiting for the screen:** a picture waits for the screen's refresh to pass before it goes, a few milliseconds on average, so the game shows a few pictures a second fewer than it could draw. With SCREEN REFRESH OFF it shows them all, torn.
 * **Mario's head stays still:** after the title, the N64 moved his face with its own engine (goddard), which doesn't fit. Here it is goddard's model as it rests, turning a little.
 * **Smaller pictures:** the skies are kept at half their size, and the textures that lose little at half their size are kept so; the textures have at most 16 colours, or 256 for faces, paintings and the screens.
 
@@ -105,7 +112,7 @@ Shift shows these keys on Mario's head and on the file select, and a new game st
 
 The game's code is the n64decomp team's decompilation of Super Mario 64: thousands of functions rewritten in C that compile to the same game. It runs on the calculator almost unchanged (its few changes are marked `(calculator)`); the N64's graphics chip, its memory and its cartridge are what the port (`src/port`) replaces.
 
-The calculator gives an app about 130 KB of RAM, and the N64 had 4 MB. So the levels, models, animations and collision never come to RAM: `tools/pack.py` and `tools/port.py` turn the decompilation's data into the calculator's own formats, read in place from flash: meshes with 4-bit textures, collision surfaces sorted into the game's cells ahead of time, animations kept one byte a key frame. The game's display lists for the HUD, the dialogs and the menus are played by `src/port/gfx.c`, and the 3D is drawn by NumPlay's 3D renderer (`src/render.c`) ten rows at a time, with no frame buffer. The behaviors of objects no level here has are left out (`src/port/gen/behavior_data.c`).
+The calculator gives an app about 130 KB of RAM, and the N64 had 4 MB. So the levels, models, animations and collision never come to RAM: `tools/pack.py` and `tools/port.py` turn the decompilation's data into the calculator's own formats, read in place from flash: meshes with 4-bit textures, collision surfaces sorted into the game's cells ahead of time, animations kept one byte a key frame. The game's display lists for the HUD, the dialogs and the menus are played by `src/port/gfx.c`, and the 3D is drawn by NumPlay's 3D renderer (`src/render.c`) thirteen columns at a time, with no frame buffer. Each band of columns goes to the screen once the screen's own refresh has passed it and before the next one comes to it (the way NumPlay's Doom does it): the renderer times the refreshes with the calculator's vertical blank. The behaviors of objects no level here has are left out (`src/port/gen/behavior_data.c`).
 
 `make` builds `output/sm64.nwa` (needs `arm-none-eabi-gcc` and Node.js for nwlink). `make host` builds the game for a computer, `make test` plays it there with the sanitizers on (`tests/check.py`), and `make media` takes the pictures on this page. `python3 tools/fetch.py build/ref` downloads the decompilation, `python3 tools/assets.py <folder>` gets the game's textures, and `make data REF=build/ref/decomp ASSETS=<folder>` makes the game's data again (`src/data.bin` and `src/port/gen`).
 
