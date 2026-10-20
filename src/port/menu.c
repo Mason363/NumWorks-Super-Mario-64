@@ -237,7 +237,7 @@ static void draw_files(void) {
   for (s32 i = 0; i < 4; i++) print_menu_generic_string(i % 2 ? 207 : 92, i < 2 ? 65 : 105, textMario[i]);
   gSPDisplayList(gDisplayListHead++, dl_menu_ia8_text_end);
   /* the hand (print_menu_cursor), on the chosen file's button */
-  static const s16 hand[4][2] = {{-80, 52}, {28, 52}, {-80, 12}, {28, 12}};
+  static const s16 hand[4][2] = {{-97, 56}, {11, 56}, {-97, 16}, {11, 16}};
   create_dl_translation_matrix(MENU_MTX_PUSH, hand[sFile][0] + 160.0f - 5.0f, hand[sFile][1] + 120.0f - 25.0f, 0.0f);
   gSPDisplayList(gDisplayListHead++, dl_menu_idle_hand);
   gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
