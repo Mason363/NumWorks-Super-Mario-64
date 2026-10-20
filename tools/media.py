@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Super Mario 64's pictures and animations, from the computer build (which draws exactly what the calculator does):
-docs/*.png, and the repository's docs/media/sm64.gif (640 x 480), docs/media/gallery/sm64.gif (320 x 240) and
-docs/media/thumb_sm64.png (160 x 120).
+docs/*.png, docs/media/sm64.gif (640 x 480), docs/media/gallery.gif (320 x 240) and docs/media/thumb_sm64.png
+(160 x 120).
 
     make host && python3 tools/media.py build/play"""
 import os
@@ -13,9 +13,9 @@ import tempfile
 from PIL import Image
 
 GAME = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ROOT = os.path.dirname(os.path.dirname(GAME))
+ROOT = GAME
 sys.path.insert(0, os.path.join(ROOT, "tools"))
-from record import save_gif  # noqa: E402 (the repository's GIF maker: one palette, gifsicle)
+from record import save_gif  # noqa: E402 (NumPlay's GIF maker: one palette, gifsicle)
 
 PLAY = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.join(GAME, "build/play"))
 ENV = dict(os.environ, ASAN_OPTIONS="detect_leaks=0")
@@ -86,7 +86,7 @@ save_png(pics[215], os.path.join(docs, "quit.png"))
 
 save_gif([(i * 1000 * STEP // 30, im) for i, im in enumerate(anim)], os.path.join(media, "sm64.gif"), 2, 6)
 print("sm64.gif", os.path.getsize(os.path.join(media, "sm64.gif")) // 1024, "KB")
-save_gif([(i * 2000 * STEP // 30, im) for i, im in enumerate(anim[::2])], os.path.join(media, "gallery", "sm64.gif"), 1, 3)
-print("gallery/sm64.gif", os.path.getsize(os.path.join(media, "gallery", "sm64.gif")) // 1024, "KB")
+save_gif([(i * 2000 * STEP // 30, im) for i, im in enumerate(anim[::2])], os.path.join(media, "gallery.gif"), 1, 3)
+print("gallery.gif", os.path.getsize(os.path.join(media, "gallery.gif")) // 1024, "KB")
 thumb = Image.open(os.path.join(docs, "grounds.png")).convert("RGB").resize((160, 120), Image.LANCZOS)
 save_png(thumb, os.path.join(media, "thumb_sm64.png"))

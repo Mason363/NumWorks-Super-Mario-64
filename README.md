@@ -1,4 +1,4 @@
-> **Super Mario 64 is a [NumPlay](../../README.md) game that comes on its own.** It is too big to sit next to NumPlay. Get `SuperMario64.nwa` from the [latest release](https://github.com/Mason363/NumPlay/releases/latest).
+> **Super Mario 64 for the NumWorks calculator**, by the maker of [NumPlay](https://github.com/Mason363/NumPlay), the collection of free NumWorks games. It comes as its own app: get `SuperMario64.nwa` from the [latest release](https://github.com/Mason363/NumWorks-Super-Mario-64/releases/latest).
 
 <p align="center">
   <img src="src/icon.png" width="84" alt="Super Mario 64 icon">
@@ -12,12 +12,12 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Mason363/NumPlay/releases/latest/download/SuperMario64.nwa"><b>Download SuperMario64.nwa</b></a>
+  <a href="https://github.com/Mason363/NumWorks-Super-Mario-64/releases/latest/download/SuperMario64.nwa"><b>Download SuperMario64.nwa</b></a>
   &nbsp;·&nbsp; <a href="#controls">Controls</a>
 </p>
 
 <p align="center">
-  <img src="../../docs/media/sm64.gif" width="640" alt="Mario running up to Peach's castle, then a star in Bob-omb Battlefield">
+  <img src="docs/media/sm64.gif" width="640" alt="Mario running up to Peach's castle, then a star in Bob-omb Battlefield">
 </p>
 
 ## Highlights
@@ -28,7 +28,7 @@
 * **Mario's whole moveset:** walk, run, crouch and crawl; the double and triple jump, the backflip, the side somersault, the long jump and the wall kick; punches, kicks, the dive, the slide kick and the ground pound; climbing poles and trees, hanging from ledges and fences, swimming, carrying and throwing.
 * **Peach's castle:** her letter, Lakitu's flight over the grounds and the warp pipe; the grounds with the moat, the bridge and the trees; the courtyard and its Boos; the castle's first floor with its lobby, its star doors (1, 3 and 8 stars), its paintings and the doors that open with stars.
 * **Five courses and their stars:** Bob-omb Battlefield, Whomp's Fortress, Jolly Roger Bay, Cool, Cool Mountain and Big Boo's Haunt: their six missions each and the 100-coin stars, 33 of their 35 stars to get (Mario Wings to the Sky and Eye to Eye in the Secret Room need the Wing Cap and the Vanish Cap, whose switches are in levels left out), with the act select, King Bob-omb, Koopa the Quick, the Whomp King, the sunken ship and its eel, the penguins and their race, the Big Boo and the mad piano.
-* **In 3D, as on the N64:** the levels, models and animations are the game's, drawn by NumPlay's renderer with perspective-correct textures smoothed as the N64 filters them, the game's skyboxes, fog, lights and shadows. The game thinks 30 times a second, as on the N64, so Mario moves at his own speed: when a picture takes too long to draw, the next ones are skipped, not the game slowed.
+* **In 3D, as on the N64:** the levels, models and animations are the game's, drawn by NumPlay's 3D renderer with perspective-correct textures smoothed as the N64 filters them, the game's skyboxes, fog, lights and shadows. The game thinks 30 times a second, as on the N64, so Mario moves at his own speed: when a picture takes too long to draw, the next ones are skipped, not the game slowed.
 * **Saved like on the cartridge:** four files, as on the N64. Collect a star and it's saved, as the N64's save chip did. Your stars are also copied into `sm64_saves.py`, so installing the app again doesn't erase them.
 
 <table>
@@ -61,6 +61,14 @@
     <td align="center"><img src="docs/quit.png" width="390" alt="The pause menu, quitting"><br><sub>Quitting from the pause menu</sub></td>
   </tr>
 </table>
+
+## How to install
+
+1. Download [SuperMario64.nwa](https://github.com/Mason363/NumWorks-Super-Mario-64/releases/latest/download/SuperMario64.nwa).
+2. Plug your NumWorks calculator into your computer and open [my.numworks.com/apps](https://my.numworks.com/apps) in Google Chrome or Microsoft Edge.
+3. Drop the file there and follow the steps. Super Mario 64 takes almost all the room for apps, so install it on its own.
+
+It runs on the N0110, N0115 and N0120 with Epsilon 23.2 or newer.
 
 ## How to play
 
@@ -97,7 +105,7 @@ Shift shows these keys on Mario's head and on the file select, and a new game st
 
 The game's code is the n64decomp team's decompilation of Super Mario 64: thousands of functions rewritten in C that compile to the same game. It runs on the calculator almost unchanged (its few changes are marked `(calculator)`); the N64's graphics chip, its memory and its cartridge are what the port (`src/port`) replaces.
 
-The calculator gives an app about 130 KB of RAM, and the N64 had 4 MB. So the levels, models, animations and collision never come to RAM: `tools/pack.py` and `tools/port.py` turn the decompilation's data into the calculator's own formats, read in place from flash: meshes with 4-bit textures, collision surfaces sorted into the game's cells ahead of time, animations kept one byte a key frame. The game's display lists for the HUD, the dialogs and the menus are played by `src/port/gfx.c`, and the 3D is drawn by NumPlay's renderer (`src/render.c`) ten rows at a time, with no frame buffer. The behaviors of objects no level here has are left out (`src/port/gen/behavior_data.c`).
+The calculator gives an app about 130 KB of RAM, and the N64 had 4 MB. So the levels, models, animations and collision never come to RAM: `tools/pack.py` and `tools/port.py` turn the decompilation's data into the calculator's own formats, read in place from flash: meshes with 4-bit textures, collision surfaces sorted into the game's cells ahead of time, animations kept one byte a key frame. The game's display lists for the HUD, the dialogs and the menus are played by `src/port/gfx.c`, and the 3D is drawn by NumPlay's 3D renderer (`src/render.c`) ten rows at a time, with no frame buffer. The behaviors of objects no level here has are left out (`src/port/gen/behavior_data.c`).
 
 `make` builds `output/sm64.nwa` (needs `arm-none-eabi-gcc` and Node.js for nwlink). `make host` builds the game for a computer, `make test` plays it there with the sanitizers on (`tests/check.py`), and `make media` takes the pictures on this page. `python3 tools/fetch.py build/ref` downloads the decompilation, `python3 tools/assets.py <folder>` gets the game's textures, and `make data REF=build/ref/decomp ASSETS=<folder>` makes the game's data again (`src/data.bin` and `src/port/gen`).
 
@@ -117,10 +125,10 @@ Super Mario 64 is Nintendo's game (1996). Not affiliated with Nintendo.
 * **[n64decomp/sm64](https://github.com/n64decomp/sm64)**, the decompilation of Super Mario 64 by the n64decomp team: the game's code and data in `decomp/`, and the data `tools/pack.py` and `tools/port.py` read.
 * **The textures are Nintendo's**, from the game itself: taken from "SM64 US Assets" on the [Internet Archive](https://archive.org/details/am64-US-assets.tar), an extraction of the US ROM, and checked against the texture hashes [teamsalta/sm64nx](https://github.com/teamsalta/sm64nx) lists for that ROM.
 
-Made by Mason Chen as part of NumPlay.
+Made by Mason Chen, the maker of [NumPlay](https://github.com/Mason363/NumPlay).
 
 ## License
 
-NumPlay's own code here (the port in `src/`, the renderer, the tools in `tools/` and the tests) is licensed under the GNU General Public License v3.0: see the `LICENSE` file at the root of the repository.
+The port's own code (in `src/`, the renderer, the tools in `tools/`, `common/` and the tests) is licensed under the GNU General Public License v3.0: see the `LICENSE` file at the root of the repository.
 
-The code and data in `decomp/` come from the [n64decomp/sm64](https://github.com/n64decomp/sm64) project, and so do the models, levels, animations and text packed into `src/data.bin` and `src/port/gen/`. They are not covered by NumPlay's GPL: the n64decomp team placed their work under CC0 (`decomp/LICENSE.md`), but what they decompiled is Nintendo's game, and it stays Nintendo's. The textures in `src/data.bin` and the icon are Nintendo's too.
+The code and data in `decomp/` come from the [n64decomp/sm64](https://github.com/n64decomp/sm64) project, and so do the models, levels, animations and text packed into `src/data.bin` and `src/port/gen/`. They are not covered by the GPL: the n64decomp team placed their work under CC0 (`decomp/LICENSE.md`), but what they decompiled is Nintendo's game, and it stays Nintendo's. The textures in `src/data.bin` and the icon are Nintendo's too.

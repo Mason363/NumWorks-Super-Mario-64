@@ -4,7 +4,7 @@
 #   make check      link it like the calculator does (output/sm64.bin)
 #   make host       build/play: the game on a computer, for tests and screenshots
 #   make test       the game played on a computer (tests/check.py, with the sanitizers)
-#   make media      the pictures of README.md and NumPlay's GIFs (tools/media.py)
+#   make media      the pictures of README.md and the GIFs in docs/media (tools/media.py)
 #   make data       src/data.bin, src/data_ids.h and src/port/gen/ from the decompilation tools/fetch.py
 #                   downloads (REF=build/ref/decomp) and the game's textures tools/assets.py checks
 #                   (ASSETS=<its folder>; Python + Pillow + NumPy)
@@ -27,7 +27,7 @@ GAME_SRC = $(filter-out tests/play.c src/plat_host.c src/data.S,$(shell grep -v 
 HOT = src/render.c src/port/gfx.c
 COLD = $(filter-out $(HOT),$(GAME_SRC))
 OBJ = $(patsubst %.c,$(BUILD_DIR)/obj/%.o,$(GAME_SRC))
-HEADERS = $(wildcard src/*.h src/port/*.h) ../common/epsilon_app.h ../common/epsilon_files.h
+HEADERS = $(wildcard src/*.h src/port/*.h) common/epsilon_app.h common/epsilon_files.h
 
 DECOMP_FLAGS = -DNON_MATCHING -DAVOID_UB -DVERSION_US -D_LANGUAGE_C -DNO_SEGMENTED_MEMORY -DSM_PORT \
   -include src/port/port.h -Isrc/port -Idecomp/include -Idecomp/src -Idecomp -Isrc -Isrc/port/gen

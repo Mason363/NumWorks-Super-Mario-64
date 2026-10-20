@@ -1,7 +1,7 @@
 /* The calculator: EADK display, keyboard, time and files. */
 #include <eadk.h>
-#include "../../common/epsilon_app.h"
-#include "../../common/epsilon_files.h"
+#include "../common/epsilon_app.h"
+#include "../common/epsilon_files.h"
 #include "plat.h"
 
 #define KEY(k) ((uint64_t)1 << (k))
