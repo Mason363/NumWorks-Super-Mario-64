@@ -468,7 +468,47 @@ void port_draw_area(struct GraphNodeRoot *root) {
 }
 
 void geo_process_root(struct GraphNodeRoot *node, Vp *b, Vp *c, s32 clearColor) {
-  if (node->node.flags & GRAPH_RENDER_ACTIVE) port_draw_area(node);
+  /* (not under a screen of the calculator's that draws its own scene) */
+  if ((node->node.flags & GRAPH_RENDER_ACTIVE) && !port_menu_active) port_draw_area(node);
+}
+
+/* ------------------------------------------------------------------------------------------------ screens */
+/* The screens' scenes (src/port/menu.c): the title's logo, the act select's stars, the file select's buttons,
+ * as the menus' geo layouts drew them: a camera of their own, a plain background, models with no object */
+static struct GraphNodeCamera sScreenCamera;
+void port_screen_camera(f32 x, f32 y, f32 z, f32 fx, f32 fy, f32 fz, f32 fov, f32 near, f32 far, u16 background) {
+  Vec3f pos = {x, y, z}, focus = {fx, fy, fz};
+  mtxf_lookat(sCamera, pos, focus, 0);
+  Mtx43 view;
+  for (int i = 0; i < 4; i++) view.m[i][0] = sCamera[i][0], view.m[i][1] = sCamera[i][1], view.m[i][2] = -sCamera[i][2];
+  r_frame(&view, 0, fov, near, far);
+  r_sky(0x8000 | background >> 1, 0, 0xFFFFFF);
+}
+
+void port_screen_model(int model, f32 x, f32 y, f32 z, s16 pitch, s16 yaw, s16 roll, f32 scale, u8 alpha) {
+  port_screen_model_scaled(model, x, y, z, pitch, yaw, roll, scale, scale, scale, alpha);
+}
+
+void port_screen_model_scaled(int model, f32 x, f32 y, f32 z, s16 pitch, s16 yaw, s16 roll, f32 sx, f32 sy, f32 sz,
+                              u8 alpha) {
+  int room;
+  if (model < 0 || model >= HDR->nmodel) return;
+  sStack = r_scratch(&room);
+  if (sStack == NULL || room < (int) (DEPTH * sizeof(Level))) return;
+  memset(&sScreenCamera, 0, sizeof sScreenCamera);
+  gCurGraphNodeCamera = &sScreenCamera;
+  gCurGraphNodeObject = NULL;
+  Vec3f pos = {x, y, z}, s = {sx, sy, sz};
+  Vec3s angle = {pitch, yaw, roll};
+  Mat4 local;
+  mtxf_rotate_zxy_and_translate(local, pos, angle);
+  mtxf_mul(sStack[0].m, local, sCamera);
+  mtxf_scale_vec3f(sStack[0].m, sStack[0].m, s);
+  sAnim.type = ANIM_TYPE_NONE;
+  sAlpha = alpha;
+  walk_model(model, 0);
+  sStack = NULL;
+  gCurGraphNodeCamera = NULL;
 }
 
 /* the screens' display list (the HUD, the menus, the text and the transitions), over each band */
@@ -494,4 +534,16 @@ void port_render(void) {
   if (cmd != NULL) *cmd = screens;
   if (port_draw) r_draw();
   else r_skip();
+}
+
+/* Mario's head (goddard's: tools/goddard.py), on the screen after the title: on its backdrop, facing the
+ * camera, turning a little from side to side as it looks around */
+void port_draw_mario_head(s32 t) {
+  port_screen_camera(0, 170, 1950, 0, 170, 0, 45, 100, 25000, 0x0001);
+  r_sky(R_SKY_TITLE, 0, 0xFFFFFF);
+  f32 yaw = sinf(t * 0.035f) * 0.30f, pitch = sinf(t * 0.023f) * 0.08f;
+  f32 cy = cosf(yaw), sy = sinf(yaw), cp = cosf(pitch), sp = sinf(pitch);
+  /* (about y, then x; row vectors, as the game's matrices) */
+  Mtx43 m = {{{cy, sy * sp, -sy * cp}, {0, cp, sp}, {sy, -cy * sp, cy * cp}, {0, 0, 0}}};
+  r_mesh(MESH(MESH_GODDARD_HEAD), &m, 0xFFFFFF, 255, 0);
 }

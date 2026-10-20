@@ -133,6 +133,63 @@ def calls(body):
     return out
 
 
+def us_version(text, version="VERSION_US"):
+    """The text as the US version's build sees it: the #if, #ifdef and #ifndef whose conditions name only
+    VERSION_* (and defined, !, ||, &&) are decided, the others are kept as they are."""
+    out, stack = [], []   # stack: (decided, taking, taken) for each #if; decided False: kept as is
+
+    def taking():
+        return all(t for d, t, _ in stack if d)
+
+    def decide(cond):
+        c = cond.strip()
+        m = re.fullmatch(r"(!?)\s*(?:defined\s*\(?\s*)?(VERSION_\w+)\s*\)?", c)
+        names = re.findall(r"\b\w+\b", c)
+        if any(n not in ("defined",) and not n.startswith("VERSION_") for n in names):
+            return None
+        e = re.sub(r"defined\s*\(\s*(\w+)\s*\)|defined\s+(\w+)",
+                   lambda k: str((k.group(1) or k.group(2)) == version), c)
+        e = re.sub(r"\bVERSION_\w+\b", lambda k: str(k.group(0) == version), e)
+        e = e.replace("||", " or ").replace("&&", " and ").replace("!", " not ")
+        try:
+            return bool(eval(e, {"__builtins__": {}}, {}))
+        except Exception:
+            return None
+    for line in text.split("\n"):
+        d = line.strip()
+        m = re.match(r"#\s*(if|ifdef|ifndef|elif|else|endif)\b(.*)", d)
+        if m:
+            kw, rest = m.group(1), m.group(2)
+            if kw in ("if", "ifdef", "ifndef"):
+                cond = rest if kw == "if" else (("" if kw == "ifdef" else "!") + "defined(" + rest.strip() + ")")
+                v = decide(cond)
+                stack.append((v is not None, bool(v), bool(v)))
+                if v is None and taking():
+                    out.append(line)
+                continue
+            if not stack:
+                out.append(line)
+                continue
+            dec, tk, taken = stack[-1]
+            if not dec:
+                stack.pop() if kw == "endif" else None
+                if taking():
+                    out.append(line)
+                continue
+            if kw == "elif":
+                v = decide(rest)
+                v = bool(v) and not taken
+                stack[-1] = (True, v, taken or v)
+            elif kw == "else":
+                stack[-1] = (True, not taken, True)
+            else:
+                stack.pop()
+            continue
+        if taking():
+            out.append(line)
+    return "\n".join(out)
+
+
 class Source:
     """Every data file read so far, by symbol."""
 
@@ -148,7 +205,7 @@ class Source:
         if path in self.read_files or not os.path.exists(path):
             return
         self.read_files.add(path)
-        text = strip_comments(open(path, encoding="utf-8", errors="replace").read())
+        text = us_version(strip_comments(open(path, encoding="utf-8", errors="replace").read()))
         for name, body in arrays(text, "Vtx").items():
             vs = []
             for m in re.finditer(r"\{\{\{([^}]*)\},([^,]*),\{([^}]*)\},\{([^}]*)\}\}\}", body.replace(" ", "")):
@@ -283,6 +340,9 @@ def run_dl(src, name, layer, out, light_dir=None, state=None, light=None):
                 vs = [state["vbuf"][i] for i in g]
                 if None in vs:
                     continue
+                if state.get("fade") and state["env"] is not None and len(state["env"]) > 3:
+                    ea = state["env"][3]
+                    vs = [(x, y, z, s, t, (c[0], c[1], c[2] * ea // 255, c[3])) for x, y, z, s, t, c in vs]
                 out.append(Tri(mat, vs))
         elif cmd == "gsSPLight":
             ln = a[0].replace("&", "").strip()
@@ -332,6 +392,8 @@ def run_dl(src, name, layer, out, light_dir=None, state=None, light=None):
                 state["h"] = (cval(a[4]) >> 2) + 1
         elif cmd == "gsDPSetCombineMode":
             state["combine"] = tex_combine(a[0])
+            # (the shade's alpha times the environment's: a see-through model, the transparent star)
+            state["fade"] = "FADEA" in a[0]
         elif cmd == "gsDPSetRenderMode":
             m = a[0] + a[1]
             state["cutout"] = "TEX_EDGE" in m

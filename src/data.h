@@ -39,7 +39,7 @@ typedef struct {
   uint8_t mode, wrap;
   uint16_t tri0, ntri;   /* in the mesh's triangles (3 bytes each: indices among the batch's vertices) */
   uint16_t v0, nv;       /* the vertices they use (128 at most) */
-  int16_t lo[3], hi[3];  /* their bounds */
+  uint8_t lo[3], hi[3];  /* their bounds, in 255ths of the mesh's (rounded outwards: batch_box) */
   uint8_t light[6];      /* lit: the ambient colour, then the light's */
   uint8_t alpha, pad;    /* the vertices' alpha (but W_VALPHA) */
 } Batch;
@@ -101,10 +101,20 @@ typedef struct {
 typedef struct {
   uint32_t magic, size;
   uint32_t tex, mesh, model;  /* offsets of the tables */
-  uint32_t sky;               /* the skyboxes: an offset (a Sky, or 0) for each of the game's 10 backgrounds */
+  uint32_t sky;               /* the skyboxes: an offset (a Sky, or 0) for each of the game's 10 backgrounds, then
+                                 the backdrop of Mario's head (render.h's R_SKY_TITLE) */
   uint32_t pad2, pad3;
   uint16_t ntex, nmesh, nmodel, pad4, pad5, pad6;
 } DataHeader;
+
+/* a batch's bounds in the mesh's space */
+static inline void batch_box(const Mesh *m, const Batch *b, int16_t lo[3], int16_t hi[3]) {
+  for (int k = 0; k < 3; k++) {
+    int32_t span = (int32_t) m->hi[k] - m->lo[k];
+    lo[k] = (int16_t) (m->lo[k] + b->lo[k] * span / 255);
+    hi[k] = (int16_t) (m->lo[k] + (b->hi[k] * span + 254) / 255);
+  }
+}
 
 #define HDR DAT(DataHeader, 0)
 #define TEX(i) (DAT(Tex, HDR->tex) + (i))

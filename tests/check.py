@@ -65,11 +65,11 @@ def limits(e, what):
           f"{e['gfx']} display list commands")
 
 
-# a new game: the title, the keys, Peach's letter read, Lakitu's flight to the castle, the warp pipe and Lakitu's
-# welcome read, then Mario runs
+# a new game: the title, Mario's head, the file select, the keys, Peach's letter read, Lakitu's flight to the
+# castle, the warp pipe and Lakitu's welcome read, then Mario runs
 saves = tempfile.mkdtemp(prefix="sm64_check_")
-e = run(["--frames", "2000", "--keys", "20:a,60:a,300:a,400:a,500:a,600:a,700:a,1550:a,1600:a,1650:a,1700:a,1750:a,"
-         "1800-2000:up"], saves, "a new game")
+e = run(["--frames", "2020", "--keys", "20:a,40:a,60:a,80:a," + ",".join(f"{t + 20}:a" for t in (
+         300, 400, 500, 600, 700, 1550, 1600, 1650, 1700, 1750)) + ",1820-2020:up"], saves, "a new game")
 if e:
     check(e["level"] == 16 and e["pos"][2] < 4000 and "sm64.sav" in e["files"] and "sm64_saves.py" in e["files"],
           f"a new game: the title, the keys, Peach's letter, the castle grounds, Mario runs to {e['pos']}; "

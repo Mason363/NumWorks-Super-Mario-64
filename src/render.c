@@ -151,7 +151,11 @@ void r_mesh(const Mesh *m, const Mtx43 *mtx, uint32_t tint, uint8_t alpha, int f
   for (int i = 0; i < m->nbatch; i++) {
     uint8_t *r = F->rows[nrows++];
     if (m->nbatch == 1) r[0] = y0, r[1] = y1;
-    else if (!box_rows(&it->mv, b[i].lo, b[i].hi, &r[0], &r[1], NULL)) r[0] = r[1] = 0;
+    else {
+      int16_t blo[3], bhi[3];
+      batch_box(m, &b[i], blo, bhi);
+      if (!box_rows(&it->mv, blo, bhi, &r[0], &r[1], NULL)) r[0] = r[1] = 0;
+    }
     if (r[1] > r[0]) it->layers |= (uint8_t)layer_of(&b[i], alpha);
   }
   if (!it->layers) {
@@ -688,7 +692,7 @@ static void draw_item(const RItem *it, int layer) {
  * texels, 4 bits each, with a palette for each band of rows. */
 static const Sky *sky_of(int kind) {
   uint32_t t = HDR->sky;
-  if (!t || kind < 0 || kind > 9) return NULL;
+  if (!t || kind < 0 || kind > R_SKY_TITLE) return NULL;
   uint32_t off = DAT(uint32_t, t)[kind];
   return off ? DAT(Sky, off) : NULL;
 }
@@ -703,14 +707,26 @@ static inline void sky_texel(const Sky *k, const uint8_t *tx, const uint16_t *pa
 static void draw_sky(void) {
   const Sky *k = sky_kind & 0x8000 ? NULL : sky_of(sky_kind);
   if (k == NULL) {
-    /* a plain colour (RGBA5551), or black */
+    /* a plain colour (RGB 555), or black */
     int c5 = sky_kind & 0x8000 ? sky_kind & 0x7FFF : 0;
-    uint16_t c = rgb565((c5 >> 11 & 31) << 3, (c5 >> 6 & 31) << 3, (c5 >> 1 & 31) << 3);
+    uint16_t c = rgb565((c5 >> 10 & 31) << 3, (c5 >> 5 & 31) << 3, (c5 & 31) << 3);
     for (int i = 0; i < r_w * r_band_h; i++) F->col[i] = c;
     return;
   }
   const uint16_t *pal = DAT(uint16_t, k->pal);
   const uint8_t *tx = DAT(uint8_t, k->texels);
+  if (sky_kind == R_SKY_TITLE) {
+    /* a picture repeated over the screen, a texel a pixel */
+    for (int y = r_band_y; y < r_band_y + r_band_h; y++) {
+      uint16_t *row = F->col + (y - r_band_y) * r_w;
+      int ty = y * r_scale % k->h, c[3];
+      for (int x = 0; x < r_w; x++) {
+        sky_texel(k, tx, pal, x * r_scale % k->w, ty, c);
+        row[x] = rgb565(c[0], c[1], c[2]);
+      }
+    }
+    return;
+  }
   /* skybox.c: the camera's yaw and pitch place the screen in the picture (its fov taken as 90 degrees) */
   int scaled_x = 1280 - (int)((uint16_t)sky_yaw * 1280.0f / 65536.0f + 0.5f);
   int scaled_y = (int)(sky_pitch * (57.29578f * 4.0f) + (sky_pitch < 0 ? -0.5f : 0.5f)) + 600;

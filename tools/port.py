@@ -290,16 +290,23 @@ def write_text(ref):
 UI_FILES = {"bin/segment2.c": "segment2.c", "actors/power_meter/model.inc.c": "power_meter.c",
             # Peach's letter and her signature (the intro's message, ingame_menu.c)
             "levels/castle_grounds/areas/1/12/model.inc.c": "letter.c",
-            "levels/castle_grounds/areas/1/13/model.inc.c": "letter.c"}
+            "levels/castle_grounds/areas/1/13/model.inc.c": "letter.c",
+            # the title's copyright and its scale tables, the file and act select's font, wood and hand
+            "levels/intro/leveldata.c": "intro.c", "levels/menu/leveldata.c": "menu_data.c"}
+# (textures of those files that are the models' (tools/pack.py packs them with their meshes), or not drawn)
+UI_NOT = re.compile(r"intro_seg7_texture_[01]$|texture_menu_(stone|dark_stone|mario_save|mario_new|erase|copy|file|"
+                    r"score|sound)$")
 UI_TEX = re.compile(r'(Texture\s+(\w+)\s*\[\]\s*=\s*\{\s*)#include\s+"([^"]+)"')
 
 
 def ui_textures(ref):
     """(symbol, path) of every texture the screens' files define."""
     out = []
+    import decomp
     for f in UI_FILES:
-        for m in UI_TEX.finditer(open(os.path.join(ref, f)).read()):
-            out.append((m.group(2), m.group(3)))
+        for m in UI_TEX.finditer(decomp.us_version(open(os.path.join(ref, f)).read())):
+            if not UI_NOT.match(m.group(2)):
+                out.append((m.group(2), m.group(3)))
     return out
 
 
@@ -326,7 +333,7 @@ def write_ui(ref):
         else:
             files[out][0] += f", {f}"
         files[out].append(txt)
-        names |= set(re.findall(r"\b(?:Gfx|Texture)\s+(?:\*const\s+)?(\w+)\s*\[", txt))
+        names |= set(re.findall(r"\b(?:Gfx|Texture|f32|Collision)\s+(?:\*const\s+)?(\w+)\s*\[", txt))
     for out, parts in files.items():
         open(os.path.join(GEN, out), "w").write(parts[0] + ": its textures are the calculator's (PORT_TEX_STUB). */\n"
                                                 + "".join(parts[1:]))

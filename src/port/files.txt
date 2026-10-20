@@ -52,6 +52,8 @@ src/port/gen/geo_funcs.c
 src/port/gen/segment2.c
 src/port/gen/power_meter.c
 src/port/gen/letter.c
+src/port/gen/intro.c
+src/port/gen/menu_data.c
 decomp/src/game/memory.c
 src/port/game.c
 src/port/stubs.c

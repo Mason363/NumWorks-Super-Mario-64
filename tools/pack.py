@@ -133,6 +133,8 @@ SMOOTH = float(os.environ.get("SM64_SMOOTH", 7.0))   # (the mean difference, of 
 # (the mean difference, of 255, a texture may lose with 16 colours; with 8 bits a texel, how close its colours
 # keep it)
 LOSS_4BIT = float(os.environ.get("SM64_LOSS4", 8))
+MAX_HALVE = int(os.environ.get("SM64_HALVE", 1))
+ACTORS_WHOLE = tuple(os.environ.get("SM64_WHOLE", "").split(",")) if os.environ.get("SM64_WHOLE") else ()
 LOSS_8BIT = float(os.environ.get("SM64_LOSS8", 3.5))
 # what is seen close and big (Mario's and Peach's faces, the stars, the paintings, Peach's window, the screens):
 # 8 bits a texel from a smaller loss
@@ -203,9 +205,12 @@ class Pack:
             img[..., 0] = img[..., :3].max(axis=2)
         # a texture that loses little at half its size (or a quarter) is kept so (data.h's Tex.shift)
         shift = 0
-        while shift < 2 and min(img.shape[:2]) >= 16 and smooth(img, fmt):
+        most = 0 if path.startswith(CLOSE) or path.startswith(ACTORS_WHOLE) else MAX_HALVE
+        while shift < most and min(img.shape[:2]) >= 16 and smooth(img, fmt):
             img = halve(img)
             shift += 1
+        if shift and os.environ.get("SM64_LIST_HALVED"):
+            print("halved", shift, path, fmt)
         close = path.startswith(CLOSE) or path in self.painting_textures
         self.tex_entries.append(self.encode(img, fmt, shift, LOSS_4BIT_CLOSE if close else LOSS_4BIT))
         self.tex_index[key] = len(self.tex_entries) - 1
@@ -240,6 +245,13 @@ class Pack:
     def ui_texture(self, name, img, kind):
         """A texture of the screens (the game's), kind 'ia' or 'rgba' (a transparent key)."""
         fmt = 2 if kind == "ia" else 1
+        # (a size that isn't a power of two, the title's backdrop's 80 x 20: in a bigger texture, the rest clear)
+        h, w = img.shape[:2]
+        pw, ph = 1 << (w - 1).bit_length(), 1 << (h - 1).bit_length()
+        if (pw, ph) != (w, h):
+            big = np.zeros((ph, pw, 4), np.uint8)
+            big[:h, :w] = img
+            img = big
         self.tex_entries.append(self.encode(img, fmt, 0, LOSS_4BIT_CLOSE))
         return len(self.tex_entries) - 1
 
@@ -330,10 +342,17 @@ class Pack:
                 bwrap = wrap | (32 if len(alphas) > 1 and not lit else 0)
                 for k in range(v0, len(verts)):
                     verts[k] = verts[k][:5] + (vertex_colour(verts[k], lit, bwrap & 32),)
-                batches.append(struct.pack("<HBBHHHH6h6sBx", tex, mode, bwrap, tri0, len(bt), v0, len(bverts), *blo, *bhi,
-                                           light, balpha))
+                batches.append((tex, mode, bwrap, tri0, len(bt), v0, len(bverts), blo, bhi, light, balpha))
         if not verts:
             return None
+
+        # (each batch's box in 255ths of the mesh's, rounded outwards: data.h's Batch)
+        def q(v, i, up):
+            span = max(1, hi[i] - lo[i])
+            return min(255, max(0, (math.ceil if up else math.floor)((v - lo[i]) * 255 / span)))
+        batches = [struct.pack("<HBBHHHH3B3B6sBx", tex, mode, bwrap, tri0, nt, v0, nv, *(q(blo[i], i, False) for i in range(3)),
+                               *(q(bhi[i], i, True) for i in range(3)), light, balpha)
+                   for tex, mode, bwrap, tri0, nt, v0, nv, blo, bhi, light, balpha in batches]
         vdata = b"".join(struct.pack("<5hH", *v) for v in verts)
         voff = self.blob.add(vdata)
         toff = self.blob.add(bytes(i for t in tri_idx for i in t), 1)
@@ -412,7 +431,7 @@ class Pack:
                 elif c.kind == "GEO_BACKGROUND":
                     info["bg"] = decomp.cval(a[0], BACKGROUNDS)
                 elif c.kind == "GEO_BACKGROUND_COLOR":
-                    info["bg"] = 0x8000 | (decomp.cval(a[0]) & 0x7FFF)
+                    info["bg"] = 0x8000 | (decomp.cval(a[0]) >> 1)
                 walk(c)
         walk(tree)
         info["mesh"] = self.mesh("area_" + geo, tris, bake=True) if tris else 0xFFFF
@@ -486,35 +505,49 @@ class Pack:
     def sky(self, kind):
         """The game's skybox for a background (BACKGROUND_*), from its 248 x 248 picture (data.h's Sky): at
         SKY_SIZE, 4 bits a texel with a palette of 16 colours for each band of SKY_BAND rows."""
+        from PIL import Image
+        if kind == SKY_TITLE:
+            # the backdrop of Mario's head: its picture's four strips (mario_title_texture_table), 80 x 80, kept
+            # as it is (the renderer repeats it over the screen)
+            strips = [rom.load(f"textures/title_screen_bg/title_screen_bg.{o}.rgba16.png")
+                      for o in ("001C0", "00E40", "01AC0", "02740")]
+            if any(x is None for x in strips):
+                return 0
+            return self.sky_picture(np.concatenate(strips, axis=0)[..., :3])
         img = rom.load(f"textures/skyboxes/{SKYBOXES[kind]}.png")
         if img is None:
             return 0
-        from PIL import Image
         # (resized as a picture that wraps around: a copy of each side beside it)
         h0, w0 = img.shape[:2]
         wide = np.concatenate([img[:, -8:], img, img[:, :8]], axis=1)[..., :3]
         big = Image.fromarray(wide).resize((SKY_SIZE + SKY_SIZE * 16 // w0, SKY_SIZE), Image.LANCZOS)
         off = SKY_SIZE * 8 // w0
-        arr = np.array(big)[:, off:off + SKY_SIZE]
+        return self.sky_picture(np.array(big)[:, off:off + SKY_SIZE])
+
+    def sky_picture(self, arr):
+        """A Sky of a picture (RGB): 4 bits a texel, 16 colours for each band of SKY_BAND rows."""
+        h, w = arr.shape[:2]
         rgba = np.concatenate([arr, np.full(arr.shape[:2] + (1,), 255, np.uint8)], axis=2)
         pals, idx = [], []
-        for b0 in range(0, SKY_SIZE, SKY_BAND):
+        for b0 in range(0, h, SKY_BAND):
             pal, ix = quantize(rgba[b0:b0 + SKY_BAND], 0, 16)
             pals += pal + [pal[0]] * (16 - len(pal))
             idx.append(ix)
         flat = np.concatenate(idx).reshape(-1).astype(np.uint8)
+        if len(flat) % 2:
+            flat = np.append(flat, 0)
         texels = (flat[0::2] | (flat[1::2] << 4)).astype(np.uint8)
         pal_off = self.blob.add(struct.pack(f"<{len(pals)}H", *pals))
         tex_off = self.blob.add(texels.tobytes())
-        return self.blob.add(struct.pack("<4H2I", SKY_SIZE, SKY_SIZE, SKY_BAND, 0, pal_off, tex_off))
+        return self.blob.add(struct.pack("<4H2I", w, h, SKY_BAND, 0, pal_off, tex_off))
 
     def write(self, models=None, skies=()):
         b = self.blob
         tex_off = b.add(b"".join(self.tex_entries))
         mesh_off = b.add(b"".join(self.meshes))
         model_off = b.add(b"".join(models.models)) if models else 0
-        sky_offs = [self.sky(k) if k in skies else 0 for k in range(10)]
-        sky_off = b.add(struct.pack("<10I", *sky_offs)) if any(sky_offs) else 0
+        sky_offs = [self.sky(k) if k in skies else 0 for k in range(SKY_TITLE + 1)]
+        sky_off = b.add(struct.pack(f"<{len(sky_offs)}I", *sky_offs)) if any(sky_offs) else 0
         hdr = struct.pack("<8I6H", 0x34364D53, 0, tex_off, mesh_off, model_off, sky_off, 0, 0,
                           len(self.tex_entries), len(self.meshes), len(models.models) if models else 0, 0, 0, 0)
         b.b[0:len(hdr)] = hdr
@@ -529,9 +562,23 @@ class Pack:
         print(f"data.bin: {len(b.b)} bytes, {len(self.tex_entries)} textures, {len(self.meshes)} meshes")
 
 
+# the models the screens draw (src/port/menu.c): data_ids.h's PORT_SCREEN_<name>, from a display list (and its
+# layer) or a geo layout
+SCREEN_MODELS = [("LOGO", ("dl", "intro_seg7_dl_logo", 1)), ("STAR", ("geo", "star_geo")),
+                 ("TRANSPARENT_STAR", ("geo", "transparent_star_geo")),
+                 ("SAVE_BUTTON", ("geo", "geo_menu_mario_save_button")),
+                 ("NEW_BUTTON", ("geo", "geo_menu_mario_new_button")),
+                 ("FILE_BUTTON", ("geo", "geo_menu_file_button")),
+                 ("SCORE_BUTTON", ("geo", "geo_menu_score_button")),
+                 ("COPY_BUTTON", ("geo", "geo_menu_copy_button")),
+                 ("ERASE_BUTTON", ("geo", "geo_menu_erase_button")),
+                 ("SOUND_BUTTON", ("geo", "geo_menu_sound_button"))]
+
 # the skyboxes' pictures, by background (skybox.c's sSkyboxTextures), and the size and bands they are kept at
 SKYBOXES = ["water", "bitfs", "wdw", "cloud_floor", "ccm", "ssl", "bbh", "bidw", "clouds", "bits"]
 SKY_SIZE, SKY_BAND = 124, 16
+# (and a picture repeated over the screen, not turning: the backdrop of Mario's head, render.h's R_SKY_TITLE)
+SKY_TITLE = 10
 
 BACKGROUNDS = {"BACKGROUND_OCEAN_SKY": 0, "BACKGROUND_FLAMING_SKY": 1, "BACKGROUND_UNDERWATER_CITY": 2,
                "BACKGROUND_BELOW_CLOUDS": 3, "BACKGROUND_SNOW_MOUNTAINS": 4, "BACKGROUND_DESERT": 5,
@@ -589,9 +636,19 @@ def main():
     for lv in port.LEVELS:
         p.read(f"levels/{lv}/**/*.inc.c")
         p.read(f"levels/{lv}/*.c")
+    # the screens around the game: the title's logo (levels/intro), the file and act select's models
+    p.read("levels/intro/*.c")
+    p.read("levels/menu/*.c")
     mb = M.ModelBuilder(p)
     lines = []
     skies = set()
+    for name, how in SCREEN_MODELS:
+        idx = mb.from_dl(how[1], how[2]) if how[0] == "dl" else mb.from_geo(how[1])
+        p.ids.append(("PORT_SCREEN_" + name, idx))
+    # Mario's head after the title (goddard's: tools/goddard.py), and its backdrop (a sky of its own)
+    import goddard
+    p.mesh("goddard_head", goddard.head_tris(ref, decomp), bake=False, cell=0)
+    skies.add(SKY_TITLE)
     # the scripts the levels run: their own, the common one, and the groups of models they link to
     bodies = []
     for lv in port.LEVELS:

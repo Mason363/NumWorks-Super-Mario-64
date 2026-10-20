@@ -21,14 +21,21 @@
 #include "port_game.h"
 #include "port_menu.h"
 #include "plat.h"
+#include "data_ids.h"
+#include "../render.h"
 
 /* the screen of the calculator's that is drawn over the frame (port_menu_draw) */
-enum { SCREEN_NONE, SCREEN_ACT, SCREEN_TITLE, SCREEN_KEYS };
+enum { SCREEN_NONE, SCREEN_ACT, SCREEN_LOGO, SCREEN_HEAD, SCREEN_FILES, SCREEN_KEYS };
 s32 port_menu_active;
 /* (ingame_menu.c's: the pause menu is up; a scale of the menus' matrix) */
 extern s16 gMenuMode;
 void create_dl_scale_matrix(s8 pushOp, f32 x, f32 y, f32 z);
+void create_dl_rotation_matrix(s8 pushOp, f32 a, f32 x, f32 y, f32 z);
 void shade_screen(void);
+/* (the menus' display lists: src/port/gen/menu_data.c) */
+extern const Gfx dl_menu_rgba16_wood_course[];
+extern const Gfx dl_menu_ia8_text_begin[];
+extern const Gfx dl_menu_ia8_text_end[];
 /* the player chose to quit, from the pause menu (src/main.c stops) */
 int port_quit;
 
@@ -52,72 +59,83 @@ static void print_text_at(s16 x, s16 y, const char *s) {
   print_generic_string(x < 0 ? get_str_x_pos_from_center(160, buf, 10.0f) : x, y, buf);
 }
 
-/* in the HUD's letters, size 16 or 32 pixels, each letter in turn in one of the n colours (from the first), y from
- * the top */
-static void print_hud_at(s16 x, s16 y, s32 size, const char *s, const u8 (*colours)[3], s32 n, s32 first) {
-  void **lut = segmented_to_virtual(main_hud_lut);
-  gSPDisplayList(gDisplayListHead++, dl_rgba16_text_begin);
-  gDPSetCombineLERP(gDisplayListHead++, TEXEL0, 0, ENVIRONMENT, 0, TEXEL0, 0, ENVIRONMENT, 0, TEXEL0, 0, ENVIRONMENT,
-                    0, TEXEL0, 0, ENVIRONMENT, 0);
-  for (s32 i = 0; s[i]; i++) {
-    char c = s[i];
-    s32 g = c >= '0' && c <= '9' ? c - '0' : c >= 'A' && c <= 'Z' ? 10 + c - 'A' : -1;
-    if (g >= 0 && lut[g] != NULL) {
-      const u8 *k = colours[(i + first) % n];
-      gDPPipeSync(gDisplayListHead++);
-      gDPSetEnvColor(gDisplayListHead++, k[0], k[1], k[2], 255);
-      gDPSetTextureImage(gDisplayListHead++, G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, lut[g]);
-      gSPDisplayList(gDisplayListHead++, dl_rgba16_load_tex_block);
-      gSPTextureRectangle(gDisplayListHead++, x << 2, y << 2, (x + size) << 2, (y + size) << 2, G_TX_RENDERTILE, 0, 0,
-                          (16 << 10) / size, (16 << 10) / size);
-    }
-    x += (s16) (c == ' ' ? size / 2 : size * 3 / 4);
-  }
-  gSPDisplayList(gDisplayListHead++, dl_rgba16_text_end);
-}
-
-static void fill_screen(u8 r, u8 g, u8 b) {
-  gDPSetCycleType(gDisplayListHead++, G_CYC_FILL);
-  gDPSetFillColor(gDisplayListHead++, GPACK_RGBA5551(r, g, b, 1) << 16 | GPACK_RGBA5551(r, g, b, 1));
-  gDPFillRectangle(gDisplayListHead++, 0, 0, SCREEN_WIDTH - 1, SCREEN_HEIGHT - 1);
-  gDPSetCycleType(gDisplayListHead++, G_CYC_1CYCLE);
-}
-
 /* ------------------------------------------------------------------------------------------------ the title */
-/* The game's title and its one save file (the N64 had four: here it is file A), then the keys the first time
- * (and with Shift). */
-static s32 sTitleTimer;
-static s8 sStartAfterKeys;
+/* The game's way in: its title (intro_geo.c: the SUPER MARIO 64 logo zooming in, Nintendo's copyright fading
+ * in, the logo zooming away), the screen of Mario's head on its backdrop, then the file select (file_select.c:
+ * SELECT FILE, the four files and their stars, the hand). A new file shows the calculator's keys first, as the
+ * game's own dialog box; Shift shows them from the title and the file select. */
+static s32 sTitleTimer, sScreenTimer;
+static s8 sStartAfterKeys, sKeysFrom, sFile;
+static s32 sLogoFrame, sCopyrightAlpha;
+
+static void set_screen(s32 screen) {
+  port_menu_active = screen;
+  sScreenTimer = 0;
+}
+
 s32 port_title_init(s16 arg, s32 unused) {
-  sTitleTimer = 0;
-  port_menu_active = SCREEN_TITLE;
+  sTitleTimer = 0, sLogoFrame = 0, sCopyrightAlpha = 0, sFile = 0;
+  /* (tests that start in a course go straight to the file select) */
+  set_screen(port_start_level() != LEVEL_CASTLE_GROUNDS ? SCREEN_FILES : SCREEN_LOGO);
   return 0;
 }
+
+/* the logo's frames: zooming in, held, zooming away (intro_geo.c's INTRO_STEPS_*), then the head */
+#define LOGO_ZOOM_IN 20
+#define LOGO_HOLD 75
+#define LOGO_ZOOM_OUT 91
+
 s32 port_title_loop(s16 arg, s32 unused) {
   u16 pressed = gPlayer1Controller->buttonPressed;
-  if (++sTitleTimer < 10) return 0;
-  if (port_menu_active == SCREEN_KEYS) {
-    if (pressed & (A_BUTTON | START_BUTTON | B_BUTTON)) {
-      port_menu_active = SCREEN_TITLE;
-      if (sStartAfterKeys) {
-        port_menu_active = SCREEN_NONE;
-        return 1;
+  sTitleTimer++, sScreenTimer++;
+  switch (port_menu_active) {
+    case SCREEN_LOGO:
+      /* (geo_intro_super_mario_64_logo, geo_intro_tm_copyright) */
+      sLogoFrame++;
+      if (sLogoFrame >= 19 && (sCopyrightAlpha += 26) > 255) sCopyrightAlpha = 255;
+      if (sLogoFrame >= LOGO_ZOOM_OUT + 10 || (sScreenTimer > 5 && (pressed & (A_BUTTON | START_BUTTON))))
+        set_screen(SCREEN_HEAD);
+      break;
+    case SCREEN_HEAD:
+      if (sScreenTimer < 5) break;
+      if (pressed & Z_TRIG) sKeysFrom = SCREEN_HEAD, sStartAfterKeys = 0, set_screen(SCREEN_KEYS);
+      else if (pressed & (A_BUTTON | START_BUTTON)) set_screen(SCREEN_FILES);
+      break;
+    case SCREEN_FILES:
+      if (sScreenTimer < 5) break;
+      /* the hand goes from file to file (A B on top, C D below) */
+      {
+        static s8 sHeld;
+        s8 x = gPlayer1Controller->rawStickX, y = gPlayer1Controller->rawStickY;
+        if (x > 60 || x < -60 || y > 60 || y < -60) {
+          if (!sHeld) sFile = (s8) (x > 60 || x < -60 ? sFile ^ 1 : sFile ^ 2);
+          sHeld = 1;
+        } else sHeld = 0;
       }
-    }
-    return 0;
-  }
-  if (pressed & Z_TRIG) {
-    port_menu_active = SCREEN_KEYS;
-    sStartAfterKeys = 0;
-  } else if (pressed & (A_BUTTON | START_BUTTON)) {
-    /* (a new game: the keys first) */
-    if (!save_file_exists(0)) {
-      port_menu_active = SCREEN_KEYS;
-      sStartAfterKeys = 1;
-      return 0;
-    }
-    port_menu_active = SCREEN_NONE;
-    return 1;
+      if (pressed & Z_TRIG) sKeysFrom = SCREEN_FILES, sStartAfterKeys = 0, set_screen(SCREEN_KEYS);
+      else if (pressed & B_BUTTON) set_screen(SCREEN_HEAD);
+      else if (pressed & (A_BUTTON | START_BUTTON)) {
+        /* (a new game: the keys first) */
+        if (!save_file_exists(sFile)) {
+          sStartAfterKeys = 1;
+          set_screen(SCREEN_KEYS);
+          break;
+        }
+        set_screen(SCREEN_NONE);
+        return sFile + 1;
+      }
+      break;
+    case SCREEN_KEYS:
+      if (sScreenTimer < 5) break;
+      if (pressed & (A_BUTTON | START_BUTTON | B_BUTTON)) {
+        if (sStartAfterKeys && !(pressed & B_BUTTON)) {
+          set_screen(SCREEN_NONE);
+          return sFile + 1;
+        }
+        set_screen(sStartAfterKeys ? SCREEN_FILES : sKeysFrom);
+        sStartAfterKeys = 0;
+      }
+      break;
   }
   return 0;
 }
@@ -128,137 +146,269 @@ s32 port_title_start_level(s16 arg, s32 unused) {
   return level;
 }
 
+extern const f32 intro_seg7_table_0700C790[], intro_seg7_table_0700C880[];
+extern const Gfx intro_seg7_dl_copyright[];
+static void draw_logo(void) {
+  /* the title's area (intro_geo_0002D0): black, its camera, the logo at its frame's scale */
+  const f32 *t = NULL;
+  if (sLogoFrame < LOGO_ZOOM_IN) t = intro_seg7_table_0700C790 + sLogoFrame * 3;
+  else if (sLogoFrame >= LOGO_HOLD && sLogoFrame < LOGO_ZOOM_OUT) t = intro_seg7_table_0700C880 + (sLogoFrame - LOGO_HOLD) * 3;
+  f32 sx = t ? t[0] : sLogoFrame < LOGO_HOLD ? 1 : 0, sy = t ? t[1] : sx, sz = t ? t[2] : sx;
+  port_screen_camera(0, 0, 3200, 0, 0, 0, 45, 128, 16384, 0x0001);
+  if (sx > 0) port_screen_model_scaled(PORT_SCREEN_LOGO, 0, 0, 0, 0, 0, 0, sx, sy, sz, 255);
+  gSPDisplayList(gDisplayListHead++, dl_proj_mtx_fullscreen);
+  gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, sCopyrightAlpha);
+  if (sCopyrightAlpha < 255) {
+    gDPSetRenderMode(gDisplayListHead++, G_RM_AA_XLU_SURF, G_RM_AA_XLU_SURF2);
+  } else {
+    gDPSetRenderMode(gDisplayListHead++, G_RM_AA_OPA_SURF, G_RM_AA_OPA_SURF2);
+  }
+  gSPDisplayList(gDisplayListHead++, intro_seg7_dl_copyright);
+}
+
+/* the backdrop of Mario's head (geo_intro_regular_backdrop: its picture twelve times), drawn as the sky */
+static void draw_backdrop(void) {
+  port_screen_camera(0, 0, 1000, 0, 0, 0, 45, 100, 25000, 0x0001);
+  r_sky(R_SKY_TITLE, 0, 0xFFFFFF);
+  create_dl_ortho_matrix();
+}
+
+static void draw_head(void) {
+  port_draw_mario_head(sScreenTimer);
+  create_dl_ortho_matrix();
+  gSPDisplayList(gDisplayListHead++, dl_ia_text_begin);
+  gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, 255);
+  if (sTitleTimer / 15 % 2 == 0) print_text_at(-1, 20, "PRESS START");
+  gSPDisplayList(gDisplayListHead++, dl_ia_text_end);
+}
+
+/* a file's stars, or NEW (file_select.c's print_save_file_star_count) */
+static void print_save_file_star_count(s8 fileIndex, s16 x, s16 y) {
+  u8 starIcon[] = {GLYPH_STAR, GLYPH_SPACE}, xIcon[] = {GLYPH_MULTIPLY, GLYPH_SPACE}, textNew[] = {TEXT_NEW};
+  u8 starCountText[4];
+  starIcon[1] = xIcon[1] = DIALOG_CHAR_TERMINATOR;
+  if (save_file_exists(fileIndex)) {
+    s16 starCount = save_file_get_total_star_count(fileIndex, COURSE_MIN - 1, COURSE_MAX - 1);
+    s8 offset = 0;
+    print_hud_lut_string(HUD_LUT_GLOBAL, x, y, starIcon);
+    if (starCount < 100) {
+      print_hud_lut_string(HUD_LUT_GLOBAL, x + 16, y, xIcon);
+      offset = 16;
+    }
+    int_to_str(starCount, starCountText);
+    print_hud_lut_string(HUD_LUT_GLOBAL, x + (offset + 16), y, starCountText);
+  } else print_hud_lut_string(HUD_LUT_GLOBAL, x, y, textNew);
+}
+
+/* the file select's main menu (file_select.c): the yellow background (its file button, nine times as big), the
+ * four files' buttons, the four below them, their words, the hand on the chosen file */
+extern const Gfx dl_menu_idle_hand[];
+static void draw_files(void) {
+  static const s16 pos[4][2] = {{-6400, 2800}, {1500, 2800}, {-6400, 0}, {1500, 0}};
+  static const s16 below[4][2] = {{-6400, -3500}, {-2134, -3500}, {2134, -3500}, {6400, -3500}};
+  static const u8 belowModel[4] = {PORT_SCREEN_SCORE_BUTTON, PORT_SCREEN_COPY_BUTTON, PORT_SCREEN_ERASE_BUTTON,
+                                   PORT_SCREEN_SOUND_BUTTON};
+  u8 textSelectFile[] = {TEXT_SELECT_FILE}, textScore[] = {TEXT_SCORE}, textCopy[] = {TEXT_COPY};
+  u8 textErase[] = {TEXT_ERASE}, textStereo[] = {TEXT_STEREO};
+  u8 textMario[4][8] = {{TEXT_FILE_MARIO_A}, {TEXT_FILE_MARIO_B}, {TEXT_FILE_MARIO_C}, {TEXT_FILE_MARIO_D}};
+  port_screen_camera(0, 0, 1000, 0, 0, 0, 45, 100, 25000, 0x0001);
+  port_screen_model(PORT_SCREEN_FILE_BUTTON, 0, 0, -19000, 0, 0x8000, 0, 9.0f, 255);
+  for (s32 i = 0; i < 4; i++) {
+    port_screen_model(save_file_exists(i) ? PORT_SCREEN_SAVE_BUTTON : PORT_SCREEN_NEW_BUTTON, pos[i][0], pos[i][1],
+                      -19000, 0, 0, 0, 1.0f, 255);
+    port_screen_model(belowModel[i], below[i][0], below[i][1], -19000, 0, 0, 0, 1.0f, 255);
+  }
+  /* (print_main_menu_strings) */
+  create_dl_ortho_matrix();
+  gSPDisplayList(gDisplayListHead++, dl_rgba16_text_begin);
+  gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, 255);
+  print_hud_lut_string(HUD_LUT_GLOBAL, 93, 35, textSelectFile);
+  for (s32 i = 0; i < 4; i++) print_save_file_star_count(i, i % 2 ? 209 : 92, i < 2 ? 78 : 118);
+  gSPDisplayList(gDisplayListHead++, dl_rgba16_text_end);
+  gSPDisplayList(gDisplayListHead++, dl_ia_text_begin);
+  gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, 255);
+  print_generic_string(52, 39, textScore);
+  print_generic_string(117, 39, textCopy);
+  print_generic_string(177, 39, textErase);
+  print_generic_string(get_str_x_pos_from_center(254, textStereo, 10.0f), 39, textStereo);
+  gSPDisplayList(gDisplayListHead++, dl_ia_text_end);
+  gSPDisplayList(gDisplayListHead++, dl_menu_ia8_text_begin);
+  gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, 255);
+  for (s32 i = 0; i < 4; i++) print_menu_generic_string(i % 2 ? 207 : 92, i < 2 ? 65 : 105, textMario[i]);
+  gSPDisplayList(gDisplayListHead++, dl_menu_ia8_text_end);
+  /* the hand (print_menu_cursor), on the chosen file's button */
+  static const s16 hand[4][2] = {{-80, 52}, {28, 52}, {-80, 12}, {28, 12}};
+  create_dl_translation_matrix(MENU_MTX_PUSH, hand[sFile][0] + 160.0f - 5.0f, hand[sFile][1] + 120.0f - 25.0f, 0.0f);
+  gSPDisplayList(gDisplayListHead++, dl_menu_idle_hand);
+  gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
+}
+
+/* the calculator's keys for the N64 controller's buttons (src/plat.h), in the game's dialog box */
+static void draw_keys(void) {
+  static const char *const keys[][2] = {
+    {"Arrows", "Move (alpha: walk)"}, {"OK", "A: jump, read"}, {"Back", "B: punch, pick up"},
+    {"Shift", "Z: crouch, pound"}, {"4  6", "Turn the camera"}, {"8  2", "Camera near, far"},
+    {"0", "R: Lakitu or Mario"}, {"Backspace", "Start: pause"}, {"Home", "Save and quit"},
+  };
+  draw_backdrop();
+  /* the box of the game's dialogs (render_dialog_box_type: black, see-through) */
+  create_dl_translation_matrix(MENU_MTX_PUSH, 18, 214, 0);
+  create_dl_scale_matrix(MENU_MTX_NOPUSH, 2.18f, 2.45f, 1.0f);
+  gDPSetEnvColor(gDisplayListHead++, 0, 0, 0, 150);
+  gSPDisplayList(gDisplayListHead++, dl_draw_text_bg_box);
+  gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
+  gSPDisplayList(gDisplayListHead++, dl_ia_text_begin);
+  for (u32 i = 0; i < sizeof keys / sizeof keys[0]; i++) {
+    s16 y = (s16) (192 - 17 * (s32) i);
+    gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, 255);
+    print_text_at(30, y, keys[i][0]);
+    print_text_at(116, y, keys[i][1]);
+  }
+  gSPDisplayList(gDisplayListHead++, dl_ia_text_end);
+  /* the dialog's arrow: on to the game (render_dialog_triangle_choice's) */
+  if (sTitleTimer / 8 % 2 == 0) {
+    create_dl_translation_matrix(MENU_MTX_PUSH, 282, 34, 0);
+    create_dl_rotation_matrix(MENU_MTX_NOPUSH, -90.0f, 0, 0, 1.0f);
+    gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, 255);
+    gSPDisplayList(gDisplayListHead++, dl_draw_triangle);
+    gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
+  }
+}
+
 /* ------------------------------------------------------------------------------------------------ the act select */
-/* The stars of the course, as star_select.c chose them: the acts done (the clear stars), the next one, the
- * selection starting at the first star not yet collected. Drawn in the frame's display list (port_menu_draw)
- * where the game had them, on its white screen: a row of stars (the chosen one bigger and spinning) and their
- * numbers, the act's name, the best coin score, the course's name. */
-static s8 sVisibleStars, sSelected, sDone;
-static u8 sStarModel[6];   /* 1: a star to get, 2: a star got */
-static s16 sActTimer;
-static s16 sSpin;
+/* star_select.c's act select, on its white screen: the course's stars as the game's star models (the ones got
+ * gold, the others clear; the chosen one bigger and turning), their numbers and the chosen act's name in the
+ * menu font, the best coin score, the wooden COURSE sign with its number, the course's name. */
+static s8 sVisibleStars, sObtainedStars, sInitSelectedActNum, sSelectableStarIndex, sSelectedActIndex;
+static s8 sLoadedActNum;
+static u8 sStarGot[7];          /* a gold star (else a clear one); [6]: the 100 coin star */
+static f32 sStarSize[7];
+static s16 sStarYaw[7];
+static s16 sActSelectorMenuTimer;
 
 s32 port_act_select_init(s16 arg, s32 unused) {
+  /* (lvl_init_act_selector_values_and_stars) */
   u8 stars = save_file_get_star_flags(gCurrSaveFileNum - 1, COURSE_NUM_TO_INDEX(gCurrCourseNum));
-  s32 obtained = save_file_get_course_star_count(gCurrSaveFileNum - 1, COURSE_NUM_TO_INDEX(gCurrCourseNum));
-  s32 got = 0, first = -1;
-  sVisibleStars = 0;
-  while (got != obtained && sVisibleStars < 6) {
-    if (stars & (1 << sVisibleStars)) sStarModel[sVisibleStars] = 2, got++;
+  sLoadedActNum = 0, sInitSelectedActNum = 0, sVisibleStars = 0, sActSelectorMenuTimer = 0;
+  sSelectableStarIndex = 0, sSelectedActIndex = 0;
+  sObtainedStars = (s8) save_file_get_course_star_count(gCurrSaveFileNum - 1, COURSE_NUM_TO_INDEX(gCurrCourseNum));
+  if (stars & (1 << 6)) sObtainedStars--;
+  /* (bhv_act_selector_init) */
+  s32 i = 0;
+  while (i != sObtainedStars) {
+    if (stars & (1 << sVisibleStars)) sStarGot[sVisibleStars] = 1, i++;
     else {
-      sStarModel[sVisibleStars] = 1;
-      if (first < 0) first = sVisibleStars;
+      sStarGot[sVisibleStars] = 0;
+      if (sInitSelectedActNum == 0) {
+        sInitSelectedActNum = sVisibleStars + 1;
+        sSelectableStarIndex = sVisibleStars;
+      }
     }
     sVisibleStars++;
   }
-  /* (collected in order so far: the next one shows) */
-  if (sVisibleStars == obtained && sVisibleStars != 6) {
-    sStarModel[sVisibleStars] = 1;
-    first = sVisibleStars++;
+  if (sVisibleStars == sObtainedStars && sVisibleStars != 6) {
+    sStarGot[sVisibleStars] = 0;
+    sInitSelectedActNum = sVisibleStars + 1;
+    sSelectableStarIndex = sVisibleStars;
+    sVisibleStars++;
   }
-  sSelected = (s8) (first >= 0 ? first : sVisibleStars - 1);
-  sDone = 0;
-  sActTimer = 0;
-  sSpin = 0;
+  if (sObtainedStars == 6) sInitSelectedActNum = sVisibleStars;
+  if (sObtainedStars == 0) sInitSelectedActNum = 1;
+  for (i = 0; i < 7; i++) sStarSize[i] = 1.0f, sStarYaw[i] = 0;
+  sStarGot[6] = (stars & (1 << 6)) != 0;
+  sStarSize[6] = 0.8f;
   port_menu_active = SCREEN_ACT;
   return 0;
 }
 
 s32 port_act_select_loop(s16 arg, s32 unused) {
-  sActTimer++;
-  sSpin += 0x400;
-  if (sDone) {
-    /* (a moment for the chosen star, as the game waited) */
-    if (++sDone > 20) {
-      port_menu_active = SCREEN_NONE;
-      gDialogCourseActNum = sSelected + 1;
-      return sSelected + 1;
-    }
-    return 0;
+  u8 stars = save_file_get_star_flags(gCurrSaveFileNum - 1, COURSE_NUM_TO_INDEX(gCurrCourseNum));
+  /* (bhv_act_selector_loop: only the stars got and the first not got can be chosen) */
+  if (sObtainedStars != 6) {
+    sSelectedActIndex = 0;
+    handle_menu_scrolling(MENU_SCROLL_HORIZONTAL, &sSelectableStarIndex, 0, sObtainedStars);
+    s32 left = sSelectableStarIndex;
+    for (s32 i = 0; i < sVisibleStars; i++)
+      if ((stars & (1 << i)) || i == sInitSelectedActNum - 1) {
+        if (left == 0) {
+          sSelectedActIndex = (s8) i;
+          break;
+        }
+        left--;
+      }
+  } else {
+    handle_menu_scrolling(MENU_SCROLL_HORIZONTAL, &sSelectableStarIndex, 0, sVisibleStars - 1);
+    sSelectedActIndex = sSelectableStarIndex;
   }
-  s16 stickX = gPlayer1Controller->rawStickX;
-  static s8 sHeld;
-  if (stickX > 60 || stickX < -60) {
-    if (!sHeld) {
-      sSelected = (s8) (sSelected + (stickX > 0 ? 1 : -1));
-      if (sSelected < 0) sSelected = (s8) (sVisibleStars - 1);
-      if (sSelected >= sVisibleStars) sSelected = 0;
+  /* (bhv_act_selector_star_type_loop) */
+  for (s32 i = 0; i < sVisibleStars; i++) {
+    if (i == sSelectedActIndex) {
+      sStarSize[i] += 0.1f;
+      if (sStarSize[i] > 1.3f) sStarSize[i] = 1.3f;
+      sStarYaw[i] += 0x800;
+    } else {
+      sStarSize[i] -= 0.1f;
+      if (sStarSize[i] < 1.0f) sStarSize[i] = 1.0f;
+      sStarYaw[i] = 0;
     }
-    sHeld = 1;
-  } else sHeld = 0;
-  if (sActTimer > 10 && (gPlayer1Controller->buttonPressed & (A_BUTTON | START_BUTTON | B_BUTTON))) sDone = 1;
-  return 0;
+  }
+  sStarYaw[6] += 0x800;
+  /* (lvl_update_obj_and_load_act_button_actions) */
+  if (sActSelectorMenuTimer >= 11 && (gPlayer3Controller->buttonPressed & (A_BUTTON | START_BUTTON | B_BUTTON))) {
+    sLoadedActNum = sInitSelectedActNum >= sSelectedActIndex + 1 ? sSelectedActIndex + 1 : sInitSelectedActNum;
+    gDialogCourseActNum = sSelectedActIndex + 1;
+  }
+  sActSelectorMenuTimer++;
+  if (sLoadedActNum) port_menu_active = SCREEN_NONE;
+  return sLoadedActNum;
 }
 
-/* a star of polygons: ten points around a middle, (x, y) on the N64's screen (y up), r its size, its yaw */
-static void draw_star(s16 x, s16 y, f32 r, s16 yaw, u8 cr, u8 cg, u8 cb, u8 ca) {
-  Vtx *v = alloc_display_list(11 * sizeof(Vtx));
-  if (v == NULL) return;
-  f32 sx = coss(yaw);
-  for (s32 i = 0; i <= 10; i++) {
-    f32 rr = i == 0 ? 0 : (i % 2 ? r : r * 0.45f);
-    f32 a = (i - 1) * (3.14159265f / 5);
-    f32 px = i == 0 ? 0 : sinf(a) * rr, py = i == 0 ? 0 : cosf(a) * rr;
-    s32 shade = i == 0 ? 255 : (i % 2 ? 200 : 150);
-    v[i].v.ob[0] = (s16) (x + px * sx), v[i].v.ob[1] = (s16) (y + py), v[i].v.ob[2] = 0;
-    v[i].v.flag = 0, v[i].v.tc[0] = v[i].v.tc[1] = 0;
-    v[i].v.cn[0] = (u8) (cr * shade / 255), v[i].v.cn[1] = (u8) (cg * shade / 255);
-    v[i].v.cn[2] = (u8) (cb * shade / 255), v[i].v.cn[3] = ca;
-  }
-  gSPVertex(gDisplayListHead++, v, 11, 0);
-  for (s32 i = 1; i <= 10; i++) gSP1Triangle(gDisplayListHead++, 0, i, i % 10 + 1, 0);
-}
 
-static void draw_title(void) {
-  static const u8 logo[][3] = {{230, 30, 30}, {250, 200, 20}, {40, 170, 40}, {40, 90, 230}};
-  static const u8 white[][3] = {{255, 255, 255}};
-  sSpin += 0x300;
-  fill_screen(10, 20, 90);
+static void draw_act_select(void) {
+  /* the act selector's area (geo_menu_act_selector_strings): its camera, its white background, the stars */
+  port_screen_camera(0, 0, 1000, 0, 0, 0, 45, 100, 25000, 0xFFFF);
+  for (s32 i = 0; i < sVisibleStars; i++)
+    port_screen_model(sStarGot[i] ? PORT_SCREEN_STAR : PORT_SCREEN_TRANSPARENT_STAR,
+                      (sVisibleStars - 1) * -75 + i * 152, 248, -300, 0, sStarYaw[i], 0, sStarSize[i], 255);
+  if (sStarGot[6]) port_screen_model(PORT_SCREEN_STAR, 370, 24, -300, 0, sStarYaw[6], 0, sStarSize[6], 255);
+  /* (print_act_selector_strings) */
+  u8 **courses = segmented_to_virtual(seg2_course_name_table);
+  u8 **acts = segmented_to_virtual(seg2_act_name_table);
+  s32 course = COURSE_NUM_TO_INDEX(gCurrCourseNum);
+  u8 *name = segmented_to_virtual(courses[course]);
+  u8 myScore[] = {TEXT_MYSCORE};
+  u8 starNumbers[2] = {0, DIALOG_CHAR_TERMINATOR};
   create_dl_ortho_matrix();
-  print_hud_at(95, 30, 32, "SUPER", logo, 4, 0);
-  print_hud_at(61, 68, 32, "MARIO 64", logo, 4, 1);
-  if (save_file_exists(0)) {
-    /* the file's stars */
-    gDPSetCombineMode(gDisplayListHead++, G_CC_SHADE, G_CC_SHADE);
-    gDPSetRenderMode(gDisplayListHead++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
-    draw_star(140, 100, 13, sSpin, 255, 210, 30, 255);
-    char n[8];
-    s32 stars = save_file_get_total_star_count(0, COURSE_MIN - 1, COURSE_MAX - 1), i = 7;
-    n[i] = 0;
-    do n[--i] = (char) ('0' + stars % 10), stars /= 10; while (stars);
-    print_hud_at(158, 132, 16, n + i, white, 1, 0);
-  }
-  gSPDisplayList(gDisplayListHead++, dl_ia_text_begin);
+  gSPDisplayList(gDisplayListHead++, dl_rgba16_text_begin);
   gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, 255);
-  if (sTitleTimer / 15 % 2 == 0) print_text_at(-1, 60, "PRESS START");
-  gDPSetEnvColor(gDisplayListHead++, 160, 170, 220, 255);
-  print_text_at(-1, 20, "Shift: the keys");
-  gSPDisplayList(gDisplayListHead++, dl_ia_text_end);
-}
-
-/* the calculator's keys for the N64 controller's buttons (src/plat.h) */
-static void draw_keys(void) {
-  static const char *const keys[][2] = {
-    {"Arrows", "Move (alpha held: walk)"}, {"OK, EXE", "A: jump, swim, read"}, {"Back", "B: punch, kick, pick up"},
-    {"Shift", "Z: crouch, ground pound"}, {"4  6", "Turn the camera"}, {"8  2", "Camera closer, further"},
-    {"0", "R: Mario's or Lakitu's camera"}, {"Backspace", "Start: pause"},
-    {"Home", "Quit (stars are saved)"},
-  };
-  static const u8 gold[][3] = {{255, 210, 40}};
-  fill_screen(10, 20, 90);
-  create_dl_ortho_matrix();
-  print_hud_at(94, 16, 16, "HOW TO PLAY", gold, 1, 0);
+  print_hud_my_score_coins(1, gCurrSaveFileNum - 1, course, 155, 106);
+  gSPDisplayList(gDisplayListHead++, dl_rgba16_text_end);
   gSPDisplayList(gDisplayListHead++, dl_ia_text_begin);
-  for (u32 i = 0; i < sizeof keys / sizeof keys[0]; i++) {
-    s16 y = (s16) (186 - 16 * (s32) i);
-    gDPSetEnvColor(gDisplayListHead++, 255, 210, 40, 255);
-    print_text_at(22, y, keys[i][0]);
-    gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, 255);
-    print_text_at(112, y, keys[i][1]);
-  }
-  gDPSetEnvColor(gDisplayListHead++, 160, 170, 220, 255);
-  if (sTitleTimer / 15 % 2 == 0) print_text_at(-1, 22, sStartAfterKeys ? "OK: start" : "OK: back");
+  gDPSetEnvColor(gDisplayListHead++, 0, 0, 0, 255);
+  if (save_file_get_course_coin_score(gCurrSaveFileNum - 1, course) != 0) print_generic_string(102, 118, myScore);
+  print_generic_string(get_str_x_pos_from_center(160, name + 3, 10.0f), 33, name + 3);
   gSPDisplayList(gDisplayListHead++, dl_ia_text_end);
+  /* (print_course_number) */
+  u8 courseNum[4];
+  create_dl_translation_matrix(MENU_MTX_PUSH, 158.0f, 81.0f, 0.0f);
+  gSPDisplayList(gDisplayListHead++, dl_menu_rgba16_wood_course);
+  gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
+  gSPDisplayList(gDisplayListHead++, dl_rgba16_text_begin);
+  gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, 255);
+  int_to_str(gCurrCourseNum, courseNum);
+  print_hud_lut_string(HUD_LUT_GLOBAL, gCurrCourseNum < 10 ? 152 : 143, 158, courseNum);
+  gSPDisplayList(gDisplayListHead++, dl_rgba16_text_end);
+  gSPDisplayList(gDisplayListHead++, dl_menu_ia8_text_begin);
+  gDPSetEnvColor(gDisplayListHead++, 0, 0, 0, 255);
+  if (sVisibleStars != 0) {
+    u8 *act = segmented_to_virtual(acts[course * 6 + sSelectedActIndex]);
+    print_menu_generic_string(get_str_x_pos_from_center(163, act, 8.0f), 81, act);
+  }
+  for (s32 i = 1; i <= sVisibleStars; i++) {
+    starNumbers[0] = (u8) i;
+    print_menu_generic_string(122 - (sVisibleStars - 1) * 17 + i * 34, 38, starNumbers);
+  }
+  gSPDisplayList(gDisplayListHead++, dl_menu_ia8_text_end);
 }
 
 /* ------------------------------------------------------------------------------------------------ quitting */
@@ -325,49 +475,9 @@ static void draw_quit(void) {
 
 void port_menu_draw(void) {
   if (gMenuMode == MENU_MODE_RENDER_PAUSE_SCREEN) draw_quit();
-  if (port_menu_active == SCREEN_TITLE) draw_title();
+  if (port_menu_active == SCREEN_LOGO) draw_logo();
+  if (port_menu_active == SCREEN_HEAD) draw_head();
+  if (port_menu_active == SCREEN_FILES) draw_files();
   if (port_menu_active == SCREEN_KEYS) draw_keys();
-  if (port_menu_active != SCREEN_ACT) return;
-  u8 **courses = segmented_to_virtual(seg2_course_name_table);
-  u8 **acts = segmented_to_virtual(seg2_act_name_table);
-  s32 course = COURSE_NUM_TO_INDEX(gCurrCourseNum);
-  u8 *name = segmented_to_virtual(courses[course]);
-  /* the white screen (its GEO_BACKGROUND_COLOR) */
-  gDPSetCycleType(gDisplayListHead++, G_CYC_FILL);
-  gDPSetFillColor(gDisplayListHead++, 0xFFFFFFFF);
-  gDPFillRectangle(gDisplayListHead++, 0, 0, SCREEN_WIDTH - 1, SCREEN_HEIGHT - 1);
-  gDPSetCycleType(gDisplayListHead++, G_CYC_1CYCLE);
-  /* the stars */
-  create_dl_ortho_matrix();
-  gDPSetCombineMode(gDisplayListHead++, G_CC_SHADE, G_CC_SHADE);
-  gDPSetRenderMode(gDisplayListHead++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
-  for (s32 i = 0; i < sVisibleStars; i++) {
-    s16 x = (s16) (160 - (sVisibleStars - 1) * 17 + i * 34);
-    f32 r = i == sSelected ? 18 : 14;
-    s16 yaw = i == sSelected ? sSpin : 0;
-    if (sStarModel[i] == 2) draw_star(x, 175, r, yaw, 110, 150, 255, 170);
-    else draw_star(x, 175, r, yaw, 255, 210, 30, 255);
-  }
-  gSPDisplayList(gDisplayListHead++, dl_ia_text_begin);
-  /* the stars' numbers, the chosen act's name, the course's name, in black */
-  gDPSetEnvColor(gDisplayListHead++, 0, 0, 0, 255);
-  for (s32 i = 0; i < sVisibleStars; i++) {
-    u8 digit[2] = {(u8) (i + 1), DIALOG_CHAR_TERMINATOR};
-    print_generic_string((s16) (157 - (sVisibleStars - 1) * 17 + i * 34), 196, digit);
-  }
-  if (sVisibleStars > 0) {
-    u8 *act = segmented_to_virtual(acts[course * 6 + sSelected]);
-    print_generic_string(get_str_x_pos_from_center(160, act, 10.0f), 140, act);
-  }
-  if (save_file_get_course_coin_score(gCurrSaveFileNum - 1, course) != 0) {
-    u8 score[] = {TEXT_MYSCORE};
-    print_generic_string(95, 118, score);
-  }
-  print_generic_string(get_str_x_pos_from_center(160, name + 3, 10.0f), 33, name + 3);
-  gSPDisplayList(gDisplayListHead++, dl_ia_text_end);
-  gSPDisplayList(gDisplayListHead++, dl_rgba16_text_begin);
-  gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, 255);
-  if (save_file_get_course_coin_score(gCurrSaveFileNum - 1, course) != 0)
-    print_hud_my_score_coins(1, gCurrSaveFileNum - 1, course, 155, 106);
-  gSPDisplayList(gDisplayListHead++, dl_rgba16_text_end);
+  if (port_menu_active == SCREEN_ACT) draw_act_select();
 }
