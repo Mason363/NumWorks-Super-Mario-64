@@ -8,8 +8,9 @@ const uint32_t eadk_api_level __attribute__((section(".rodata.eadk_api_level")))
 
 void port_game_init(void);
 void port_game_frame(void);
-/* the player quit from the pause menu (src/port/menu.c) */
+/* the player quit from the pause menu (src/port/menu.c); Home saves first */
 extern int port_quit;
+void port_save_and_quit(void);
 
 /* frames drawn, the game's ticks, and the time the drawn ones take (the calculator's emulator reports them) */
 uint32_t perf_frames, perf_ticks, perf_max, perf_slow;
@@ -28,7 +29,8 @@ int main(void) {
   uint32_t t0 = plat_millis(), ticks = 0;
   int skipped = 0;
   for (;;) {
-    if ((plat_keys() & K_HOME) || port_quit) break;
+    if (plat_keys() & K_HOME) port_save_and_quit();
+    if (port_quit) break;
     /* tick number ticks is due at t0 + ticks / 30 s */
     uint32_t now = plat_millis(), due = t0 + ticks * 100 / 3;
     int32_t late = (int32_t) (now - due);

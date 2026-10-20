@@ -19,4 +19,6 @@ void port_menu_draw(void);
 void port_menu_input(void);
 /* the player chose to quit (src/main.c) */
 extern int port_quit;
+/* the save file saved, then the app ends (the pause menu's SAVE & QUIT, the Home key) */
+void port_save_and_quit(void);
 #endif

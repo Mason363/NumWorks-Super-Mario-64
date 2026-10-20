@@ -28,6 +28,7 @@ s32 port_menu_active;
 /* (ingame_menu.c's: the pause menu is up; a scale of the menus' matrix) */
 extern s16 gMenuMode;
 void create_dl_scale_matrix(s8 pushOp, f32 x, f32 y, f32 z);
+void shade_screen(void);
 /* the player chose to quit, from the pause menu (src/main.c stops) */
 int port_quit;
 
@@ -261,9 +262,12 @@ static void draw_keys(void) {
 }
 
 /* ------------------------------------------------------------------------------------------------ quitting */
-/* The game's pause menu, with the calculator's way out: Shift asks, OK quits (the stars are saved as Mario
- * gets them, as on the N64), Back stays. */
-static s8 sAskQuit;
+/* The game's pause menu, with the calculator's way out: Shift asks, in the game's own look (the box of its
+ * castle pause menu, its font, its arrow, the choices of its save menu): SAVE & QUIT saves the file (the stars
+ * are already saved as Mario gets them, as on the N64) and quits, CONTINUE (or Back) goes back to the pause
+ * menu. */
+static s8 sAskQuit, sQuitLine;
+int port_menu_asking(void) { return sAskQuit; }
 void port_menu_input(void) {
   if (gMenuMode != MENU_MODE_RENDER_PAUSE_SCREEN) {
     sAskQuit = 0;
@@ -272,33 +276,51 @@ void port_menu_input(void) {
   u16 pressed = gPlayer1Controller->buttonPressed;
   if (!sAskQuit) {
     if (!(pressed & Z_TRIG)) return;
-    sAskQuit = 1;
-  } else if (pressed & A_BUTTON) port_quit = 1;
-  else if (pressed & B_BUTTON) sAskQuit = 0;
+    sAskQuit = 1, sQuitLine = 1;
+  } else if (pressed & (A_BUTTON | START_BUTTON)) {
+    if (sQuitLine == 1) {
+      port_save_and_quit();
+    } else sAskQuit = 0;
+  } else if (pressed & B_BUTTON) sAskQuit = 0;
   /* (the game's menu does not see the keys while the question is up) */
   gPlayer1Controller->buttonPressed = gPlayer3Controller->buttonPressed = 0;
 }
 
+/* the file saved if anything changed (save_file.c's flags: a door opened, a cannon), then the app ends */
+void port_save_and_quit(void) {
+  if (gCurrSaveFileNum >= 1 && save_file_exists(gCurrSaveFileNum - 1)) save_file_do_save(gCurrSaveFileNum - 1);
+  port_quit = 1;
+}
+
 static void draw_quit(void) {
-  gSPDisplayList(gDisplayListHead++, dl_ia_text_begin);
+  u8 textSaveAndQuit[] = {TEXT_SAVE_AND_QUIT};
+  u8 textContinue[] = {TEXT_CONTINUE};
   if (!sAskQuit) {
+    gSPDisplayList(gDisplayListHead++, dl_ia_text_begin);
     gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, gMenuTextAlpha);
-    print_text_at(-1, 12, "Shift: quit the game");
+    print_text_at(-1, 12, "Shift: quit");
     gSPDisplayList(gDisplayListHead++, dl_ia_text_end);
     return;
   }
-  gSPDisplayList(gDisplayListHead++, dl_ia_text_end);
-  create_dl_translation_matrix(MENU_MTX_PUSH, 66, 150, 0);
-  create_dl_scale_matrix(MENU_MTX_NOPUSH, 1.45f, 0.8f, 1.0f);
-  gDPSetEnvColor(gDisplayListHead++, 0, 0, 0, 220);
+  /* the screen darkened and the box (render_pause_screen's shade_screen, render_pause_castle_menu_box's box) */
+  shade_screen();
+  create_dl_translation_matrix(MENU_MTX_PUSH, 160 - 78, 120 + 32, 0);
+  create_dl_scale_matrix(MENU_MTX_NOPUSH, 1.2f, 0.8f, 1.0f);
+  gDPSetEnvColor(gDisplayListHead++, 0, 0, 0, 105);
   gSPDisplayList(gDisplayListHead++, dl_draw_text_bg_box);
   gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
+  /* the choices and the arrow (render_save_confirmation's) */
+  handle_menu_scrolling(MENU_SCROLL_VERTICAL, &sQuitLine, 1, 2);
+  s16 x = 160 - 46, y = 126;
   gSPDisplayList(gDisplayListHead++, dl_ia_text_begin);
   gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, 255);
-  print_text_at(-1, 126, "Quit the game?");
-  gDPSetEnvColor(gDisplayListHead++, 255, 210, 40, 255);
-  print_text_at(-1, 104, "OK: quit   Back: stay");
+  print_generic_string(x + 12, y, textSaveAndQuit);
+  print_generic_string(x + 12, y - 20, textContinue);
   gSPDisplayList(gDisplayListHead++, dl_ia_text_end);
+  create_dl_translation_matrix(MENU_MTX_PUSH, x, y - (sQuitLine - 1) * 20, 0);
+  gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, 255);
+  gSPDisplayList(gDisplayListHead++, dl_draw_triangle);
+  gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
 }
 
 void port_menu_draw(void) {
