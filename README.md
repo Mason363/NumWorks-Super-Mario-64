@@ -129,6 +129,6 @@ Made by Mason Chen, the maker of [NumPlay](https://github.com/Mason363/NumPlay).
 
 ## License
 
-The port's own code (in `src/`, the renderer, the tools in `tools/`, `common/` and the tests) is licensed under the GNU General Public License v3.0: see the `LICENSE` file at the root of the repository.
+The port's own code (in `src/`, the renderer, the tools in `tools/`, `common/` and the tests) is under the MIT License: see the `LICENSE` file. Copyright (c) 2026 Mason Chen.
 
-The code and data in `decomp/` come from the [n64decomp/sm64](https://github.com/n64decomp/sm64) project, and so do the models, levels, animations and text packed into `src/data.bin` and `src/port/gen/`. They are not covered by the GPL: the n64decomp team placed their work under CC0 (`decomp/LICENSE.md`), but what they decompiled is Nintendo's game, and it stays Nintendo's. The textures in `src/data.bin` and the icon are Nintendo's too.
+The code and data in `decomp/` come from the [n64decomp/sm64](https://github.com/n64decomp/sm64) project, and so do the models, levels, animations and text packed into `src/data.bin` and `src/port/gen/`. They are not covered by the MIT License: the n64decomp team placed their work under CC0 (`decomp/LICENSE.md`), but what they decompiled is Nintendo's game, and it stays Nintendo's. The textures in `src/data.bin` and the icon are Nintendo's too.
