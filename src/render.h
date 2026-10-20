@@ -88,6 +88,8 @@ static inline uint16_t *r_row(int y) { return r_band + (y - r_band_y) * 320; }
 
 /* draws every band and pushes it to the screen */
 void r_draw(void);
+/* ends the frame without drawing it */
+void r_skip(void);
 
 /* statistics of the last frame */
 extern int r_stat_tris, r_stat_items, r_stat_verts;

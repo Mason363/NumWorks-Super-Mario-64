@@ -40,6 +40,8 @@ void r_begin(RFrame *f) {
   r_stat_tris = r_stat_verts = 0;
 }
 
+void r_skip(void) { F = NULL; }
+
 /* turns camera-space points by the picture's roll */
 static void apply_roll(Mtx43 *m) {
   if (roll_s == 0) return;

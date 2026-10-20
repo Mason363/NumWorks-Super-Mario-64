@@ -467,7 +467,11 @@ void geo_process_root(struct GraphNodeRoot *node, Vp *b, Vp *c, s32 clearColor) 
 /* the screens' display list (the HUD, the menus, the text and the transitions), over each band */
 static void run_screens(const void *cmd) { port_gfx_run(*(const Gfx *const *) cmd); }
 
-/* the frame: everything the renderer needs is here, on the stack, until the frame is on the screen */
+/* 0: the game is behind time, this tick is thought but not drawn (src/main.c) */
+int port_draw = 1;
+
+/* the frame: everything the renderer needs is here, on the stack, until the frame is on the screen. A tick
+ * not drawn still describes its scene: Lakitu moves and the models animate as the game draws them */
 void port_render(void) {
   RFrame f;
   r_begin(&f);
@@ -481,5 +485,6 @@ void port_render(void) {
   gSPEndDisplayList(gDisplayListHead++);
   const Gfx **cmd = r_overlay_alloc(run_screens, sizeof(const Gfx *));
   if (cmd != NULL) *cmd = screens;
-  r_draw();
+  if (port_draw) r_draw();
+  else r_skip();
 }
