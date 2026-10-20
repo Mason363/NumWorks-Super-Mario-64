@@ -57,8 +57,9 @@ void r_begin(RFrame *f);
 void r_frame(const Mtx43 *view, float roll, float fov_deg, float near, float far);
 /* memory free until r_draw (the bands'), for whoever describes the scene */
 void *r_scratch(int *bytes);
-/* the background: a skybox (the game's BACKGROUND_*), or a plain colour (0x8000 | its RGBA5551) */
-void r_sky(int sky, int16_t yaw);
+/* the background: a skybox (the game's BACKGROUND_*: the camera's yaw places it, tint multiplies its colours,
+ * 0xFFFFFF none), or a plain colour (0x8000 | its RGBA5551) */
+void r_sky(int sky, int16_t yaw, uint32_t tint);
 /* fog: colour, from distance near to far (0 to switch it off) */
 void r_fog(uint16_t color, float near, float far);
 

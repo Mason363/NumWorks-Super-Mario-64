@@ -1,7 +1,7 @@
 """Reads the Super Mario 64 decompilation's data files (github.com/n64decomp/sm64, CC0): vertices, lights,
 display lists, geo layouts, collision, macro objects, level scripts and animations. Everything here is
-plain parsing of the C sources: the game's ROM is never needed (its textures are not in the decompilation,
-and tools/textures.py draws ours).
+plain parsing of the C sources: the game's ROM is never needed (its textures are not in the decompilation:
+tools/assets.py gets them).
 
 The display lists are run like the N64's RSP would: vertices loaded into a 16-entry buffer, then triangles
 from it, under the current texture, combiner, geometry mode and lights. What comes out is a list of

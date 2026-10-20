@@ -56,9 +56,12 @@ enum { TF_565, TF_565K, TF_IA };   /* opaque; with a transparent colour (TEX_KEY
 #define TEX_KEY 0x0020
 typedef struct {
   uint32_t off;
-  uint8_t wl, hl, fmt, shift;   /* log2 of the size; shift: the texture is that many times halved (the triangles'
-                                   texel coordinates are the full size's) */
+  uint8_t wl, hl, fmt, shift;   /* log2 of the size; shift (bits 0-1): the texture is that many times halved (the
+                                   triangles' texel coordinates are the full size's); bits 4-7: its palette's
+                                   length, in 16s, less one */
 } Tex;
+/* where a texture's texels start, after its palette */
+#define TEX_TEXELS(t) (((t)->fmt >> 4) == 3 ? 0 : (((t)->shift >> 4) + 1) * 32)
 
 /* a model: the game's geo layout as a list of nodes, parents first (in the order the game draws them), each
  * with its parent: the animated parts (which take an animation's values, in order), the switches (which choose
@@ -88,9 +91,18 @@ typedef struct {
   int16_t lo[3], hi[3];       /* a box around it */
 } MModel;
 
+/* a skybox: the game's picture (248 x 248 texels on the N64) at w x h, 4 bits a texel, a palette of 16 colours
+ * (RGB 565) for each band of rows */
+typedef struct {
+  uint16_t w, h, band, pad;
+  uint32_t pal, texels;       /* offsets */
+} Sky;
+
 typedef struct {
   uint32_t magic, size;
-  uint32_t tex, mesh, model, pad1, pad2, pad3;   /* offsets of the tables */
+  uint32_t tex, mesh, model;  /* offsets of the tables */
+  uint32_t sky;               /* the skyboxes: an offset (a Sky, or 0) for each of the game's 10 backgrounds */
+  uint32_t pad2, pad3;
   uint16_t ntex, nmesh, nmodel, pad4, pad5, pad6;
 } DataHeader;
 

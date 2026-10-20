@@ -93,8 +93,9 @@ static inline void texel(int s, int t, u8 out[4]) {
   const u8 *base = DAT(u8, x->off);
   const u16 *pal = (const u16 *) (const void *) base;
   int depth = x->fmt >> 4, i = t * w + s;
-  u16 v = depth == 1 ? pal[base[32 + (i >> 1)] >> ((i & 1) << 2) & 15] : depth == 2 ? pal[base[512 + i]]
-                                                                         : ((const u16 *) (const void *) base)[i];
+  const u8 *tx = base + TEX_TEXELS(x);
+  u16 v = depth == 1 ? pal[tx[i >> 1] >> ((i & 1) << 2) & 15] : depth == 2 ? pal[tx[i]]
+                                                                : ((const u16 *) (const void *) base)[i];
   int f = x->fmt & 15;
   if (f == TF_IA) {
     out[0] = out[1] = out[2] = (u8) (v >> 8);

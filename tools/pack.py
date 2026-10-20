@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """pack.py REF: src/data.bin and src/data_ids.h from the decompilation in REF (tools/fetch.py fills it).
 
-Levels, models, animations, collision and objects come from the decompilation's sources; the textures are
-painted by tools/textures.py. See src/data.h for the format."""
+Levels, models, animations, collision and objects come from the decompilation's sources; the textures and
+skyboxes are the game's own, from the folder tools/assets.py fills (SM64_ASSETS: tools/rom.py). See src/data.h
+for the format."""
 import glob
 import math
 import os
@@ -15,7 +16,7 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import decomp  # noqa: E402
 import port  # noqa: E402
-import textures  # noqa: E402
+import rom  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_BIN = os.path.join(HERE, "..", "src", "data.bin")
@@ -128,32 +129,16 @@ def smooth(img, fmt):
     return float(np.abs(back[..., :3] - img[..., :3].astype(np.float32)).mean()) < SMOOTH
 
 
-SMOOTH = 7.0   # (the mean difference, of 255, a texture may lose)
-
-
-def usage_of(tris, m):
-    """Where a texture is used, for tools/textures.py's painter of those nobody drew by hand: the share of its
-    triangles that are floors and ceilings (the rest are walls), their mean colour, cut out or not."""
-    n = floors = ceils = 0
-    col = [0, 0, 0]
-    for t in tris:
-        (x1, y1, z1), (x2, y2, z2), (x3, y3, z3) = (v[:3] for v in t.v)
-        ax, ay, az, bx, by, bz = x2 - x1, y2 - y1, z2 - z1, x3 - x1, y3 - y1, z3 - z1
-        nx, ny, nz = ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx
-        ln = math.sqrt(nx * nx + ny * ny + nz * nz) or 1
-        floors += ny / ln > 0.6
-        ceils += ny / ln < -0.6
-        c = t.v[0][5]
-        if c[0] == "c":
-            for k in range(3):
-                col[k] += c[1][k]
-        else:
-            for k in range(3):
-                col[k] += 200
-        n += 1
-    n = n or 1
-    return {"floor": floors / n, "ceil": ceils / n, "colour": tuple(c / n for c in col), "cutout": m.cutout,
-            "xlu": m.xlu}
+SMOOTH = float(os.environ.get("SM64_SMOOTH", 7.0))   # (the mean difference, of 255, a texture may lose)
+# (the mean difference, of 255, a texture may lose with 16 colours; with 8 bits a texel, how close its colours
+# keep it)
+LOSS_4BIT = float(os.environ.get("SM64_LOSS4", 8))
+LOSS_8BIT = float(os.environ.get("SM64_LOSS8", 3.5))
+# what is seen close and big (Mario's and Peach's faces, the stars, the paintings, Peach's window, the screens):
+# 8 bits a texel from a smaller loss
+LOSS_4BIT_CLOSE = 6
+CLOSE = ("actors/mario/", "actors/mario_cap/", "actors/peach/", "actors/star/", "actors/toad/", "levels/castle_grounds/",
+         "levels/intro/", "levels/menu/")
 
 
 def vertex_colour(v, lit, own_alpha):
@@ -198,19 +183,22 @@ class Pack:
         self.tex_entries = []
         self.meshes = []         # packed Mesh structs
         self.ids = []            # (name, value) for data_ids.h
+        self.painting_textures = set()
 
     def read(self, pattern):
         for f in sorted(glob.glob(os.path.join(self.ref, pattern), recursive=True)):
             self.src.read(os.path.relpath(f, self.ref))
 
     # ------------------------------------------------------------------------------------------ textures
-    def texture(self, sym, w, h, cutout, ia, usage=None):
+    def texture(self, sym, w, h, cutout, ia):
         path = self.src.tex.get(sym, sym)
         fmt = 2 if ia or ".ia" in path or ".i4" in path or ".i8" in path else (1 if cutout or "rgba16" in path and cutout else 0)
         key = (path, w, h, fmt)
         if key in self.tex_index:
             return self.tex_index[key]
-        img = textures.paint(path, w, h, usage).copy()
+        img = rom.load(path, w, h)
+        if img is None:
+            sys.exit(f"pack.py: the game's texture {path} is not in {rom.ASSETS or 'SM64_ASSETS'} (tools/assets.py)")
         if fmt == 2 and ".ia" not in path:
             img[..., 0] = img[..., :3].max(axis=2)
         # a texture that loses little at half its size (or a quarter) is kept so (data.h's Tex.shift)
@@ -218,37 +206,25 @@ class Pack:
         while shift < 2 and min(img.shape[:2]) >= 16 and smooth(img, fmt):
             img = halve(img)
             shift += 1
-        # 16 colours a texture (4 bits a texel), 256 when 16 lose too much
-        pal, idx = quantize(img, fmt, 16)
-        depth = 1
-        if texel_error(img, fmt, pal, idx) > 6:
-            pal, idx = quantize(img, fmt, 256)
-            depth = 2
-        pal = pal + [pal[0]] * ((16 if depth == 1 else 256) - len(pal))
-        if depth == 1:
-            flat = idx.reshape(-1).astype(np.uint8)
-            if len(flat) % 2:
-                flat = np.append(flat, 0)
-            texels = (flat[0::2] | (flat[1::2] << 4)).astype(np.uint8)
-        else:
-            texels = idx.reshape(-1).astype(np.uint8)
-        off = self.blob.add(struct.pack(f"<{len(pal)}H", *pal) + texels.tobytes())
-        self.tex_bytes = getattr(self, "tex_bytes", 0) + len(pal) * 2 + len(texels)
-        wl, hl = int(round(np.log2(img.shape[1]))), int(round(np.log2(img.shape[0])))
-        self.tex_entries.append(struct.pack("<IBBBB", off, wl, hl, fmt | (depth << 4), shift))
+        close = path.startswith(CLOSE) or path in self.painting_textures
+        self.tex_entries.append(self.encode(img, fmt, shift, LOSS_4BIT_CLOSE if close else LOSS_4BIT))
         self.tex_index[key] = len(self.tex_entries) - 1
         return self.tex_index[key]
 
-    def ui_texture(self, name, img, kind):
-        """A texture of the screens (tools/glyphs.py), already painted: kind 'ia' or 'rgba' (a transparent key)."""
-        fmt = 2 if kind == "ia" else 1
-        h, w = img.shape[:2]
+    def encode(self, img, fmt, shift, loss):
+        """A texture's entry (data.h's Tex), its palette and texels added: 16 colours (4 bits a texel), or, when
+        16 lose too much, 8 bits a texel and as few colours as keep it close (a multiple of 16: the palette's
+        length is in Tex.shift's high bits)."""
         pal, idx = quantize(img, fmt, 16)
-        depth = 1
-        if texel_error(img, fmt, pal, idx) > 6:
-            pal, idx = quantize(img, fmt, 256)
+        depth, npal = 1, 16
+        if texel_error(img, fmt, pal, idx) > loss:
             depth = 2
-        pal = pal + [pal[0]] * ((16 if depth == 1 else 256) - len(pal))
+            for npal in (32, 64, 96, 128, 256):
+                pal, idx = quantize(img, fmt, npal)
+                if texel_error(img, fmt, pal, idx) <= LOSS_8BIT:
+                    break
+            npal = max(16, (len(pal) + 15) // 16 * 16)
+        pal = pal + [pal[0]] * (npal - len(pal))
         flat = idx.reshape(-1).astype(np.uint8)
         if depth == 1:
             if len(flat) % 2:
@@ -257,8 +233,14 @@ class Pack:
         else:
             texels = flat
         off = self.blob.add(struct.pack(f"<{len(pal)}H", *pal) + texels.tobytes())
-        wl, hl = int(round(np.log2(w))), int(round(np.log2(h)))
-        self.tex_entries.append(struct.pack("<IBBBB", off, wl, hl, fmt | (depth << 4), 0))
+        self.tex_bytes = getattr(self, "tex_bytes", 0) + len(pal) * 2 + len(texels)
+        wl, hl = int(round(np.log2(img.shape[1]))), int(round(np.log2(img.shape[0])))
+        return struct.pack("<IBBBB", off, wl, hl, fmt | (depth << 4), shift | (npal // 16 - 1) << 4)
+
+    def ui_texture(self, name, img, kind):
+        """A texture of the screens (the game's), kind 'ia' or 'rgba' (a transparent key)."""
+        fmt = 2 if kind == "ia" else 1
+        self.tex_entries.append(self.encode(img, fmt, 0, LOSS_4BIT_CLOSE))
         return len(self.tex_entries) - 1
 
     # ------------------------------------------------------------------------------------------ meshes
@@ -290,7 +272,7 @@ class Pack:
             if m.tex:
                 mode |= 1
                 ia = m.fmt in (3, 4)
-                tex = self.texture(m.tex, m.w, m.h, m.cutout or m.combine == "blend", ia, usage_of(ts, m))
+                tex = self.texture(m.tex, m.w, m.h, m.cutout or m.combine == "blend", ia)
                 if m.combine == "mod":
                     mode |= 2
             if m.cutout:
@@ -464,6 +446,7 @@ class Pack:
         texs = self.src.texture_lists.get(p["textures"], [])
         if not texs:
             return []
+        self.painting_textures |= {self.src.tex.get(t, t) for t in texs}
         size, n = p["size"], len(texs)
         yaw, pitch = math.radians(p["rot"][1]), math.radians(p["rot"][0])
         tw, th = p["tw"], p["th"]
@@ -499,12 +482,40 @@ class Pack:
                 self.find_fog(a[0].strip(), info)
 
     # ------------------------------------------------------------------------------------------ output
-    def write(self, models=None):
+    # ------------------------------------------------------------------------------------------ skyboxes
+    def sky(self, kind):
+        """The game's skybox for a background (BACKGROUND_*), from its 248 x 248 picture (data.h's Sky): at
+        SKY_SIZE, 4 bits a texel with a palette of 16 colours for each band of SKY_BAND rows."""
+        img = rom.load(f"textures/skyboxes/{SKYBOXES[kind]}.png")
+        if img is None:
+            return 0
+        from PIL import Image
+        # (resized as a picture that wraps around: a copy of each side beside it)
+        h0, w0 = img.shape[:2]
+        wide = np.concatenate([img[:, -8:], img, img[:, :8]], axis=1)[..., :3]
+        big = Image.fromarray(wide).resize((SKY_SIZE + SKY_SIZE * 16 // w0, SKY_SIZE), Image.LANCZOS)
+        off = SKY_SIZE * 8 // w0
+        arr = np.array(big)[:, off:off + SKY_SIZE]
+        rgba = np.concatenate([arr, np.full(arr.shape[:2] + (1,), 255, np.uint8)], axis=2)
+        pals, idx = [], []
+        for b0 in range(0, SKY_SIZE, SKY_BAND):
+            pal, ix = quantize(rgba[b0:b0 + SKY_BAND], 0, 16)
+            pals += pal + [pal[0]] * (16 - len(pal))
+            idx.append(ix)
+        flat = np.concatenate(idx).reshape(-1).astype(np.uint8)
+        texels = (flat[0::2] | (flat[1::2] << 4)).astype(np.uint8)
+        pal_off = self.blob.add(struct.pack(f"<{len(pals)}H", *pals))
+        tex_off = self.blob.add(texels.tobytes())
+        return self.blob.add(struct.pack("<4H2I", SKY_SIZE, SKY_SIZE, SKY_BAND, 0, pal_off, tex_off))
+
+    def write(self, models=None, skies=()):
         b = self.blob
         tex_off = b.add(b"".join(self.tex_entries))
         mesh_off = b.add(b"".join(self.meshes))
         model_off = b.add(b"".join(models.models)) if models else 0
-        hdr = struct.pack("<8I6H", 0x34364D53, 0, tex_off, mesh_off, model_off, 0, 0, 0,
+        sky_offs = [self.sky(k) if k in skies else 0 for k in range(10)]
+        sky_off = b.add(struct.pack("<10I", *sky_offs)) if any(sky_offs) else 0
+        hdr = struct.pack("<8I6H", 0x34364D53, 0, tex_off, mesh_off, model_off, sky_off, 0, 0,
                           len(self.tex_entries), len(self.meshes), len(models.models) if models else 0, 0, 0, 0)
         b.b[0:len(hdr)] = hdr
         struct.pack_into("<I", b.b, 4, len(b.b))
@@ -518,10 +529,47 @@ class Pack:
         print(f"data.bin: {len(b.b)} bytes, {len(self.tex_entries)} textures, {len(self.meshes)} meshes")
 
 
+# the skyboxes' pictures, by background (skybox.c's sSkyboxTextures), and the size and bands they are kept at
+SKYBOXES = ["water", "bitfs", "wdw", "cloud_floor", "ccm", "ssl", "bbh", "bidw", "clouds", "bits"]
+SKY_SIZE, SKY_BAND = 124, 16
+
 BACKGROUNDS = {"BACKGROUND_OCEAN_SKY": 0, "BACKGROUND_FLAMING_SKY": 1, "BACKGROUND_UNDERWATER_CITY": 2,
                "BACKGROUND_BELOW_CLOUDS": 3, "BACKGROUND_SNOW_MOUNTAINS": 4, "BACKGROUND_DESERT": 5,
                "BACKGROUND_HAUNTED": 6, "BACKGROUND_GREEN_SKY": 7, "BACKGROUND_ABOVE_CLOUDS": 8,
                "BACKGROUND_PURPLE_SKY": 9}
+
+
+# the size and kind of each of the screens' textures, by name (the ROM's sizes)
+def ui_size(name, path):
+    """(w, h, fmt) as the game loads it (w and h None: its picture's size), fmt 'rgba' or 'ia'."""
+    ia = ".ia" in path or ".i4" in path or ".i8" in path
+    if name.startswith("texture_font_char"):
+        return 16, 8, "ia"
+    if name.startswith("texture_credits_char"):
+        return 8, 8, "rgba"
+    if name in ("texture_hud_char_arrow_up", "texture_hud_char_arrow_down"):
+        return 8, 8, "rgba"
+    if name.startswith("texture_hud_char"):
+        return 16, 16, "rgba"
+    if name.startswith("texture_power_meter_") and name.endswith("side"):
+        return 32, 64, "rgba"
+    if name.startswith("texture_power_meter_"):
+        return 32, 32, "rgba"
+    if name == "texture_transition_mario":
+        return 64, 64, "ia"
+    if name.startswith("texture_transition_"):
+        return 32, 64, "ia"
+    if name.startswith("texture_waterbox_"):
+        return 32, 32, "ia" if ia else "rgba"
+    if name.startswith("texture_shadow_"):
+        return 16, 16, "ia"
+    if name == "texture_ia8_up_arrow":
+        return 8, 16, "ia"
+    if name.startswith("castle_grounds_seg7_texture"):
+        return 32, 64, "rgba"
+    if name.startswith("castle_grounds_seg7_us_texture"):
+        return 64, 32, "ia"
+    return None, None, "ia" if ia else "rgba"
 
 
 def fog_distance(frac, near, far):
@@ -543,6 +591,7 @@ def main():
         p.read(f"levels/{lv}/*.c")
     mb = M.ModelBuilder(p)
     lines = []
+    skies = set()
     # the scripts the levels run: their own, the common one, and the groups of models they link to
     bodies = []
     for lv in port.LEVELS:
@@ -575,6 +624,8 @@ def main():
                         fogc = ((r >> 3) << 11) | ((g >> 2) << 5) | (bb >> 3) or 1
                         fn = fog_distance(info["fog"][0], info["near"], info["far"])
                         ff = fog_distance(info["fog"][1], info["near"], info["far"])
+                    if info["bg"] < 10:
+                        skies.add(info["bg"])
                     lines.append("area {} {} {} {} {} {} {} {} {} {} {} {}".format(
                         geo, info["mesh"], info["mode"], " ".join(map(str, info["pos"])), " ".join(map(str, info["focus"])),
                         info["fov"], info["near"], info["far"], info["bg"], fogc, fn, ff))
@@ -582,16 +633,18 @@ def main():
                         lines.append(f"rooms {geo} " + " | ".join(" ".join(map(str, r)) for r in info["rooms"]))
     os.makedirs(port.GEN, exist_ok=True)
     open(os.path.join(port.GEN, "models.txt"), "w").write("\n".join(sorted(set(lines))) + "\n")
-    # the screens' textures: the HUD, the fonts, the power meter, the transitions (tools/glyphs.py)
-    import glyphs
+    # the screens' textures: the HUD, the fonts, the power meter, the transitions, Peach's letter (those of
+    # the other versions are not in the US game's ROM: left out)
     ui = []
     for name, path in port.ui_textures(ref):
         if any(k in name for k in ("_cn_", "_jp_", "_eu_", "EU_", "beta")) or name in dict(ui):
             continue
-        w, h, kind = glyphs.ui_size(name, path)
-        ui.append((name, p.ui_texture(name, glyphs.paint_ui(name, w, h), kind)))
+        w, h, kind = ui_size(name, path)
+        img = rom.load(path, w, h)
+        if img is not None:
+            ui.append((name, p.ui_texture(name, img, kind)))
     open(os.path.join(port.GEN, "uitex.txt"), "w").write("".join(f"{n} {i}\n" for n, i in ui))
-    p.write(mb)
+    p.write(mb, skies)
     M.write_funcs(os.path.join(port.GEN, "geo_funcs.c"))
     print(f"{len(mb.models)} models, {len(mb.dl_mesh)} display lists, {len(M.FUNCS)} functions")
 

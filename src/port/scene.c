@@ -16,10 +16,12 @@
 #include "game/mario.h"
 #include "game/mario_misc.h"
 #include "game/shadow.h"
+#include "game/save_file.h"
 #include "engine/math_util.h"
 #include "engine/graph_node.h"
 #include "engine/surface_collision.h"
 #include "behavior_data.h"
+#include "geo_commands.h"
 #include "port.h"
 #include "port_game.h"
 #include "port_gfx.h"
@@ -424,7 +426,12 @@ void port_draw_area(struct GraphNodeRoot *root) {
   for (int i = 0; i < 4; i++) view.m[i][0] = sCamera[i][0], view.m[i][1] = sCamera[i][1], view.m[i][2] = -sCamera[i][2];
   r_frame(&view, gc->rollScreen * (M_PI_F / 32768.0f), sFrustum.fov, a->near ? a->near : 100,
           a->far ? (float) a->far : 20000);
-  r_sky(a->background, (s16) atan2s(gc->focus[2] - gc->pos[2], gc->focus[0] - gc->pos[0]));
+  /* the skybox (skybox.c): in Jolly Roger Bay, darker and greener until the sunken ship's star is got */
+  u32 tint = 0xFFFFFF;
+  if (a->background == BACKGROUND_ABOVE_CLOUDS
+      && !(save_file_get_star_flags(gCurrSaveFileNum - 1, COURSE_NUM_TO_INDEX(COURSE_JRB)) & 1))
+    tint = 0x50645A;
+  r_sky(a->background, (s16) atan2s(gc->focus[2] - gc->pos[2], gc->focus[0] - gc->pos[0]), tint);
   if (a->fog_color) r_fog((u16) a->fog_color, a->fog_near, a->fog_far);
   if (a->mesh != 0xFFFF && a->mesh < HDR->nmesh) r_mesh(MESH(a->mesh), NULL, 0xFFFFFF, 255, 0);
   if (a->rooms) {

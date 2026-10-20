@@ -9,7 +9,9 @@
   holding the index of the calculator's own model (src/data.bin), and the levels that are not in the game
   as a script that goes back to the castle;
 - writes src/port/gen/terrain.c: each level area's collision cut into the game's 16 x 16 cells, sorted as
-  the game sorts them, ready in flash (the game builds this in RAM when a level loads: 100 KB and more).
+  the game sorts them, ready in flash (the game builds this in RAM when a level loads: 100 KB and more);
+- writes src/port/gen/behavior_data.c: the game's behavior scripts, but those no object of these levels can
+  have left empty, so that their code isn't in the app.
 
 The calculator's own changes to the decompilation's files are marked "(calculator)" in them."""
 import glob
@@ -157,7 +159,7 @@ def write_symbols(ref, model_of, anim_tables, rooms_of):
             if name in model_of:
                 lines.append(f"const Gfx {name}[1] = {{{{{{PORT_MODEL_TAG, {model_of[name]}}}}}}};")
             else:
-                lines.append(f'extern const Gfx {name}[] __attribute__((alias("port_dummy_dl")));')
+                lines.append(f"PORT_DUMMY_DL({name});")
         elif typ == "Collision":
             lines.append(f"const Collision {name}[] = {{ COL_INIT(), COL_VERTEX_INIT(0), COL_TRI_STOP(), COL_END() }};")
         elif typ == "Animation":
@@ -703,6 +705,77 @@ def write_terrain(ref, data_files):
     print(f"terrain: {len(table)} areas")
 
 
+# ------------------------------------------------------------------------------------------------ behaviors
+def _strip_c(t):
+    return re.sub(r"//[^\n]*|/\*.*?\*/", "", t, flags=re.S)
+
+
+def used_behaviors(ref):
+    """The behaviors an object of these levels can have: those their scripts, macro objects and special objects
+    place, those the game's own code (not a behavior's) names, and, again and again, those named in the files
+    of these behaviors' functions."""
+    scripts = behavior_scripts(ref)
+    where = {}
+    for f in glob.glob(os.path.join(ref, "src", "game", "**", "*.c"), recursive=True):
+        for m in re.finditer(r"^\w[\w\s\*]*?\b(\w+)\s*\([^;{]*\)\s*\{", _strip_c(open(f).read()), re.M):
+            where.setdefault(m.group(1), f)
+    bhv = re.compile(r"\bbhv[A-Z]\w*")
+    keep, macros, specials = set(), set(), set()
+    for lv in LEVELS:
+        for f in glob.glob(os.path.join(ref, "levels", lv, "**", "*.c"), recursive=True):
+            t = _strip_c(open(f).read())
+            keep |= set(bhv.findall(t))
+            macros |= set(re.findall(r"MACRO_OBJECT\w*\s*\(\s*(macro_\w+)", t))
+            specials |= set(re.findall(r"SPECIAL_OBJECT\w*\s*\(\s*(special_\w+)", t))
+    for m in re.finditer(r"/\*\s*(macro_\w+)\s*\*/\s*\{\s*(bhv\w+)", open(os.path.join(ref, "include", "macro_presets.inc.c")).read()):
+        if m.group(1) in macros:
+            keep.add(m.group(2))
+    for m in re.finditer(r"\{\s*(special_\w+)\s*,[^}]*?(bhv\w+)", _strip_c(open(os.path.join(ref, "include", "special_presets.inc.c")).read())):
+        if m.group(1) in specials:
+            keep.add(m.group(2))
+    for f in open(os.path.join(GAME, "src", "port", "files.txt")):
+        f = f.strip()
+        if f.startswith("decomp/src/"):
+            keep |= set(bhv.findall(_strip_c(open(os.path.join(ref, f[len("decomp/"):])).read())))
+    seen = set()
+    while True:
+        more = set()
+        for b in keep:
+            body = scripts.get(b, "")
+            more |= set(bhv.findall(body))
+            for fn in re.findall(r"\b[a-z_]\w*\b", body):
+                f = where.get(fn)
+                if f and f not in seen and os.sep + "behaviors" + os.sep in f:
+                    seen.add(f)
+                    more |= set(bhv.findall(_strip_c(open(f).read())))
+        if more <= keep:
+            return keep & set(scripts)
+        keep |= more
+
+
+def behavior_scripts(ref):
+    t = _strip_c(open(os.path.join(ref, "data", "behavior_data.c")).read())
+    return {m.group(1): m.group(2) for m in re.finditer(r"const BehaviorScript (bhv\w+)\[\]\s*=\s*\{(.*?)\};", t, re.S)}
+
+
+def write_behaviors(ref):
+    keep = used_behaviors(ref)
+    txt = open(os.path.join(ref, "data", "behavior_data.c")).read()
+    n = 0
+
+    def stub(m):
+        nonlocal n
+        if m.group(1) in keep:
+            return m.group(0)
+        n += 1
+        return f"const BehaviorScript {m.group(1)}[] = {{\n    BEGIN(OBJ_LIST_DEFAULT),\n    DEACTIVATE(),\n}};"
+    out = re.sub(r"const BehaviorScript (bhv\w+)\[\]\s*=\s*\{.*?\n\};", stub, txt, flags=re.S)
+    open(os.path.join(GEN, "behavior_data.c"), "w").write(
+        "/* Made by tools/port.py from the decompilation's data/behavior_data.c: the behaviors no object of the\n"
+        f" * calculator's levels can have ({n}) are left empty. */\n" + out)
+    return n
+
+
 def main():
     ref = sys.argv[1]
     model_of, rooms_of = {}, {}
@@ -737,6 +810,7 @@ def main():
                 os.makedirs(os.path.dirname(p), exist_ok=True)
                 open(p, "w").write("0\n")
     write_terrain(ref, data_files)
+    print(f"behaviors: {write_behaviors(ref)} left empty")
     hdrs = sorted(glob.glob(os.path.join(ref, "levels", "*", "header.h")))
     open(os.path.join(GEN, "level_headers.h"), "w").write(
         "/* Made by tools/port.py: every level's header. */\n" +

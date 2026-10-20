@@ -15,6 +15,13 @@
 #define PORT_AREA(mesh, mode, px, py, pz, fx, fy, fz, fov, near, far, bg, fogc, fogn, fogf, rooms) \
   PORT_MODEL_TAG, (mesh), PORT_AREA_TAG, (mode), (px), (py), (pz), (fx), (fy), (fz), (fov), (near), (far), (bg), \
   (fogc), (fogn), (fogf), (rooms)
+/* a display list nobody draws (the calculator draws its own models): one, port_dummy_dl, under every name
+ * (macOS's linker has no aliases: there, each its own) */
+#ifdef __APPLE__
+#define PORT_DUMMY_DL(name) const Gfx name[] = { gsSPEndDisplayList() }
+#else
+#define PORT_DUMMY_DL(name) extern const Gfx name[] __attribute__((alias("port_dummy_dl")))
+#endif
 /* a texture of the screens (src/port/gen/segment2.c, power_meter.c): the index of the calculator's own in
  * src/data.bin, after a tag (src/port/gfx.c reads it) */
 #define PORT_TEX_STUB(i) 0x50, 0x54, 0x58, 0x54, (i) & 0xFF, ((i) >> 8) & 0xFF

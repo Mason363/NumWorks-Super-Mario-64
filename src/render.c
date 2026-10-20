@@ -27,6 +27,7 @@ static float roll_c = 1, roll_s;
 static int sky_kind;
 static int16_t sky_yaw;
 static float sky_pitch;
+static int sky_tr = 256, sky_tg = 256, sky_tb = 256;   /* (its tint: x 256) */
 static uint16_t fog_col;
 static float fog_near, fog_far, fog_k;   /* (fog_k: 255 / (far - near)) */
 static bool fog_on;
@@ -73,7 +74,10 @@ void *r_scratch(int *bytes) {
   return F ? F->col : NULL;
 }
 
-void r_sky(int sky, int16_t yaw) { sky_kind = sky, sky_yaw = yaw; }
+void r_sky(int sky, int16_t yaw, uint32_t tint) {
+  sky_kind = sky, sky_yaw = yaw;
+  sky_tr = (int)(tint >> 16 & 255) + 1, sky_tg = (int)(tint >> 8 & 255) + 1, sky_tb = (int)(tint & 255) + 1;
+}
 void r_fog(uint16_t color, float near, float far) {
   fog_on = far > near && far > 0;
   fog_col = color, fog_near = near, fog_far = far;
@@ -546,13 +550,12 @@ static void use_texture(const Batch *b) {
     const Tex *t = TEX(b->tex);
     const uint8_t *base = DAT(uint8_t, t->off);
     int depth = t->fmt >> 4;
-    tx_depth = depth, tx_shift = t->shift;
+    tx_depth = depth, tx_shift = t->shift & 3;
     tx_wl = t->wl, tx_wm = (1 << t->wl) - 1, tx_hm = (1 << t->hl) - 1;
     tx_fmt = t->fmt & 15;
     tx_pal = (const uint16_t *)(const void *)base;
-    if (depth == 1) tx_texels = base + 32, span = span_t4;
-    else if (depth == 2) tx_texels = base + 512, span = span_t8;
-    else tx_texels = base, span = span_t16;
+    tx_texels = base + TEX_TEXELS(t);
+    span = depth == 1 ? span_t4 : depth == 2 ? span_t8 : span_t16;
   }
   tx_wrap = b->wrap & 15, tx_blend = b->wrap & W_BLEND;   /* (the rest of wrap is the vertices') */
 }
@@ -680,45 +683,76 @@ static void draw_item(const RItem *it, int layer) {
 }
 
 /* ------------------------------------------------------------------------------------------------ the sky */
-/* each background's colours: the top of the sky, the horizon, and below it */
-static const uint32_t skies[10][3] = {
-  {0x2858D8, 0x98C8F8, 0x6890C8},   /* ocean sky: Bob-omb Battlefield, the castle */
-  {0x480800, 0xE05010, 0x601000},   /* flaming sky: Lethal Lava Land, Bowser in the Fire Sea */
-  {0x081848, 0x3870B8, 0x102850},   /* underwater city: Dire, Dire Docks */
-  {0x5888D8, 0xD8E8F8, 0xF0F0F8},   /* below clouds: Tall, Tall Mountain */
-  {0x4878C8, 0xD0E0F0, 0xE8F0F8},   /* snow mountains: Cool, Cool Mountain, Snowman's Land */
-  {0xC88838, 0xF8D890, 0xD0A060},   /* desert: Shifting Sand Land */
-  {0x080810, 0x283040, 0x101018},   /* haunted: Big Boo's Haunt */
-  {0x184818, 0x80C080, 0x305830},   /* green sky: Wet-Dry World */
-  {0x3060C0, 0xC0D8F8, 0xF8F8F8},   /* above clouds: Rainbow Ride, Wing Mario over the Rainbow */
-  {0x281048, 0x9060B8, 0x381858},   /* purple sky: Bowser in the Dark World and the Sky */
-};
+/* The game's skybox (skybox.c): a picture covering the whole turn, 1280 by 960 of the N64's pixels, the camera's
+ * yaw scrolling it across and its pitch up and down, filtered as the N64 did (bilinear). data.h's Sky: its
+ * texels, 4 bits each, with a palette for each band of rows. */
+static const Sky *sky_of(int kind) {
+  uint32_t t = HDR->sky;
+  if (!t || kind < 0 || kind > 9) return NULL;
+  uint32_t off = DAT(uint32_t, t)[kind];
+  return off ? DAT(Sky, off) : NULL;
+}
+
+/* (a sky texel: rgb in 0..255 << 8 each, packed loosely) */
+static inline void sky_texel(const Sky *k, const uint8_t *tx, const uint16_t *pal, int x, int y, int *rgb) {
+  int i = y * k->w + x;
+  uint16_t c = pal[(y / k->band) * 16 + (tx[i >> 1] >> ((i & 1) << 2) & 15)];
+  rgb[0] = (c >> 11) << 3, rgb[1] = ((c >> 5) & 63) << 2, rgb[2] = (c & 31) << 3;
+}
 
 static void draw_sky(void) {
-  if (sky_kind & 0x8000) {
-    /* a plain colour (RGBA5551) */
-    int c5 = sky_kind & 0x7FFF;
+  const Sky *k = sky_kind & 0x8000 ? NULL : sky_of(sky_kind);
+  if (k == NULL) {
+    /* a plain colour (RGBA5551), or black */
+    int c5 = sky_kind & 0x8000 ? sky_kind & 0x7FFF : 0;
     uint16_t c = rgb565((c5 >> 11 & 31) << 3, (c5 >> 6 & 31) << 3, (c5 >> 1 & 31) << 3);
     for (int i = 0; i < r_w * r_band_h; i++) F->col[i] = c;
     return;
   }
-  const uint32_t *k = skies[sky_kind < 0 || sky_kind > 9 ? 0 : sky_kind];
-  /* the horizon's row, from the camera's pitch */
-  float hz = cam_cy + cam_f * tanf(sky_pitch);
+  const uint16_t *pal = DAT(uint16_t, k->pal);
+  const uint8_t *tx = DAT(uint8_t, k->texels);
+  /* skybox.c: the camera's yaw and pitch place the screen in the picture (its fov taken as 90 degrees) */
+  int scaled_x = 1280 - (int)((uint16_t)sky_yaw * 1280.0f / 65536.0f + 0.5f);
+  int scaled_y = (int)(sky_pitch * (57.29578f * 4.0f) + (sky_pitch < 0 ? -0.5f : 0.5f)) + 600;
+  if (scaled_y > 960) scaled_y = 960;
+  if (scaled_y < 240) scaled_y = 240;
+  /* texels a screen pixel (16.16), and where the screen starts */
+  int step = r_scale;
+  int32_t du = (int32_t)((int64_t)k->w * 65536 * step / 1280), dv = (int32_t)((int64_t)k->h * 65536 * step / 960);
+  int32_t u0 = (int32_t)((int64_t)scaled_x * k->w * 65536 / 1280) - 32768;
+  int32_t v0 = (int32_t)((int64_t)(960 - scaled_y) * k->h * 65536 / 960) - 32768;
+  int tr = sky_tr, tg = sky_tg, tb = sky_tb;
+  int wmod = k->w << 16;
   for (int y = r_band_y; y < r_band_y + r_band_h; y++) {
-    float t = (y - (hz - r_h)) / (float)r_h;
-    uint32_t c0 = k[0], c1 = k[1];
-    if (t > 1) c0 = k[1], c1 = k[2], t = (t - 1) * 4;
-    if (t < 0) t = 0;
-    if (t > 1) t = 1;
-    int r = (int)((c0 >> 16 & 255) + (((int)(c1 >> 16 & 255) - (int)(c0 >> 16 & 255)) * t));
-    int g = (int)((c0 >> 8 & 255) + (((int)(c1 >> 8 & 255) - (int)(c0 >> 8 & 255)) * t));
-    int b = (int)((c0 & 255) + (((int)(c1 & 255) - (int)(c0 & 255)) * t));
-    uint16_t c = rgb565(r, g, b);
+    int32_t v = v0 + y * dv;
+    if (v < 0) v = 0;
+    int ty = v >> 16, fy = (v >> 8) & 255;
+    int ty1 = ty + 1 < k->h ? ty + 1 : ty;
+    if (ty >= k->h) ty = ty1 = k->h - 1;
     uint16_t *row = F->col + (y - r_band_y) * r_w;
-    for (int x = 0; x < r_w; x++) row[x] = c;
+    int32_t u = u0 % wmod;
+    if (u < 0) u += wmod;
+    int col = -1, a[3] = {0}, b[3] = {0};
+    for (int x = 0; x < r_w; x++, u += du) {
+      if (u >= wmod) u -= wmod;
+      int tx0 = u >> 16;
+      if (tx0 != col) {
+        /* this column and the next, each blended between its two rows */
+        col = tx0;
+        int tx1 = tx0 + 1 < k->w ? tx0 + 1 : 0, p[3], q[3];
+        sky_texel(k, tx, pal, tx0, ty, p);
+        sky_texel(k, tx, pal, tx0, ty1, q);
+        for (int c = 0; c < 3; c++) a[c] = p[c] + ((q[c] - p[c]) * fy >> 8);
+        sky_texel(k, tx, pal, tx1, ty, p);
+        sky_texel(k, tx, pal, tx1, ty1, q);
+        for (int c = 0; c < 3; c++) b[c] = p[c] + ((q[c] - p[c]) * fy >> 8);
+      }
+      int fx = (u >> 8) & 255;
+      int r = a[0] + ((b[0] - a[0]) * fx >> 8), g = a[1] + ((b[1] - a[1]) * fx >> 8);
+      int bl = a[2] + ((b[2] - a[2]) * fx >> 8);
+      row[x] = rgb565(r * tr >> 8, g * tg >> 8, bl * tb >> 8);
+    }
   }
-  (void)sky_yaw;
 }
 
 

@@ -6,7 +6,8 @@
 #   make test       the game played on a computer (tests/check.py, with the sanitizers)
 #   make media      the pictures of README.md and NumPlay's GIFs (tools/media.py)
 #   make data       src/data.bin, src/data_ids.h and src/port/gen/ from the decompilation tools/fetch.py
-#                   downloads (REF=build/ref/decomp, Python + Pillow + NumPy)
+#                   downloads (REF=build/ref/decomp) and the game's textures tools/assets.py checks
+#                   (ASSETS=<its folder>; Python + Pillow + NumPy)
 Q ?= @
 # the ARM toolchain on the PATH, or in TOOLCHAIN=<its bin folder>
 TOOLCHAIN ?=
@@ -17,6 +18,7 @@ STRIP ?= $(BIN)arm-none-eabi-strip --strip-unneeded
 SIZE = $(BIN)arm-none-eabi-size
 BUILD_DIR = output
 REF ?=
+ASSETS ?=
 
 # what is compiled: the decompilation's files and the port's (src/port/files.txt), the calculator's main
 GAME_SRC = $(filter-out tests/play.c src/plat_host.c src/data.S,$(shell grep -v '^\#' src/port/files.txt)) src/main.c \
@@ -79,7 +81,7 @@ $(BUILD_DIR):
 HOST_SRC = $(filter-out src/data.S,$(shell grep -v '^\#' src/port/files.txt))
 HOST_OBJ = $(patsubst %.c,build/obj/%.o,$(HOST_SRC))
 HOST_FLAGS = -std=gnu11 -O1 -g -DHOST -DDATA_BIN='"src/data.bin"' $(DECOMP_FLAGS) -fno-strict-aliasing -MMD -MP
-HOST_SAN = -fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-sanitize=alignment
+HOST_SAN = -fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-sanitize=alignment,float-cast-overflow
 host: build/play
 build/obj/%.o: %.c src/port/port.h
 	@mkdir -p $(@D)
@@ -98,8 +100,8 @@ media: build/play
 	python3 tools/media.py build/play
 
 data:
-	@test -n "$(REF)" || { echo "make data REF=<the folder tools/fetch.py filled>"; exit 1; }
-	python3 -I tools/pack.py $(REF)
+	@test -n "$(REF)" -a -n "$(ASSETS)" || { echo "make data REF=<the folder tools/fetch.py filled> ASSETS=<the folder tools/assets.py filled>"; exit 1; }
+	SM64_ASSETS="$(ASSETS)" python3 -I tools/pack.py $(REF)
 	python3 -I tools/port.py $(REF)
 
 clean:

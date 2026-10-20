@@ -35,7 +35,7 @@ decomp/src/game/ingame_menu.c
 decomp/src/game/print.c
 decomp/src/game/screen_transition.c
 decomp/src/game/geo_misc.c
-decomp/data/behavior_data.c
+src/port/gen/behavior_data.c
 decomp/levels/scripts.c
 decomp/levels/castle_grounds/script.c
 decomp/levels/castle_inside/script.c
